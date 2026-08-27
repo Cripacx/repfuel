@@ -1,0 +1,126 @@
+import type { Messages } from './de.js';
+
+/**
+ * English translation. Typed against `Messages` (derived from `de.ts`), so a
+ * missing or extra key is a compile-time error — no `any`, no runtime drift.
+ */
+const en: Messages = {
+  common: {
+    appName: 'repfuel',
+    loading: 'Loading…',
+    cancel: 'Cancel',
+    save: 'Save',
+    close: 'Close',
+    copy: 'Copy',
+    copied: 'Copied!',
+    yes: 'Yes',
+    no: 'No',
+    actions: 'Actions',
+    back: 'Back',
+  },
+  language: {
+    label: 'Language',
+    de: 'German',
+    en: 'English',
+  },
+  nav: {
+    home: 'Home',
+    admin: 'Admin',
+    logout: 'Log out',
+    loggingOut: 'Logging out…',
+  },
+  roles: {
+    admin: 'Administrator',
+    user: 'User',
+  },
+  auth: {
+    loginTitle: 'Log in',
+    registerTitle: 'Register',
+    usernameLabel: 'Username',
+    usernamePlaceholder: 'e.g. jane.doe',
+    usernameOptionalHint: 'Leave empty to sign in passwordless via passkey.',
+    usernameRequiredForRegister: 'Please enter a username.',
+    loginWithPasskeyButton: 'Sign in with passkey',
+    registerWithPasskeyButton: 'Register passkey',
+    submitting: 'Please wait…',
+    noAccountYet: "Don't have an account yet?",
+    registerLink: 'Register now',
+    haveAccountAlready: 'Already have an account?',
+    loginLink: 'Go to login',
+    bootstrapNotice:
+      'No user exists on this instance yet. The first registered user automatically becomes administrator.',
+    inviteRequiredNotice: 'Registration currently requires a valid invite link.',
+    inviteTokenLabel: 'Invite token',
+    inviteTokenPlaceholder: 'Token from the invite link',
+  },
+  errors: {
+    generic: 'Something went wrong. Please try again.',
+    network: 'The server is unreachable. Please check your connection.',
+    unauthorized: 'Please sign in.',
+    forbidden: "You don't have permission to do that.",
+    invalidCredentials: 'Sign-in failed. Please try again.',
+    usernameTaken: 'This username is already taken.',
+    invalidInviteToken: 'The invite link is invalid or has expired.',
+    webauthnCancelled: 'The passkey ceremony was cancelled.',
+    webauthnNotAllowed: 'The browser declined the passkey request or no passkey was found.',
+    webauthnUnsupported: 'This browser does not support passkeys.',
+  },
+  home: {
+    greeting: 'Signed in as',
+    placeholderNotice: 'More features are coming in upcoming milestones.',
+    adminLinkHint: 'You have administrator privileges.',
+    goToAdmin: 'Go to admin area',
+  },
+  admin: {
+    title: 'Administration',
+    loadError: 'Admin data could not be loaded.',
+    tabs: {
+      users: 'Users',
+      invites: 'Invites',
+      settings: 'Settings',
+      status: 'Status',
+    },
+    users: {
+      columnUsername: 'Username',
+      columnRole: 'Role',
+      columnCreatedAt: 'Created at',
+      columnStatus: 'Status',
+      statusActive: 'Active',
+      statusDisabled: 'Disabled',
+      disable: 'Disable',
+      enable: 'Enable',
+      delete: 'Delete',
+      confirmDelete: 'Really delete this user? This cannot be undone.',
+      empty: 'No users yet.',
+    },
+    invites: {
+      createTitle: 'Create new invite',
+      usernameLabel: 'Username (optional)',
+      expiresLabel: 'Valid for (hours)',
+      createButton: 'Create invite',
+      columnLink: 'Link',
+      columnUsername: 'Username',
+      columnExpiresAt: 'Expires',
+      columnUsed: 'Used',
+      notUsed: 'No',
+      revoke: 'Revoke',
+      confirmRevoke: 'Really revoke this invite?',
+      empty: 'No invites yet.',
+      copyLink: 'Copy link',
+    },
+    settings: {
+      registrationModeLabel: 'Registration mode',
+      modeOpen: 'Open (anyone can register)',
+      modeInvite: 'Invite only',
+      configuredHint: 'Configured via environment variable:',
+      saved: 'Saved.',
+    },
+    status: {
+      versionLabel: 'Version',
+      modeLabel: 'Registration mode',
+      userCountLabel: 'User count',
+    },
+  },
+};
+
+export default en;
