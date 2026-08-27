@@ -3,6 +3,7 @@
   import type { Snippet } from 'svelte';
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
+  import { page } from '$app/state';
   import type { Locale } from '@repfuel/shared';
   import { api } from '$lib/api.js';
   import { getUser, setUser } from '$lib/auth.svelte.js';
@@ -11,6 +12,11 @@
   let { children }: { children: Snippet } = $props();
 
   let loggingOut = $state(false);
+
+  function isActiveNav(path: string): boolean {
+    const current = page.url.pathname;
+    return path === '/' ? current === '/' : current === path || current.startsWith(`${path}/`);
+  }
 
   async function handleLogout(): Promise<void> {
     loggingOut = true;
@@ -68,6 +74,21 @@
       {/if}
     </div>
   </header>
+  {#if getUser()}
+    <nav class="main-nav" aria-label={m().nav.home}>
+      <a href={resolve('/')} class:active={isActiveNav('/')}>{m().nav.home}</a>
+      <a href={resolve('/workouts')} class:active={isActiveNav('/workouts')}
+        >{m().nav.workouts}</a
+      >
+      <a href={resolve('/routines')} class:active={isActiveNav('/routines')}
+        >{m().nav.routines}</a
+      >
+      <a href={resolve('/weight')} class:active={isActiveNav('/weight')}>{m().nav.weight}</a>
+      {#if getUser()?.role === 'admin'}
+        <a href={resolve('/admin')} class:active={isActiveNav('/admin')}>{m().nav.admin}</a>
+      {/if}
+    </nav>
+  {/if}
   <main class="app-main">
     {@render children()}
   </main>

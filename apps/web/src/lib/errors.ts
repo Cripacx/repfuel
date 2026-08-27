@@ -17,6 +17,10 @@ function knownApiErrorMessage(code: string): string | undefined {
     case 'invite_expired':
     case 'invite_used':
       return m().errors.invalidInviteToken;
+    case 'not_found':
+      return m().errors.notFound;
+    case 'conflict':
+      return m().errors.conflict;
     default:
       return undefined;
   }

@@ -3,15 +3,30 @@ import type {
   AdminSettingsDto,
   AdminUserDto,
   ApiErrorBody,
+  BodyWeightDto,
+  CreateExerciseRequest,
   CreateInviteRequest,
+  CreateRoutineRequest,
+  ExerciseDto,
   InstanceStatusDto,
+  LastSetsResponse,
+  ListExercisesQuery,
+  ListWeightQuery,
+  ListWorkoutsQuery,
   LoginOptionsRequest,
   MeResponse,
   RegisterOptionsRequest,
   RegistrationModeResponse,
+  RoutineDto,
+  SetDto,
   UpdateMeRequest,
+  UpdateRoutineRequest,
   UpdateSettingsRequest,
   UpdateUserRequest,
+  UpsertSetRequest,
+  UpsertWeightRequest,
+  UpsertWorkoutRequest,
+  WorkoutDto,
 } from '@repfuel/shared';
 import type {
   AuthenticationResponseJSON,
@@ -98,8 +113,24 @@ function patch<T>(path: string, body: unknown): Promise<T> {
   return request<T>(path, { method: 'PATCH', body: JSON.stringify(body) });
 }
 
+function put<T>(path: string, body: unknown): Promise<T> {
+  return request<T>(path, { method: 'PUT', body: JSON.stringify(body) });
+}
+
 function del(path: string): Promise<void> {
   return request<void>(path, { method: 'DELETE' });
+}
+
+/** Baut einen Query-String aus definierten Werten; `undefined`/`null` werden übersprungen. */
+function query(params: Record<string, string | number | undefined>): string {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null) {
+      search.set(key, String(value));
+    }
+  }
+  const qs = search.toString();
+  return qs ? `?${qs}` : '';
 }
 
 export interface RegisterOptionsResponse {
@@ -150,5 +181,62 @@ export const api = {
     updateSettings: (body: UpdateSettingsRequest): Promise<{ settings: AdminSettingsDto }> =>
       patch('/admin/settings', body),
     getStatus: (): Promise<{ status: InstanceStatusDto }> => get('/admin/status'),
+  },
+
+  // --- Übungen ---
+  exercises: {
+    list: (params: Partial<ListExercisesQuery> = {}): Promise<{ exercises: ExerciseDto[] }> =>
+      get(
+        `/exercises${query({
+          q: params.q,
+          muscle: params.muscle,
+          equipment: params.equipment,
+          limit: params.limit,
+          offset: params.offset,
+        })}`,
+      ),
+    create: (body: CreateExerciseRequest): Promise<{ exercise: ExerciseDto }> =>
+      post('/exercises', body),
+  },
+
+  // --- Routinen ---
+  routines: {
+    list: (): Promise<{ routines: RoutineDto[] }> => get('/routines'),
+    create: (body: CreateRoutineRequest): Promise<{ routine: RoutineDto }> =>
+      post('/routines', body),
+    get: (id: string): Promise<{ routine: RoutineDto }> => get(`/routines/${id}`),
+    update: (id: string, body: UpdateRoutineRequest): Promise<{ routine: RoutineDto }> =>
+      patch(`/routines/${id}`, body),
+    remove: (id: string): Promise<void> => del(`/routines/${id}`),
+  },
+
+  // --- Workouts & Sätze ---
+  workouts: {
+    list: (params: Partial<ListWorkoutsQuery> = {}): Promise<{ workouts: WorkoutDto[] }> =>
+      get(`/workouts${query({ from: params.from, to: params.to, limit: params.limit })}`),
+    lastSets: (exerciseIds: string[]): Promise<{ lastSets: LastSetsResponse }> =>
+      exerciseIds.length === 0
+        ? Promise.resolve({ lastSets: {} })
+        : get(`/workouts/last-sets${query({ exerciseIds: exerciseIds.join(',') })}`),
+    get: (id: string): Promise<{ workout: WorkoutDto }> => get(`/workouts/${id}`),
+    upsert: (id: string, body: UpsertWorkoutRequest): Promise<{ workout: WorkoutDto }> =>
+      put(`/workouts/${id}`, body),
+    remove: (id: string): Promise<void> => del(`/workouts/${id}`),
+    upsertSet: (
+      workoutId: string,
+      setId: string,
+      body: UpsertSetRequest,
+    ): Promise<{ set: SetDto }> => put(`/workouts/${workoutId}/sets/${setId}`, body),
+    removeSet: (workoutId: string, setId: string): Promise<void> =>
+      del(`/workouts/${workoutId}/sets/${setId}`),
+  },
+
+  // --- Gewicht ---
+  weight: {
+    list: (params: Partial<ListWeightQuery> = {}): Promise<{ entries: BodyWeightDto[] }> =>
+      get(`/weight${query({ from: params.from, to: params.to, limit: params.limit })}`),
+    upsert: (id: string, body: UpsertWeightRequest): Promise<{ entry: BodyWeightDto }> =>
+      put(`/weight/${id}`, body),
+    remove: (id: string): Promise<void> => del(`/weight/${id}`),
   },
 };
