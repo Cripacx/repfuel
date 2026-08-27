@@ -10,3 +10,7 @@ build/
 coverage/
 .pnpm-store/
 /data/
+# Sandbox-Verifikationsartefakte (nicht Teil des Projekts)
+Dockerfile.verify
+.sandbox-ca.crt
+compose.sandbox-override.yml

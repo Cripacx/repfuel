@@ -21,7 +21,7 @@ RUN pnpm --filter @repfuel/shared build \
   && pnpm --filter @repfuel/server build
 
 # Produktions-Abhängigkeiten des Servers isoliert auflösen
-RUN pnpm --filter @repfuel/server --prod deploy /deploy/server
+RUN pnpm --filter @repfuel/server --prod deploy --legacy /deploy/server
 
 FROM node:22-alpine
 ENV NODE_ENV=production
