@@ -1,0 +1,50 @@
+services:
+  app:
+    image: ghcr.io/cripacx/repfuel:latest
+    build: .
+    restart: unless-stopped
+    ports:
+      - '${PORT:-8080}:8080'
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgres://repfuel:repfuel@db:5432/repfuel}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      ORIGIN: ${ORIGIN:-http://localhost:8080}
+      REGISTRATION_MODE: ${REGISTRATION_MODE:-open}
+      SESSION_TTL_DAYS: ${SESSION_TTL_DAYS:-30}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: repfuel
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-repfuel}
+      POSTGRES_DB: repfuel
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U repfuel -d repfuel']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes']
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  db-data:
+  redis-data:
