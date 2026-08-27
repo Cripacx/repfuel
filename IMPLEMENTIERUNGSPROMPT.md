@@ -31,6 +31,8 @@ Referenzprojekte (nicht kopieren, aber als Vorbild für Patterns):
 | Offline-Daten | IndexedDB via Dexie.js, Sync-Queue zum Server |
 | Backend | Node.js + TypeScript, Fastify; liefert auch die statischen Frontend-Dateien aus |
 | Datenbank | PostgreSQL, Drizzle ORM (Schema + Migrations) |
+| Cache/Queue | Redis: Sessions, Rate-Limiting, SSE-Pub/Sub, Background-Jobs (BullMQ, z.B. Health-Ingest-Verarbeitung, OFF-Cache-Refresh) |
+| i18n | Deutsch + Englisch von Anfang an; typsichere Message-Keys (z.B. typesafe-i18n oder Paraglide), Sprache aus Browser-Locale mit Override im Profil. Auch KI-Antworten in der Nutzersprache (Sprachhinweis im System-Prompt). |
 | Auth | Passkeys (WebAuthn) via SimpleWebAuthn, Session-Cookies |
 | KI | Adapter-Interface mit 3 Implementierungen: API (Vercel AI SDK), Ollama, CLI-Sidecar |
 | Externe Daten | Open Food Facts API (Lebensmittel + Barcode), wger-Exercise-DB als einmaliger Seed |
@@ -41,8 +43,8 @@ Referenzprojekte (nicht kopieren, aber als Vorbild für Patterns):
 
 ## Architekturprinzipien
 
-1. **Eine Service-Schicht, mehrere Clients.** Alle Geschäftslogik liegt in
-   `apps/server/src/services/` (z.B. `mealService`, `workoutService`, `statsService`).
+1. **Eine Service-Schicht, mehrere Clients.** Alle Geschäftslogik liegt in den
+   Service-Schichten der Module (`apps/server/src/modules/<modul>/services/`).
    Die REST-API, die KI-Tools und der MCP-Server sind nur dünne Wrapper um dieselben
    Service-Funktionen. Keine Logik in Routen oder Tool-Definitionen.
 2. **KI ist ein zweiter Client, kein Sonderfall.** Der Chat darf nichts können, was
@@ -61,6 +63,18 @@ Referenzprojekte (nicht kopieren, aber als Vorbild für Patterns):
 6. **Multi-User ist Grundannahme.** Jede Query ist user-scoped (user_id aus der Session,
    nie aus dem Request-Body). Mehrere Nutzer teilen sich eine Instanz mit strikt
    getrennten Daten; es gibt eine Admin-Rolle (erster registrierter Nutzer wird Admin).
+7. **Modular Monolith.** Der Server ist in klar geschnittene Module gegliedert
+   (`modules/auth`, `modules/workout`, `modules/nutrition`, `modules/health`,
+   `modules/ai`, `modules/admin`), jedes mit eigenem Ordner für routes/services/
+   repositories/schema. Module kommunizieren **nur** über exportierte
+   Service-Interfaces (öffentliche `index.ts` pro Modul), nie über Direktimporte
+   in fremde Interna — per ESLint-Regel (import-Boundaries) erzwingen.
+   Jedes Modul besitzt seine eigenen Drizzle-Tabellen; modulübergreifende Joins
+   nur innerhalb eines dedizierten `modules/stats` (Read-Model). Ereignisse
+   zwischen Modulen über einen internen Event-Bus (in-process, Redis-Pub/Sub-
+   kompatible Abstraktion), damit eine spätere Extraktion einzelner Module zu
+   Services ohne Umbau der Aufrufer möglich ist. Ein Deployment, ein Prozess —
+   die Grenzen sind logisch, nicht physisch.
 
 ## Datenmodell (Drizzle-Schema, Kernfelder)
 
@@ -119,9 +133,9 @@ interface AIAdapter {
 - `log_meal({ food_query | barcode | quick_kcal, amount_g, meal_type, eaten_at? })`
 - `log_weight({ weight_kg, measured_at? })`
 - `search_food({ query })` (erst lokale foods, dann Open Food Facts)
-- `update_routine({ ... })` — **nur als Vorschlag**: Die KI erzeugt einen Änderungsentwurf,
-  der Nutzer bestätigt im UI, bevor geschrieben wird. Reine Lese-Tools und einfache
-  Log-Tools dürfen direkt ausgeführt werden.
+- `update_routine({ ... })`, `update_profile({ ... })` — **nur als Vorschlag**: Die KI
+  erzeugt einen Änderungsentwurf, der Nutzer bestätigt im UI, bevor geschrieben wird.
+  Reine Lese-Tools und einfache Log-Tools dürfen direkt ausgeführt werden.
 
 ### Klarstellung Tools vs. MCP
 
@@ -132,19 +146,14 @@ Beide rufen exakt dieselben Service-Funktionen auf. Optional (Config-Flag, defau
 kann der MCP-Server auch extern exponiert werden, damit Nutzer eigene Agenten
 (z.B. Claude Desktop) an ihre Instanz hängen — dann mit per-User-API-Token.
 
-### Chat-Slash-Commands
+### Ziele (Feature, kein Chat-Command)
 
-Im Chat-Eingabefeld werden Slash-Commands erkannt (Autocomplete-Menü bei `/`).
-Commands sind clientseitig definierte Prompt-Templates + serverseitige Kontext-Anreicherung:
-
-- `/goal` — interaktiver Ziel-Flow: Die KI fragt Zielgewicht/Zieldatum bzw. Cut/Bulk ab,
-  rechnet daraus kcal-/Makro-Targets (Mifflin-St Jeor + Aktivitätslevel aus dem Profil)
-  und schlägt ein Update von `profiles` vor (Bestätigungs-Flow wie bei `update_routine`).
-  Muss auch ohne KI funktionieren: Ohne Adapter öffnet `/goal` bzw. der Ziele-Screen
-  ein normales Formular mit derselben Berechnungslogik (gemeinsame Funktion in
-  `packages/shared`).
-- `/week` — Wochenrückblick (Training + Ernährung vs. Ziele).
-- `/plan` — Trainingsplan-Entwurf/-Revision (nur Vorschlag, Bestätigung im UI).
+Ziel-Setzung ist ein normaler Screen: Formular für Zielgewicht/Zieldatum bzw.
+Cut/Maintain/Bulk, daraus berechnete kcal-/Makro-Targets (Mifflin-St Jeor +
+Aktivitätslevel). Die Berechnungslogik liegt als gemeinsame Funktion in
+`packages/shared`. Der KI-Coach kann im normalen Gespräch dieselben Ziele
+vorschlagen — über ein `update_profile`-Tool, das wie `update_routine` nur einen
+Vorschlag erzeugt, den der Nutzer im UI bestätigt.
 
 ### System-Prompt des Coaches
 
@@ -153,41 +162,15 @@ Ein-Zeilen-Zusammenfassung verfügbarer Datenbereiche. Keine Rohdaten in den
 System-Prompt kippen — die KI holt sich Daten per Tool. Regel im Prompt verankern:
 Fehlende Mahlzeiten-Logs nie als Fasten oder Defizit interpretieren.
 
-### Modell-Empfehlungen (Defaults, alles per Config überschreibbar)
+### Modell-Konfiguration (provider-neutral, keine Empfehlungen verdrahten)
 
-Nicht jede Aufgabe braucht dasselbe Modell. Zwei Modell-Slots in der Config:
-`AI_MODEL` (Main Agent) und `AI_MODEL_LIGHT` (billige Hilfsaufgaben; Fallback = AI_MODEL).
-
-**Main Agent (Coach-Chat, /goal, /plan, /week):**
-Braucht zuverlässiges Multi-Turn-Tool-Calling und solides Schlussfolgern über
-Zahlenreihen. Empfehlung als Default: **Claude Sonnet (aktuell `claude-sonnet-4-6`)** —
-bestes Verhältnis aus Tool-Calling-Qualität, Preis und Latenz für diesen Zweck.
-Opus (`claude-opus-4-8`) nur, wenn der Nutzer es explizit konfiguriert; für
-Plan-Revisionen und Wochenanalysen ist Sonnet ausreichend und deutlich günstiger.
-Bei OpenAI-Konfiguration das jeweilige mittlere Flaggschiff-Modell mit
-Tool-Calling verwenden (in den Docs nur als Beispiel nennen, nicht hart verdrahten —
-Modellnamen altern schnell).
-
-**Light-Modell (`AI_MODEL_LIGHT`, z.B. `claude-haiku-4-5`):**
-- Chat-Titel für Sessions generieren
-- Freitext-Mahlzeit → strukturierter Log-Vorschlag parsen („2 Eier und eine Scheibe
-  Vollkornbrot" → food_query + amount_g), bevor der Main Agent überhaupt nötig ist
-- Zusammenfassen alter Chat-Verläufe für das Session-Memory (Kontextfenster klein halten)
-
-**Vision (optional, V1.5):** Foto-basiertes Mahlzeiten-Logging über den Main Agent
-mit Bild-Input (Sonnet kann das nativ). Als eigenes Feature-Flag, nicht in V1.
-
-**Ollama-Defaults (lokal):** In den Docs zwei getestete Empfehlungen aussprechen und
-in CI gegen sie testen: ein ~8B-Modell mit gutem Function-Calling für schwache
-Hardware und ein ~30–70B-Modell für brauchbare Coach-Qualität (konkrete Modellnamen
-zum Release-Zeitpunkt evaluieren, z.B. aktuelle Qwen-/Llama-Generation mit
-Tool-Support). Wichtig: Beim Ollama-Adapter einen Capability-Check einbauen —
-wenn das konfigurierte Modell kein Tool-Calling beherrscht, klare Fehlermeldung
-in `/ai/status` statt stiller Degradation.
-
-**CLI-Sidecar:** Kein Modell konfigurieren — es gilt das Modell des jeweiligen
-CLI-Logins/Abos (bei Claude Code z.B. das im Abo enthaltene Sonnet/Opus).
-Optional `--model` durchreichen, wenn die CLI das erlaubt.
+Zwei Modell-Slots in der Config: `AI_MODEL` (Coach) und optional `AI_MODEL_LIGHT`
+(Fallback = AI_MODEL) für billige Hilfsaufgaben: Chat-Titel generieren,
+Freitext-Mahlzeit in einen strukturierten Log-Vorschlag parsen („2 Eier und eine
+Scheibe Vollkornbrot" → food_query + amount_g) und Zusammenfassen alter
+Chat-Verläufe für das Session-Memory. Keine Modellnamen im Code hart verdrahten;
+Beispiele nur in der Doku. Foto-basiertes Mahlzeiten-Logging (Vision) ist V1.5
+hinter einem Feature-Flag, nicht V1.
 
 ### Adapter 1: API (Vercel AI SDK)
 
@@ -198,7 +181,9 @@ Streaming über die AI-SDK-Streams, Tool-Calling nativ. Antworten per SSE ans Fr
 
 Gleicher Codepfad wie Adapter 1 über die OpenAI-kompatible Ollama-API
 (`AI_PROVIDER=ollama`, `AI_BASE_URL=http://ollama:11434/v1`). Im Compose als
-optionales Profil `ollama`.
+optionales Profil `ollama`. Capability-Check einbauen: Wenn das konfigurierte
+Modell kein Tool-Calling beherrscht, klare Fehlermeldung in `/ai/status`
+statt stiller Degradation.
 
 ### Adapter 3: CLI-Sidecar (Claude Code / Codex)
 
@@ -231,13 +216,14 @@ optionales Profil `ollama`.
 
 ## Registrierung & Admin-Panel (schmal halten)
 
-Registrierungsmodus per Config (`REGISTRATION_MODE=open|invite|closed`, in DB
+Registrierungsmodus per Config (`REGISTRATION_MODE=open|invite`, in DB
 überschreibbar durch Admin):
 
 - `open` — jeder kann sich registrieren (Default für den Erstlauf, bis ein Admin existiert).
 - `invite` — Registrierung nur mit gültigem Invite-Link (`/register?invite=<token>`).
-- `closed` — nur der Admin legt Nutzer an (erzeugt dabei einen Invite-Link, über den
-  der Nutzer seinen Passkey selbst registriert — der Admin sieht nie Credentials).
+  Deckt auch den "Admin legt Nutzer an"-Fall ab: Der Admin erzeugt im Panel einen
+  Invite (optional mit vorgegebenem Username), über den der Nutzer seinen Passkey
+  selbst registriert — der Admin sieht nie Credentials.
 
 Admin-Panel als einzelne Route `/admin` (nur role=admin): Nutzerliste (anlegen,
 deaktivieren, löschen), Invite-Links erzeugen/widerrufen (mit Ablaufdatum),
@@ -282,7 +268,7 @@ GET  /stats/health?metric&from&to
 - Image-Namen: `ghcr.io/<owner>/repfuel` (App) und `ghcr.io/<owner>/repfuel-ai-cli` (Sidecar).
 - PWA-Manifest: name "repfuel", short_name "repfuel", eigenes Icon (Platzhalter ok,
   maskable-Variante nicht vergessen).
-- `docker-compose.yml`: `app` + `db` (Standard), `ollama` und `ai-cli` als Profile.
+- `docker-compose.yml`: `app` + `db` + `redis` (Standard), `ollama` und `ai-cli` als Profile.
 - `.env.example` mit allen Variablen und Kommentaren: `DATABASE_URL`, `ORIGIN`
   (für WebAuthn zwingend), `AI_PROVIDER`, `AI_API_KEY`, `AI_MODEL`, `AI_BASE_URL`,
   `CLAUDE_CODE_OAUTH_TOKEN`.
@@ -294,19 +280,22 @@ GET  /stats/health?metric&from&to
 
 ## Meilensteine (in dieser Reihenfolge bauen, nach jedem Meilenstein: lauffähig + committen)
 
-1. **M1 Fundament:** Monorepo, Fastify + Drizzle + Postgres im Compose, Health-Endpoint,
-   SvelteKit-SPA wird vom Server ausgeliefert. Passkey-Registrierung + Login,
+1. **M1 Fundament:** Monorepo, Modulstruktur + ESLint-Import-Boundaries,
+   Fastify + Drizzle + Postgres + Redis im Compose (Redis-Sessions), Health-Endpoint,
+   SvelteKit-SPA wird vom Server ausgeliefert, i18n-Grundgerüst (de/en, typsichere Keys,
+   Sprachumschalter). Passkey-Registrierung + Login,
    Admin-Bootstrap, Registrierungsmodi + Invite-Links, minimales /admin-Panel.
 2. **M2 Workout-Kern:** Übungs-Seed, Routinen-CRUD, Workout-Logging-Flow (online),
    Gewichts-Tracking mit Chart.
 3. **M3 Ernährungs-Kern:** Food-Suche (Open Food Facts + Cache in `foods`),
    Barcode-Scan (BarcodeDetector, Fallback zxing-js), Mahlzeiten-Logging,
+   Ziele-Screen (Formular + Berechnungslogik in `packages/shared`),
    Tages-Dashboard kcal/Makros vs. Ziele.
 4. **M4 Offline/PWA:** Dexie-Layer, Sync-Queue + `/sync/batch`, Service Worker,
    Manifest, Install-Test auf Android und iOS.
 5. **M5 KI API-Adapter:** Adapter-Interface, Tools, Chat-UI mit SSE-Streaming,
-   Bestätigungs-Flow für Schreib-Vorschläge, Slash-Commands (/goal, /week, /plan),
-   Ziel-Formular als Nicht-KI-Fallback, Ollama-Support.
+   Bestätigungs-Flow für Schreib-Vorschläge (update_routine/update_profile),
+   Ollama-Support.
 6. **M6 CLI-Sidecar:** Sidecar-Image, MCP-Server im Backend, Claude-Code-Anbindung,
    Auth-Statusanzeige, Doku der drei Auth-Wege.
 7. **M7 Health-Ingest + Polish:** `/ingest/health` mit API-Tokens, Health-Auto-Export-
@@ -316,9 +305,9 @@ GET  /stats/health?metric&from&to
 
 ## Nicht-Ziele für V1 (nicht bauen, auch nicht vorbereiten)
 
-Kein Sleep-/Mood-Tracking, keine Wearable-Integrationen, keine Familien-/Coach-Freigaben,
-keine native App, kein Redis, keine Microservices, keine i18n (UI erst mal Englisch,
-i18n-fähige Struktur ist ok).
+Kein Sleep-/Mood-Tracking, keine Wearable-Integrationen (außer Health-Ingest-Endpoint),
+keine Familien-/Coach-Freigaben, keine native App, keine Microservices (Modular
+Monolith, ein Prozess), keine weiteren Sprachen außer Deutsch und Englisch.
 
 ## Konventionen
 
