@@ -11,6 +11,8 @@ import { createInProcessEventBus } from './core/event-bus.js';
 import { redisKeyValueStore, type RedisClient } from './core/redis.js';
 import { registerAdminModule } from './modules/admin/index.js';
 import { registerAuthModule } from './modules/auth/index.js';
+import { registerHealthModule } from './modules/health/index.js';
+import { registerWorkoutModule } from './modules/workout/index.js';
 
 export interface AppDeps {
   db: Database;
@@ -24,6 +26,16 @@ export async function buildApp(config: AppConfig, deps: AppDeps): Promise<Fastif
   });
 
   await app.register(fastifyCookie);
+
+  // Leere JSON-Bodies (z.B. DELETE mit content-type application/json) tolerieren.
+  app.addContentTypeParser('application/json', { parseAs: 'string' }, (_req, body, done) => {
+    if (body === '' || body === undefined) return done(null, undefined);
+    try {
+      done(null, JSON.parse(body as string));
+    } catch {
+      done(new AppError('bad_request', 'Invalid JSON body'), undefined);
+    }
+  });
 
   app.setErrorHandler((err: unknown, req, reply) => {
     if (err instanceof AppError) {
@@ -80,6 +92,15 @@ export async function buildApp(config: AppConfig, deps: AppDeps): Promise<Fastif
     sessionTtlDays: config.SESSION_TTL_DAYS,
   });
   await registerAdminModule(app, { userService: authApi.userService, guards: authApi.guards });
+  const workoutApi = await registerWorkoutModule(app, {
+    db: deps.db,
+    eventBus,
+    guards: authApi.guards,
+  });
+  await registerHealthModule(app, { db: deps.db, guards: authApi.guards });
+
+  const seeded = await workoutApi.seedExercises();
+  app.log.info({ seeded }, 'exercise library seeded (idempotent)');
 
   if (config.STATIC_DIR) {
     const staticRoot = path.resolve(config.STATIC_DIR);

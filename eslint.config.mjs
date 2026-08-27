@@ -8,14 +8,19 @@ import tseslint from 'typescript-eslint';
  * über deren öffentliche `index.ts` importieren — hier per Lint-Regel erzwungen.
  * Neue Module müssen in diese Liste aufgenommen werden.
  */
-const SERVER_MODULES = ['auth', 'admin'];
+const SERVER_MODULES = ['auth', 'admin', 'workout', 'health'];
 
 const moduleBoundaryZones = SERVER_MODULES.map((mod) => ({
   target: `./apps/server/src/modules/${mod}`,
   from: './apps/server/src/modules',
+  // Erlaubt: öffentliche index.ts anderer Module sowie deren schema.ts
+  // (Drizzle-FK-Referenzen sind Datenbank-Verweise, keine Logik-Kopplung).
   except: [
     `./${mod}`,
-    ...SERVER_MODULES.filter((other) => other !== mod).map((other) => `./${other}/index.ts`),
+    ...SERVER_MODULES.filter((other) => other !== mod).flatMap((other) => [
+      `./${other}/index.ts`,
+      `./${other}/schema.ts`,
+    ]),
   ],
   message:
     'Module kommunizieren nur über die öffentliche index.ts anderer Module, nie über deren Interna.',

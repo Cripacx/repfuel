@@ -3,3 +3,5 @@
  * Die Tabellen selbst gehören den Modulen (jedes Modul besitzt seine Tabellen).
  */
 export * from '../modules/auth/schema.js';
+export * from '../modules/workout/schema.js';
+export * from '../modules/health/schema.js';
