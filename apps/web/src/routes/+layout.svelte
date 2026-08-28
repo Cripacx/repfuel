@@ -90,6 +90,7 @@
       {#if getUser()?.role === 'admin'}
         <a href={resolve('/admin')} class:active={isActiveNav('/admin')}>{m().nav.admin}</a>
       {/if}
+      <a href={resolve('/settings')} class:active={isActiveNav('/settings')}>{m().nav.settings}</a>
     </nav>
   {/if}
   <main class="app-main">

@@ -19,11 +19,14 @@ import type {
   MealDto,
   MeResponse,
   NutritionStatsResponse,
+  PasswordLoginRequest,
+  PasswordRegisterRequest,
   ProfileDto,
   RegisterOptionsRequest,
   RegistrationModeResponse,
   RoutineDto,
   SetDto,
+  SetPasswordRequest,
   UpdateMeRequest,
   UpdateProfileRequest,
   UpdateRoutineRequest,
@@ -170,6 +173,11 @@ export const api = {
   getLoginOptions: (body: LoginOptionsRequest): Promise<LoginOptionsResponse> =>
     post('/auth/login-options', body),
   postLoginVerify: (body: LoginVerifyBody): Promise<MeResponse> => post('/auth/login', body),
+  registerWithPassword: (body: PasswordRegisterRequest): Promise<MeResponse> =>
+    post('/auth/register-password', body),
+  loginWithPassword: (body: PasswordLoginRequest): Promise<MeResponse> =>
+    post('/auth/login-password', body),
+  setPassword: (body: SetPasswordRequest): Promise<void> => post('/auth/password', body),
   logout: (): Promise<void> => post('/auth/logout'),
   getMe: (): Promise<MeResponse> => get('/auth/me'),
   updateMe: (body: UpdateMeRequest): Promise<MeResponse> => patch('/auth/me', body),
