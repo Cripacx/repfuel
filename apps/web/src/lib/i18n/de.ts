@@ -301,6 +301,9 @@ const de = {
     columnWeight: 'Gewicht',
   },
   nutrition: {
+    previousMonth: 'Vorheriger Monat',
+    nextMonth: 'Nächster Monat',
+    monthOverview: 'Monatsübersicht',
     title: 'Ernährung',
     goalsLink: 'Ziele',
     today: 'Heute',

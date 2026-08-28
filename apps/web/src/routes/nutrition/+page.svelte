@@ -5,9 +5,11 @@
   import { api } from '$lib/api.js';
   import AddMealForm from '$lib/components/AddMealForm.svelte';
   import Modal from '$lib/components/Modal.svelte';
+  import MonthCalendar from '$lib/components/MonthCalendar.svelte';
   import NumberStepper from '$lib/components/NumberStepper.svelte';
   import { describeError } from '$lib/errors.js';
   import { getLocale, m } from '$lib/i18n/index.js';
+  import { monthBounds, monthKeyOf } from '$lib/nutrition/month-grid.js';
   import {
     currentTzOffsetMinutes,
     defaultEatenAtIso,
@@ -220,6 +222,35 @@
     }
     return m().nutrition.quickEntryLabel;
   }
+
+  // --- Monatsübersicht ---------------------------------------------------
+  // Standardmäßig zu, damit der schnelle Weg (heute loggen) der kurze bleibt;
+  // die Übersicht ist einen Tipp entfernt.
+  let calendarOpen = $state(false);
+  // Folgt dem gewählten Tag, lässt sich aber überschreiben: im Kalender zu
+  // blättern ändert selectedDate nicht, der Nutzer kann also frei in anderen
+  // Monaten stöbern, bis er einen Tag wählt.
+  let calendarMonth = $derived(monthKeyOf(selectedDate));
+  let loggedDates = $state<Set<string>>(new Set());
+
+  $effect(() => {
+    if (!calendarOpen) return;
+    const month = calendarMonth;
+    void (async () => {
+      try {
+        const { from, to } = monthBounds(month);
+        const res = await api.stats.nutrition({ from, to, tzOffsetMinutes });
+        loggedDates = new Set(res.days.filter((d) => d.mealCount > 0).map((d) => d.date));
+      } catch {
+        // Ohne Monatsdaten bleibt der Kalender nutzbar — nur die Punkte fehlen.
+      }
+    })();
+  });
+
+  function pickDate(date: string): void {
+    calendarMonth = monthKeyOf(date);
+    changeDate(date);
+  }
 </script>
 
 <div class="page-header">
@@ -232,7 +263,15 @@
     ‹
   </button>
   <div class="date-nav-current">
-    <span class="date-nav-label">{formatDateLabel(selectedDate)}</span>
+    <button
+      type="button"
+      class="date-nav-label"
+      onclick={() => (calendarOpen = !calendarOpen)}
+      aria-expanded={calendarOpen}
+      aria-label={m().nutrition.monthOverview}
+    >
+      {formatDateLabel(selectedDate)}
+    </button>
     {#if !isToday(selectedDate)}
       <button type="button" class="link-more" onclick={goToday}>{m().nutrition.today}</button>
     {/if}
@@ -247,6 +286,19 @@
     ›
   </button>
 </div>
+
+{#if calendarOpen}
+  <section class="card">
+    <MonthCalendar
+      month={calendarMonth}
+      {selectedDate}
+      today={todayDateString()}
+      {loggedDates}
+      onSelect={pickDate}
+      onMonthChange={(next) => (calendarMonth = next)}
+    />
+  </section>
+{/if}
 
 {#if loading}
   <p class="muted">{m().common.loading}</p>

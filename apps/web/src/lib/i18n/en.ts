@@ -298,6 +298,9 @@ const en: Messages = {
     columnWeight: 'Weight',
   },
   nutrition: {
+    previousMonth: 'Previous month',
+    nextMonth: 'Next month',
+    monthOverview: 'Month overview',
     title: 'Nutrition',
     goalsLink: 'Goals',
     today: 'Today',

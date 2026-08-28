@@ -2802,3 +2802,26 @@ input[type='checkbox'] {
     backdrop-filter: none;
   }
 }
+
+/* Datums-Label ist zugleich der Schalter für die Monatsübersicht. */
+.date-nav-label {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  transition:
+    transform var(--dur-press) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+
+.date-nav-label:hover {
+  background: var(--surface-2);
+}
+
+.date-nav-label:active {
+  transform: scale(0.96);
+}
