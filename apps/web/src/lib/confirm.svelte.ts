@@ -12,8 +12,13 @@
  */
 export interface ConfirmRequest {
   message: string;
-  /** Beschriftung der bestätigenden Aktion; Default: „Löschen“ aus der i18n. */
-  confirmLabel?: string;
+  /**
+   * Beschriftung der bestätigenden Aktion — verpflichtend. Ein Default wäre
+   * hier eine Fehlerquelle: „Löschen“ als Rückfallwert stand schon einmal unter
+   * „Workout wirklich beenden?“. Die Aktion benennt sich selbst
+   * (apple-design §16: konkrete Labels schlagen sichere allgemeine).
+   */
+  confirmLabel: string;
   title?: string;
 }
 

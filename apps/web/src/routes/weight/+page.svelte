@@ -83,7 +83,7 @@
   }
 
   async function removeEntry(entry: BodyWeightDto): Promise<void> {
-    if (!(await requestConfirm({ message: m().weight.deleteConfirm }))) return;
+    if (!(await requestConfirm({ message: m().weight.deleteConfirm, confirmLabel: m().common.delete }))) return;
     loadError = null;
     try {
       await removeWeight(entry.id);

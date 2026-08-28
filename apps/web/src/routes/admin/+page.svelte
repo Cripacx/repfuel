@@ -69,7 +69,7 @@
   }
 
   async function removeUser(user: AdminUserDto): Promise<void> {
-    if (!(await requestConfirm({ message: m().admin.users.confirmDelete }))) return;
+    if (!(await requestConfirm({ message: m().admin.users.confirmDelete, confirmLabel: m().common.delete }))) return;
     loadError = null;
     try {
       await api.admin.deleteUser(user.id);
@@ -98,7 +98,7 @@
   }
 
   async function revokeInvite(invite: AdminInviteDto): Promise<void> {
-    if (!(await requestConfirm({ message: m().admin.invites.confirmRevoke }))) return;
+    if (!(await requestConfirm({ message: m().admin.invites.confirmRevoke, confirmLabel: m().admin.invites.revoke }))) return;
     loadError = null;
     try {
       await api.admin.deleteInvite(invite.id);

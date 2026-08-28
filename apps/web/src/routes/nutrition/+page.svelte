@@ -162,7 +162,7 @@
   }
 
   async function deleteMeal(meal: MealDto): Promise<void> {
-    if (!(await requestConfirm({ message: m().nutrition.deleteMealConfirm }))) return;
+    if (!(await requestConfirm({ message: m().nutrition.deleteMealConfirm, confirmLabel: m().common.delete }))) return;
     loadError = null;
     try {
       await removeMeal(meal.id);

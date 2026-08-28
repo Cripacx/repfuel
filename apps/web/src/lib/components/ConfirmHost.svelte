@@ -37,7 +37,7 @@
         bind:this={confirmButton}
         onclick={() => resolveConfirm(true)}
       >
-        {pending.confirmLabel ?? m().common.delete}
+        {pending.confirmLabel}
       </button>
     </div>
   </Modal>

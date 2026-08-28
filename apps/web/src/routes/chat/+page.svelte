@@ -63,7 +63,7 @@
   }
 
   async function removeSession(session: ChatSessionDto): Promise<void> {
-    if (!(await requestConfirm({ message: m().chat.sessions.deleteConfirm }))) return;
+    if (!(await requestConfirm({ message: m().chat.sessions.deleteConfirm, confirmLabel: m().common.delete }))) return;
     actionError = null;
     try {
       await api.chat.deleteSession(session.id);

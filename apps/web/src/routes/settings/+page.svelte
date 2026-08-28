@@ -84,7 +84,7 @@
   }
 
   async function revokeToken(token: ApiTokenDto): Promise<void> {
-    if (!(await requestConfirm({ message: m().settings.healthImport.confirmRevoke }))) return;
+    if (!(await requestConfirm({ message: m().settings.healthImport.confirmRevoke, confirmLabel: m().settings.healthImport.revokeButton }))) return;
     tokensError = null;
     revokingId = token.id;
     try {

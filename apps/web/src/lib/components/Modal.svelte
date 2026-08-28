@@ -12,6 +12,12 @@
    * Ein- und Ausgang laufen denselben Weg: mobil vom unteren Rand, wo das Sheet
    * auch sitzt, ab Tablet aus der Mitte der Karte. Der Ausgang ist kürzer — die
    * Entscheidung ist gefallen, das Warten darauf wäre Latenz.
+   *
+   * `|global` ist hier zwingend: Svelte-Transitions sind lokal und laufen nur,
+   * wenn ihr eigener Block entsteht oder verschwindet. Entfernt wird aber das
+   * {#if} in der aufrufenden Komponente (ConfirmHost, AddMeal-Dialog). Ohne
+   * global bricht der Ausgang ab und lässt den Knoten mit Opazität 0 im DOM
+   * zurück — der Dialog erscheint danach nie wieder.
    */
   let {
     title,
@@ -30,8 +36,8 @@
   class="modal-backdrop"
   onclick={onClose}
   role="presentation"
-  in:fade={{ duration: DUR_OVERLAY, easing: EASE_OUT }}
-  out:fade={{ duration: DUR_EXIT, easing: EASE_OUT }}
+  in:fade|global={{ duration: DUR_OVERLAY, easing: EASE_OUT }}
+  out:fade|global={{ duration: DUR_EXIT, easing: EASE_OUT }}
 >
   <div
     class="modal-sheet"
@@ -41,8 +47,8 @@
     tabindex="-1"
     onclick={(event) => event.stopPropagation()}
     onkeydown={(event) => event.stopPropagation()}
-    in:sheet={{ duration: DUR_OVERLAY }}
-    out:sheet={{ duration: DUR_EXIT }}
+    in:sheet|global={{ duration: DUR_OVERLAY }}
+    out:sheet|global={{ duration: DUR_EXIT }}
   >
     <div class="modal-header">
       <h2>{title}</h2>

@@ -397,7 +397,7 @@
 
   async function deleteSet(set: SetDto): Promise<void> {
     if (!workout) return;
-    if (!(await requestConfirm({ message: m().workouts.session.deleteSetConfirm }))) return;
+    if (!(await requestConfirm({ message: m().workouts.session.deleteSetConfirm, confirmLabel: m().common.delete }))) return;
     logError = null;
     try {
       await repoRemoveSet(workout.id, set.id);
@@ -424,7 +424,7 @@
 
   async function finishWorkout(): Promise<void> {
     if (!workout) return;
-    if (!(await requestConfirm({ message: m().workouts.session.finishConfirm }))) return;
+    if (!(await requestConfirm({ message: m().workouts.session.finishConfirm, confirmLabel: m().workouts.session.finishButton }))) return;
     logError = null;
     try {
       const updated = await repoUpsertWorkout(workout.id, {
@@ -439,6 +439,18 @@
       logError = describeError(err);
     }
   }
+
+  // Läuft nur, solange das Workout offen ist — ein beendetes zählt nicht weiter.
+  let nowTick = $state(Date.now());
+  $effect(() => {
+    if (isFinished) return;
+    const id = setInterval(() => (nowTick = Date.now()), 30_000);
+    return () => clearInterval(id);
+  });
+
+  const elapsedMinutes = $derived(
+    workout ? Math.max(Math.round((nowTick - new Date(workout.startedAt).getTime()) / 60000), 0) : 0,
+  );
 </script>
 
 {#if loading}
@@ -446,6 +458,23 @@
 {:else if loadError}
   <p class="error" role="alert">{loadError}</p>
 {:else if workout}
+  <!-- Die Seite hatte bisher gar keine Überschrift: die Übungs-h2 hingen ohne
+       h1 in der Luft, und auf die Frage "wo bin ich?" gab es keine Antwort.
+       Name der Routine, verstrichene Zeit und Satzzahl beantworten sie. -->
+  <div class="session-header">
+    <h1>{routine?.name ?? m().workouts.session.freeWorkoutTitle}</h1>
+    <p class="session-meta">
+      {#if isFinished}
+        {computeDurationMinutes(workout.startedAt, workout.finishedAt)}
+      {:else}
+        {elapsedMinutes}
+      {/if}
+      {m().workouts.minutesShort}
+      ·
+      {workout.sets.length}
+      {workout.sets.length === 1 ? m().workouts.setsOne : m().workouts.setsOther}
+    </p>
+  </div>
   {#if isFinished}
     <section class="card">
       <h2>{m().workouts.session.summaryTitle}</h2>

@@ -254,6 +254,7 @@ const en: Messages = {
     minutesShort: 'min',
     continueButton: 'Continue',
     session: {
+      freeWorkoutTitle: 'Free workout',
       restAdd: '+15s',
       lastTimeLabel: 'Last time',
       overloadHint: 'All reps hit — try',

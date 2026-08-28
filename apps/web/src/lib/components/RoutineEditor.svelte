@@ -128,7 +128,7 @@
 
   async function handleDelete(): Promise<void> {
     if (!routine) return;
-    if (!(await requestConfirm({ message: m().routines.confirmDelete }))) return;
+    if (!(await requestConfirm({ message: m().routines.confirmDelete, confirmLabel: m().common.delete }))) return;
     deleting = true;
     formError = null;
     try {

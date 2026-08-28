@@ -2896,3 +2896,18 @@ input[type='checkbox'] {
   display: inline-flex;
   align-items: center;
 }
+
+/* Kopf der Workout-Session: Name, verstrichene Zeit, Satzzahl. */
+.session-header {
+  margin-bottom: var(--space-4);
+}
+
+.session-header h1 {
+  margin-bottom: var(--space-1);
+}
+
+.session-meta {
+  margin: 0;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}

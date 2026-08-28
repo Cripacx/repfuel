@@ -257,6 +257,7 @@ const de = {
     minutesShort: 'Min',
     continueButton: 'Fortsetzen',
     session: {
+      freeWorkoutTitle: 'Freies Workout',
       restAdd: '+15 s',
       lastTimeLabel: 'Zuletzt',
       overloadHint: 'Alle Wdh. geschafft — probier',
