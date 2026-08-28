@@ -279,8 +279,10 @@ a {
 }
 
 .locale-switch button {
-  min-height: calc(var(--touch-target) - 8px);
-  min-width: 40px;
+  /* Voller Touch-Target statt optischer Anpassung an die Umrandung: die
+     Segmente sind das, was getippt wird — der Rahmen ist nur Dekoration. */
+  min-height: var(--touch-target);
+  min-width: var(--touch-target);
   padding: 0 var(--space-3);
   border: none;
   border-radius: calc(var(--radius-sm) - 2px);
@@ -289,7 +291,10 @@ a {
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
   cursor: pointer;
-  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+  transition:
+    transform var(--dur-press) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
 }
 
 .locale-switch button.active {
@@ -596,7 +601,7 @@ button.danger:disabled {
 
 .method-switch button {
   flex: 1;
-  min-height: calc(var(--touch-target) - 6px);
+  min-height: var(--touch-target);
   padding: 0 var(--space-3);
   border: none;
   border-radius: calc(var(--radius-sm) - 3px);
@@ -605,7 +610,10 @@ button.danger:disabled {
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
   cursor: pointer;
-  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+  transition:
+    transform var(--dur-press) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
 }
 
 .method-switch button.active {
@@ -657,7 +665,10 @@ button.danger:disabled {
   color: var(--text-muted);
   font-weight: var(--weight-medium);
   cursor: pointer;
-  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+  transition:
+    transform var(--dur-press) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
 }
 
 .tabs button.active {
@@ -881,7 +892,10 @@ form label:has(input[type='radio']) {
   width: 36px;
   height: 26px;
   border-radius: var(--radius-sm);
-  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+  transition:
+    transform var(--dur-press) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
 }
 
 .bottom-nav a {
@@ -2823,5 +2837,18 @@ input[type='checkbox'] {
 }
 
 .date-nav-label:active {
+  transform: scale(0.96);
+}
+
+/* Wortmarke ist ein eigenständiges Ziel in der Topbar, kein Link im Fließtext —
+   sie muss dieselben 44px treffen wie jede andere Schaltfläche. */
+.brand {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-target);
+}
+
+.locale-switch button:active,
+.method-switch button:active {
   transform: scale(0.96);
 }
