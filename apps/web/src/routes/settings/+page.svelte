@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { MEMORY_CATEGORIES, type ApiTokenDto, type CoachMemoryDto, type CreatedApiTokenDto, type MemoryCategory } from '@repfuel/shared';
+  import { isCliProvider, MEMORY_CATEGORIES, type ApiTokenDto, type CoachMemoryDto, type CreatedApiTokenDto, type MemoryCategory } from '@repfuel/shared';
   import Icon from '$lib/components/Icon.svelte';
   import { resolve } from '$app/paths';
   import { requestConfirm } from '$lib/confirm.svelte.js';
@@ -354,7 +354,7 @@
       {#if aiStatus.status.message}
         <p class="muted">{aiStatus.status.message}</p>
       {/if}
-      {#if !aiStatus.status.ok && aiStatus.status.provider === 'cli'}
+      {#if !aiStatus.status.ok && isCliProvider(aiStatus.status.provider)}
         <p class="muted">{m().settings.aiCliHint}</p>
       {/if}
     </section>

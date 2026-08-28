@@ -1,11 +1,16 @@
 import http from 'node:http';
 import { query } from '@anthropic-ai/claude-agent-sdk';
+import { codexHealthProbe, runCodexTurn } from './codex.js';
 import { createSessionStore } from './session-store.js';
 
 /**
- * repfuel CLI-Sidecar: kleine HTTP-API um Claude Code (Agent SDK).
+ * repfuel CLI-Sidecar: kleine HTTP-API um eine lokale Coding-Agent-CLI.
  * POST /chat  → SSE-Stream (ChatChunk-JSON pro data:-Zeile)
  * GET  /health → { ok, authenticated, message?, model? }
+ *
+ * Runtime per Env: AI_PROVIDER=codex-local → Codex CLI (OpenAI),
+ * alles andere → Claude Code (Agent SDK). AI_MODEL wählt das Modell der
+ * jeweiligen CLI (leer = Default der CLI).
  *
  * Tools kommen ausschließlich über den MCP-Wrapper des Backends
  * (kurzlebiges Token pro Chat-Turn) — keine zweite Tool-Implementierung,
@@ -13,6 +18,8 @@ import { createSessionStore } from './session-store.js';
  */
 const PORT = Number(process.env.PORT ?? 8090);
 const MCP_SERVER_NAME = 'repfuel';
+const RUNTIME: 'claude' | 'codex' = process.env.AI_PROVIDER === 'codex-local' ? 'codex' : 'claude';
+const MODEL = process.env.AI_MODEL?.trim() || null;
 
 const sessions = createSessionStore();
 
@@ -31,12 +38,37 @@ function stripToolPrefix(name: string): string {
   return name.replace(new RegExp(`^mcp__${MCP_SERVER_NAME}__`), '');
 }
 
+async function handleCodexChat(body: ChatRequest, res: http.ServerResponse): Promise<void> {
+  try {
+    const result = await runCodexTurn(
+      {
+        prompt: body.prompt,
+        systemPrompt: body.systemPrompt,
+        resumeThreadId: sessions.get(body.chatSessionId) ?? null,
+        mcp: body.mcp,
+        model: MODEL,
+      },
+      (chunk) => sse(res, chunk),
+    );
+    if (result.threadId) sessions.set(body.chatSessionId, result.threadId);
+  } catch (err) {
+    sse(res, { type: 'error', message: err instanceof Error ? err.message : 'codex failed' });
+  } finally {
+    res.end();
+  }
+}
+
 async function handleChat(body: ChatRequest, res: http.ServerResponse): Promise<void> {
   res.writeHead(200, {
     'content-type': 'text/event-stream',
     'cache-control': 'no-cache, no-transform',
     connection: 'keep-alive',
   });
+
+  if (RUNTIME === 'codex') {
+    await handleCodexChat(body, res);
+    return;
+  }
 
   const resume = sessions.get(body.chatSessionId) ?? undefined;
   const toolNamesById = new Map<string, string>();
@@ -47,6 +79,7 @@ async function handleChat(body: ChatRequest, res: http.ServerResponse): Promise<
       options: {
         resume,
         systemPrompt: body.systemPrompt,
+        model: MODEL ?? undefined,
         maxTurns: 16,
         settingSources: [],
         mcpServers: {
@@ -138,10 +171,25 @@ async function handleHealth(res: http.ServerResponse): Promise<void> {
     return;
   }
   let body: { ok: boolean; authenticated: boolean; message?: string; model?: string };
+  if (RUNTIME === 'codex') {
+    const probe = await codexHealthProbe(MODEL);
+    body = probe.ok
+      ? { ok: true, authenticated: true, model: MODEL ?? undefined }
+      : { ok: false, authenticated: false, message: probe.message };
+    healthCache = { at: Date.now(), body };
+    res.writeHead(200, { 'content-type': 'application/json' });
+    res.end(JSON.stringify(body));
+    return;
+  }
   try {
     const stream = query({
       prompt: 'Reply with exactly: OK',
-      options: { maxTurns: 1, settingSources: [], disallowedTools: ['Bash', 'Read', 'Write'] },
+      options: {
+        maxTurns: 1,
+        settingSources: [],
+        disallowedTools: ['Bash', 'Read', 'Write'],
+        model: MODEL ?? undefined,
+      },
     });
     let model: string | undefined;
     let succeeded = false;
@@ -193,5 +241,7 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`repfuel ai-cli-sidecar listening on :${PORT}`);
+  console.log(
+    `repfuel ai-cli-sidecar listening on :${PORT} (runtime: ${RUNTIME}${MODEL ? `, model: ${MODEL}` : ''})`,
+  );
 });

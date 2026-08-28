@@ -14,7 +14,7 @@ import type {
 import { buildSystemPrompt } from '../system-prompt.js';
 
 export interface ApiAdapterConfig {
-  provider: Exclude<AiProvider, 'none' | 'cli'>;
+  provider: Exclude<AiProvider, 'none' | 'cli' | 'claude-local' | 'codex-local'>;
   apiKey: string | null;
   model: string;
   baseUrl: string | null;

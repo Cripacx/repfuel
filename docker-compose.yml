@@ -95,9 +95,15 @@ services:
     profiles: ['cli-adapter']
     restart: unless-stopped
     environment:
+      # Runtime-Wahl (codex-local → Codex CLI, sonst Claude Code) + Modell.
+      AI_PROVIDER: ${AI_PROVIDER:-none}
+      AI_MODEL: ${AI_MODEL:-}
       CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
+      CODEX_API_KEY: ${CODEX_API_KEY:-}
+    # Alternativ zu Token/Key: lokalen CLI-Login mounten.
     # volumes:
     #   - ~/.claude:/root/.claude
+    #   - ~/.codex:/root/.codex
 
   # Optional: lokales LLM — aktivieren mit `docker compose --profile ollama up -d`
   # und AI_PROVIDER=ollama, AI_BASE_URL=http://ollama:11434/v1 in der .env.

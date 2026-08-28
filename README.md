@@ -17,7 +17,7 @@ Cardio-Aktivitäten) und Ernährungs-Tagebuch (Open Food Facts, Barcode-Scan,
 kcal-/Makro-Ziele) in einer installierbaren PWA — offline-first fürs Logging,
 Multi-User mit strikt getrennten Daten, und einem KI-Coach mit persönlichem
 Gedächtnis, der per Tool-Calling auf deine eigenen Daten zugreift (API, Ollama
-oder dein Claude-Abo via CLI — strikt optional).
+oder dein Claude-/ChatGPT-Abo über die jeweilige CLI — strikt optional).
 
 | | | |
 |---|---|---|
@@ -41,8 +41,10 @@ oder dein Claude-Abo via CLI — strikt optional).
   IndexedDB und syncen automatisch; installierbar auf Android & iOS.
 - **KI-Coach (opt-in):** Chat mit Streaming, echten Daten-Tools und einem
   persönlichen Gedächtnis pro Nutzer (Vorhaben, Vorlieben, Unverträglichkeiten
-  — sichtbar und löschbar im Profil). Schreibaktionen an Routinen/Zielen
-  immer nur als Vorschlag mit Bestätigung im UI.
+  — sichtbar und löschbar im Profil). Provider frei wählbar: API-Key,
+  lokales Ollama oder dein Claude-/ChatGPT-Abo über die jeweilige CLI.
+  Schreibaktionen an Routinen/Zielen immer nur als Vorschlag mit
+  Bestätigung im UI.
 - **Multi-User:** Passkeys (empfohlen) + Passwort-Login, Invite-Links,
   Admin-Panel, erster Nutzer wird automatisch Admin.
 - **Deine Daten:** kompletter JSON-Export mit einem Klick. AGPL-3.0.
@@ -90,7 +92,7 @@ Alle Einstellungen liegen in der `.env` (kommentiert in
 AI_PROVIDER=anthropic        # oder: openai | openrouter
 AI_API_KEY=sk-ant-…
 AI_MODEL=claude-opus-5       # Modell-ID deines Providers, siehe Tabelle
-AI_MODEL_LIGHT=              # optional: günstigeres Modell für Hilfsaufgaben
+AI_MODEL_LIGHT=              # reserviert für künftige Hilfsaufgaben (derzeit ungenutzt)
 ```
 
 | Provider | `AI_MODEL`-Beispiel | Key erstellen |
@@ -120,7 +122,8 @@ der Status im Profil-Tab prüft das und meldet ungeeignete Modelle.
 Nutzt dein bestehendes Claude-Abo statt einer API-Abrechnung:
 
 ```dotenv
-AI_PROVIDER=cli
+AI_PROVIDER=claude-local     # "cli" funktioniert weiter als Alias
+AI_MODEL=opus                # optional: opus | sonnet | volle Modell-ID; leer = CLI-Default
 CLAUDE_CODE_OAUTH_TOKEN=…    # auf einem Rechner mit Claude-Login: `claude setup-token`
 ```
 
@@ -128,7 +131,24 @@ CLAUDE_CODE_OAUTH_TOKEN=…    # auf einem Rechner mit Claude-Login: `claude set
 docker compose --profile cli-adapter up -d
 ```
 
-Details zum CLI-Adapter und den Auth-Wegen: [docs/AI_CLI.md](docs/AI_CLI.md).
+### Variante 4 — ChatGPT-Abo/OpenAI über die Codex CLI
+
+Gleicher Sidecar, andere CLI — nutzt dein ChatGPT-Abo (gemountetes
+`codex login`) oder einen OpenAI-Key:
+
+```dotenv
+AI_PROVIDER=codex-local
+AI_MODEL=gpt-5.2-codex       # optional; leer = CLI-Default
+CODEX_API_KEY=sk-…           # ODER ~/.codex als Volume mounten (ChatGPT-Abo)
+```
+
+```bash
+docker compose --profile cli-adapter up -d
+```
+
+Bei beiden CLI-Varianten wählt `AI_MODEL` das Modell der jeweiligen CLI
+(leer = deren Default). Details zu Auth-Wegen und Verhalten:
+[docs/AI_CLI.md](docs/AI_CLI.md).
 
 ### Prüfen, ob alles läuft
 
@@ -139,12 +159,13 @@ diesen Variablen.
 
 | Variable | Bedeutung | Default |
 |---|---|---|
-| `AI_PROVIDER` | `none` · `anthropic` · `openai` · `openrouter` · `ollama` · `cli` | `none` |
-| `AI_API_KEY` | API-Key des Providers (nicht für `ollama`/`cli`) | – |
-| `AI_MODEL` | Modell-ID des Providers | – |
-| `AI_MODEL_LIGHT` | optionales günstiges Modell für Hilfsaufgaben | `AI_MODEL` |
+| `AI_PROVIDER` | `none` · `anthropic` · `openai` · `openrouter` · `ollama` · `claude-local` · `codex-local` (`cli` = Alias für `claude-local`) | `none` |
+| `AI_API_KEY` | API-Key des Providers (nur Variante 1) | – |
+| `AI_MODEL` | Modell — Provider-Modell-ID bzw. bei den CLI-Varianten das CLI-Modell (leer = CLI-Default) | – |
+| `AI_MODEL_LIGHT` | reserviert für künftige Hilfsaufgaben (derzeit ungenutzt) | – |
 | `AI_BASE_URL` | Basis-URL für Ollama/OpenAI-kompatible Endpunkte | – |
-| `CLAUDE_CODE_OAUTH_TOKEN` | Auth-Token für den CLI-Adapter (`claude setup-token`) | – |
+| `CLAUDE_CODE_OAUTH_TOKEN` | Auth-Token für `claude-local` (`claude setup-token`) | – |
+| `CODEX_API_KEY` | API-Key für `codex-local` (alternativ `~/.codex`-Volume) | – |
 
 ## Apple-Health-Import
 

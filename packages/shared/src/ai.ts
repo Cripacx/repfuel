@@ -2,8 +2,25 @@ import { z } from 'zod';
 
 /** KI-Schicht: Adapter-Interface und Chat-Typen (provider-neutral). */
 
-export const AI_PROVIDERS = ['none', 'anthropic', 'openai', 'openrouter', 'ollama', 'cli'] as const;
+export const AI_PROVIDERS = [
+  'none',
+  'anthropic',
+  'openai',
+  'openrouter',
+  'ollama',
+  /** Veralteter Alias für claude-local (bleibt für bestehende .env-Dateien). */
+  'cli',
+  'claude-local',
+  'codex-local',
+] as const;
 export type AiProvider = (typeof AI_PROVIDERS)[number];
+
+/** Läuft dieser Provider über den CLI-Sidecar (statt API/Ollama)? */
+export function isCliProvider(
+  provider: AiProvider,
+): provider is 'cli' | 'claude-local' | 'codex-local' {
+  return provider === 'cli' || provider === 'claude-local' || provider === 'codex-local';
+}
 
 export type ChatRole = 'user' | 'assistant';
 

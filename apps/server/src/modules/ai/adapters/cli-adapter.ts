@@ -1,8 +1,10 @@
-import type { AIAdapter, AdapterStatus, ChatChunk } from '@repfuel/shared';
+import type { AIAdapter, AdapterStatus, AiProvider, ChatChunk } from '@repfuel/shared';
 import { buildSystemPrompt } from '../system-prompt.js';
 import type { McpTokenService } from '../mcp/token-service.js';
 
 export interface CliAdapterConfig {
+  /** Konfigurierter Provider (cli | claude-local | codex-local) — für den Status. */
+  provider?: AiProvider;
   /** HTTP-Endpunkt des Sidecars (nur im Compose-Netz erreichbar). */
   sidecarUrl: string;
   /** URL, unter der der Sidecar den MCP-Wrapper des Backends erreicht. */
@@ -94,7 +96,7 @@ export function createCliAdapter(deps: CliAdapterDeps): AIAdapter {
 
     async healthCheck(): Promise<AdapterStatus> {
       const base: AdapterStatus = {
-        provider: 'cli',
+        provider: deps.config.provider ?? 'cli',
         configured: true,
         ok: false,
         model: null,

@@ -1,5 +1,6 @@
 /** Öffentliche Schnittstelle des KI-Moduls. */
 import type { FastifyInstance } from 'fastify';
+import { isCliProvider } from '@repfuel/shared';
 import type { AIAdapter, AiProvider } from '@repfuel/shared';
 import type { Database } from '../../core/db.js';
 import type { KeyValueStore } from '../../core/redis.js';
@@ -54,9 +55,9 @@ export interface AiModuleApi {
 function buildAdapter(opts: AiModuleOptions, tokenService: McpTokenService): AIAdapter | null {
   if (opts.adapterOverride !== undefined) return opts.adapterOverride;
   if (opts.provider === 'none') return null;
-  if (opts.provider === 'cli') {
+  if (isCliProvider(opts.provider)) {
     return createCliAdapter({
-      config: { sidecarUrl: opts.sidecarUrl, mcpUrl: opts.mcpUrl },
+      config: { provider: opts.provider, sidecarUrl: opts.sidecarUrl, mcpUrl: opts.mcpUrl },
       tokenService,
     });
   }
