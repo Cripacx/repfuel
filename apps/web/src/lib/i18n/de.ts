@@ -247,6 +247,9 @@ const de = {
     minutesShort: 'Min',
     continueButton: 'Fortsetzen',
     session: {
+      restAdd: '+15 s',
+      lastTimeLabel: 'Zuletzt',
+      overloadHint: 'Alle Wdh. geschafft — probier',
       addExercise: 'Übung hinzufügen',
       weightLabel: 'Gewicht (kg)',
       repsLabel: 'Wdh.',

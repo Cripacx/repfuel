@@ -244,6 +244,9 @@ const en: Messages = {
     minutesShort: 'min',
     continueButton: 'Continue',
     session: {
+      restAdd: '+15s',
+      lastTimeLabel: 'Last time',
+      overloadHint: 'All reps hit — try',
       addExercise: 'Add exercise',
       weightLabel: 'Weight (kg)',
       repsLabel: 'Reps',

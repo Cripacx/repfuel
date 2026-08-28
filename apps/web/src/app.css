@@ -1382,6 +1382,80 @@ a.list-card:hover {
   z-index: 40;
 }
 
+/* Restzeit auch sehen statt nur lesen: der Balken macht den Fortschritt auf
+   einen Blick erfassbar, ohne dass man die Ziffern verarbeiten muss. */
+.rest-timer-track {
+  flex: 1;
+  min-width: 80px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.22);
+  overflow: hidden;
+}
+
+.rest-timer-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--on-accent);
+  transform-origin: left center;
+  /* Der Wert kommt alle 250 ms aus dem Intervall — die Transition überbrückt
+     genau diesen Takt, damit der Balken läuft statt zu springen. */
+  transition: transform 250ms linear;
+}
+
+.rest-timer-extend {
+  min-height: var(--touch-target);
+  padding: 0 var(--space-3);
+  border: 1px solid rgb(0 0 0 / 0.25);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--on-accent);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition:
+    transform var(--dur-press) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+
+.rest-timer-extend:hover {
+  background: rgb(0 0 0 / 0.12);
+}
+
+.rest-timer-extend:active {
+  transform: scale(0.96);
+}
+
+/* Was beim letzten Mal an dieser Übung stand — Kontext direkt neben der
+   Eingabe, statt ihn im Verlauf suchen zu müssen. */
+.last-time {
+  margin: 0 0 var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.last-time-label {
+  color: var(--text-faint);
+}
+
+/* Erscheint nur, wenn beim letzten Mal wirklich alle Wiederholungen standen —
+   deshalb darf er den Akzent tragen, ohne zur Tapete zu werden. */
+.overload-hint {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--accent-subtle);
+  color: var(--accent);
+  font-size: var(--text-sm);
+}
+
+.overload-hint strong {
+  font-variant-numeric: tabular-nums;
+}
+
 .rest-timer-time {
   font-size: var(--text-2xl);
   font-weight: var(--weight-heading);

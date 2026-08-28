@@ -32,8 +32,14 @@ export interface WorkoutRepo {
   findSetByIdAnyWorkout(id: string): Promise<SetRow | null>;
   upsertSet(input: SetUpsert): Promise<SetRow>;
   softDeleteSet(id: string): Promise<void>;
-  /** Sätze des jüngsten Workouts des Nutzers, das die Übung enthält. */
-  lastSetsForExercise(userId: string, exerciseId: string): Promise<SetRow[]>;
+  /**
+   * Sätze des jüngsten Workouts des Nutzers, das die Übung enthält, samt dessen
+   * Startzeit. `null`, wenn die Übung noch nie geloggt wurde.
+   */
+  lastSetsForExercise(
+    userId: string,
+    exerciseId: string,
+  ): Promise<{ performedAt: Date; sets: SetRow[] } | null>;
   /** Alle Sätze einer Übung inkl. Workout-Datum (für PRs/Wochentrends). */
   setsWithDatesForExercise(
     userId: string,
@@ -141,9 +147,10 @@ export function createWorkoutRepo(db: Database): WorkoutRepo {
         )
         .orderBy(desc(workouts.startedAt))
         .limit(1);
-      const workoutId = latest[0]?.workoutId;
-      if (!workoutId) return [];
-      return db
+      const previous = latest[0];
+      if (!previous) return null;
+      const { workoutId, startedAt } = previous;
+      const rows = await db
         .select()
         .from(sets)
         .where(
@@ -154,6 +161,7 @@ export function createWorkoutRepo(db: Database): WorkoutRepo {
           ),
         )
         .orderBy(asc(sets.position));
+      return { performedAt: startedAt, sets: rows };
     },
     async setsWithDatesForExercise(userId, exerciseId) {
       const rows = await db

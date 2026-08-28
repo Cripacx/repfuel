@@ -57,7 +57,14 @@ export interface WorkoutDto {
 }
 
 /** Letzte geloggte Sätze je Übung (Prefill im Logging-Screen). */
-export type LastSetsResponse = Record<string, SetDto[]>;
+/** Die Sätze des jüngsten Workouts mit dieser Übung, plus dessen Datum. */
+export interface LastSetsEntry {
+  /** Startzeit des Workouts, aus dem diese Sätze stammen (ISO-8601). */
+  performedAt: string;
+  sets: SetDto[];
+}
+
+export type LastSetsResponse = Record<string, LastSetsEntry>;
 
 export interface BodyWeightDto {
   id: string;

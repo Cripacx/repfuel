@@ -71,8 +71,10 @@ describe('workout service', () => {
     await service.upsert(USER, newW, { startedAt: '2026-08-20T10:00:00.000Z' });
     await service.upsertSet(USER, newW, randomUUID(), { ...setInput(bench.id), weightKg: 75 });
     const last = await service.lastSets(USER, [bench.id]);
-    expect(last[bench.id]).toHaveLength(1);
-    expect(last[bench.id]?.[0]?.weightKg).toBe(75);
+    expect(last[bench.id]?.sets).toHaveLength(1);
+    expect(last[bench.id]?.sets[0]?.weightKg).toBe(75);
+    // Das Datum stammt aus dem jüngeren Workout, nicht aus dem älteren.
+    expect(last[bench.id]?.performedAt).toBe('2026-08-20T10:00:00.000Z');
   });
 
   it('removes sets softly and keeps others', async () => {

@@ -153,8 +153,12 @@ export function createWorkoutService(deps: {
     async lastSets(userId: string, exerciseIds: string[]): Promise<LastSetsResponse> {
       const result: LastSetsResponse = {};
       for (const exerciseId of exerciseIds) {
-        const rows = await workoutRepo.lastSetsForExercise(userId, exerciseId);
-        result[exerciseId] = rows.map(toSetDto);
+        const previous = await workoutRepo.lastSetsForExercise(userId, exerciseId);
+        if (!previous) continue;
+        result[exerciseId] = {
+          performedAt: previous.performedAt.toISOString(),
+          sets: previous.sets.map(toSetDto),
+        };
       }
       return result;
     },

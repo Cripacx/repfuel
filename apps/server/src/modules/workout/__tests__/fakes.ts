@@ -183,10 +183,13 @@ export function fakeWorkoutRepo(): WorkoutRepo & { rows: WorkoutRow[]; setRows: 
         const w = rows.find((r) => r.id === s.workoutId)!;
         if (!newest || w.startedAt > newest.startedAt) newest = w;
       }
-      if (!newest) return [];
-      return candidates
-        .filter((s) => s.workoutId === newest!.id)
-        .sort((a, b) => a.position - b.position);
+      if (!newest) return null;
+      return {
+        performedAt: newest.startedAt,
+        sets: candidates
+          .filter((s) => s.workoutId === newest!.id)
+          .sort((a, b) => a.position - b.position),
+      };
     },
   };
 }

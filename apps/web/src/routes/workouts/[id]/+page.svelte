@@ -18,6 +18,7 @@
     upsertWorkout as repoUpsertWorkout,
   } from '$lib/offline/repo.js';
   import { computeDraftRowCount, derivePrefill } from '$lib/workout/prefill.js';
+  import { suggestOverload, summarizeLastSets } from '$lib/workout/progression.js';
   import {
     DEFAULT_REST_SECONDS,
     REST_TIMER_OPTIONS_SECONDS,
@@ -136,7 +137,7 @@
   // vom Nutzer bearbeitete Werte zu überschreiben.
   $effect(() => {
     for (const section of sections) {
-      const history = lastSets[section.exerciseId] ?? [];
+      const history = lastSets[section.exerciseId]?.sets ?? [];
       for (let i = 0; i < section.draftCount; i++) {
         const rowIndex = section.loggedSets.length + i;
         const key = draftKey(section.exerciseId, rowIndex);
@@ -300,6 +301,16 @@
       restStartedAt = Date.now();
       restRemaining = seconds;
     }
+  }
+
+  /**
+   * Verlängert die laufende Pause, ohne sie neu zu starten: Ziel und Gesamtdauer
+   * wachsen um denselben Betrag, damit der Fortschrittsbalken nicht zurückspringt.
+   */
+  function extendRestTimer(seconds: number): void {
+    if (!restActive) return;
+    restDuration += seconds;
+    restRemaining = remainingSeconds(restDuration, Date.now() - restStartedAt);
   }
 
   function skipRestTimer(): void {
@@ -503,6 +514,21 @@
           gifUrl={section.exerciseGifUrl}
         />
 
+        {#if summarizeLastSets(lastSets[section.exerciseId])}
+          <p class="last-time">
+            <span class="last-time-label">{m().workouts.session.lastTimeLabel}</span>
+            {summarizeLastSets(lastSets[section.exerciseId])}
+          </p>
+        {/if}
+
+        {#if suggestOverload(lastSets[section.exerciseId], section.targetReps)}
+          {@const suggestion = suggestOverload(lastSets[section.exerciseId], section.targetReps)}
+          <p class="overload-hint">
+            {m().workouts.session.overloadHint}
+            <strong>{suggestion?.weightKg} {m().common.kg}</strong>
+          </p>
+        {/if}
+
         {#each section.loggedSets as set, i (set.id)}
           <div class="set-row logged">
             <span class="set-row-label">{i + 1}</span>
@@ -639,6 +665,15 @@
     {#if restActive}
       <div class="rest-timer">
         <span class="rest-timer-time">{formatCountdown(restRemaining)}</span>
+        <span class="rest-timer-track" aria-hidden="true">
+          <span
+            class="rest-timer-fill"
+            style={`transform: scaleX(${restDuration > 0 ? restRemaining / restDuration : 0});`}
+          ></span>
+        </span>
+        <button type="button" class="rest-timer-extend" onclick={() => extendRestTimer(15)}>
+          {m().workouts.session.restAdd}
+        </button>
         <div class="rest-timer-options">
           {#each REST_TIMER_OPTIONS_SECONDS as seconds (seconds)}
             <button
