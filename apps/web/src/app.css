@@ -3065,6 +3065,9 @@ input[type='checkbox'] {
 @media (min-width: 768px) {
   .fab {
     bottom: var(--space-6);
+    /* Am Rand der 720px-Inhaltsspalte verankern statt am Viewport-Rand —
+       auf breiten Screens gehört die Aktion zum Inhalt, nicht zur Ecke. */
+    right: max(var(--space-6), calc((100vw - 720px) / 2 - var(--space-8)));
   }
 }
 
