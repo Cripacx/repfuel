@@ -7,3 +7,8 @@ export type WeekdayKey = (typeof WEEKDAY_KEYS)[number];
 export function weekdayKey(index: number): WeekdayKey | null {
   return WEEKDAY_KEYS[index] ?? null;
 }
+
+/** Backend-Index (0 = Montag) des lokalen Wochentags eines Datums. */
+export function backendWeekdayIndex(date: Date): number {
+  return (date.getDay() + 6) % 7;
+}

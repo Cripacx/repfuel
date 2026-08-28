@@ -353,10 +353,10 @@ a {
 
 .card {
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--radius-md);
   padding: var(--space-4);
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-4);
 }
 
 .auth-card {
@@ -962,6 +962,29 @@ form label:has(input[type='radio']) {
   margin-bottom: var(--space-4);
 }
 
+/* Abschnitts-Überschrift AUSSERHALB der Karte (YAZIO-Muster): die Karte
+   bleibt reine Fläche, die Gliederung lebt in der Seite. */
+.section-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin: var(--space-6) 0 var(--space-3);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-heading);
+  letter-spacing: var(--tracking-lg);
+}
+
+.section-label:first-child {
+  margin-top: 0;
+}
+
+.page-subtitle {
+  margin: calc(var(--space-2) * -1) 0 var(--space-4);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
 .page-header h1 {
   margin: 0;
 }
@@ -1046,17 +1069,23 @@ form label:has(input[type='radio']) {
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-4);
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--radius-md);
-  background: var(--surface-2);
+  background: var(--surface);
   margin-bottom: var(--space-3);
   text-decoration: none;
   color: inherit;
-  transition: border-color var(--dur-fast) var(--ease-out);
+  transition:
+    transform var(--dur-press) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
 }
 
 a.list-card:hover {
-  border-color: var(--border-strong);
+  background: var(--surface-2);
+}
+
+a.list-card:active {
+  transform: scale(0.985);
 }
 
 .list-card-main {
@@ -1262,7 +1291,6 @@ a.list-card:hover {
 }
 
 .item-row {
-  border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: var(--space-3);
   margin-bottom: var(--space-3);
@@ -1591,7 +1619,6 @@ a.list-card:hover {
   flex-direction: column;
   gap: var(--space-1);
   padding: var(--space-3);
-  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--surface-2);
 }
@@ -2063,7 +2090,7 @@ input[type='checkbox'] {
 }
 
 .error-card {
-  border-color: color-mix(in srgb, var(--danger) 40%, var(--border));
+  border: 1px solid color-mix(in srgb, var(--danger) 40%, var(--border));
 }
 
 .error-card > p:first-child {
@@ -2795,7 +2822,6 @@ input[type='checkbox'] {
   padding: 0 var(--space-3);
   border-radius: 999px;
   background: var(--surface-2);
-  border: 1px solid var(--border);
   color: var(--text-muted);
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
@@ -2857,6 +2883,44 @@ input[type='checkbox'] {
 .exercise-library-meta {
   color: var(--text-muted);
   font-size: var(--text-sm);
+}
+
+/* --- Routine-Karte (Hevy-Muster): Name, Übungsliste, Start-CTA --------- */
+
+.routine-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.routine-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.routine-card-name {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-heading);
+  letter-spacing: var(--tracking-lg);
+  overflow-wrap: anywhere;
+}
+
+/* Die Übungsliste ist Kontext, keine Liste zum Lesen — zwei Zeilen genügen. */
+.routine-card-exercises {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.routine-card-start {
+  width: 100%;
 }
 
 /* --- Profil: Konto-Karte ----------------------------------------------- */
@@ -2974,7 +3038,6 @@ input[type='checkbox'] {
   padding: var(--space-4);
   border-radius: var(--radius-md);
   background: var(--surface);
-  border: 1px solid var(--border);
 }
 
 .kpi-label {

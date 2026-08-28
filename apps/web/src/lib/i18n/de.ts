@@ -107,6 +107,12 @@ const de = {
     conflict: 'Dieser Eintrag existiert bereits.',
   },
   home: {
+    todayTitle: 'Heute',
+    overviewTitle: 'Übersicht',
+    toDiary: 'Zum Tagebuch',
+    todayBadge: 'Heute dran',
+    lastWorkoutLabel: 'Zuletzt:',
+    habitsTitle: 'Gewohnheiten',
     kcalLeft: 'übrig',
     greeting: 'Angemeldet als',
     adminLinkHint: 'Du hast Administratorrechte.',
@@ -330,6 +336,11 @@ const de = {
     overTargetLabel: 'über Ziel',
     noTargetsHint: 'Für diesen Tag sind noch keine Ziele hinterlegt.',
     goToGoals: 'Ziele festlegen',
+    summary: {
+      eaten: 'Gegessen',
+      burned: 'Verbrannt',
+      target: 'Ziel',
+    },
     macros: {
       protein: 'Protein',
       carbs: 'Kohlenhydrate',

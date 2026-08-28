@@ -5,16 +5,18 @@
     NutritionDayDto,
     NutritionTargets,
     ProfileDto,
+    RoutineDto,
     WorkoutDto,
   } from '@repfuel/shared';
+  import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
   import { api } from '$lib/api.js';
+  import DaySummaryCard from '$lib/components/DaySummaryCard.svelte';
   import FastingCard from '$lib/components/FastingCard.svelte';
   import Icon from '$lib/components/Icon.svelte';
-  import KcalRing from '$lib/components/KcalRing.svelte';
-  import MacroBars from '$lib/components/MacroBars.svelte';
   import WaterCard from '$lib/components/WaterCard.svelte';
   import { getUser } from '$lib/auth.svelte.js';
+  import { describeError } from '$lib/errors.js';
   import { latestMetricEntry, sumMetricValues } from '$lib/health/dashboard.js';
   import { getLocale, m } from '$lib/i18n/index.js';
   import {
@@ -23,12 +25,19 @@
     shiftDateString,
     todayDateString,
   } from '$lib/nutrition/day-range.js';
-  import { roundKcal } from '$lib/nutrition/format.js';
+  import { upsertWorkout } from '$lib/offline/repo.js';
   import { computeVolumeKg } from '$lib/workout/volume.js';
+  import { backendWeekdayIndex } from '$lib/workout/weekday.js';
 
+  /**
+   * "Heute" im vertrauten Diary-Muster (YAZIO): eine Übersichts-Karte, die den
+   * Tag beantwortet, darunter der nächste Trainingsschritt (Hevy), dann die
+   * Gewohnheiten. Keine Schnellzugriff-Kachelwand — die Tabs sind der Zugriff.
+   */
   const user = $derived(getUser());
 
   let recentWorkouts = $state<WorkoutDto[]>([]);
+  let routines = $state<RoutineDto[]>([]);
   let latestWeight = $state<BodyWeightDto | null>(null);
   let profile = $state<ProfileDto | null>(null);
   let waterMl = $state(0);
@@ -37,10 +46,20 @@
   let todayNutrition = $state<NutritionDayDto | null>(null);
   let nutritionTargets = $state<NutritionTargets | null>(null);
   let loading = $state(true);
+  let startError = $state<string | null>(null);
+  let starting = $state(false);
 
   let todaySteps = $state<number | null>(null);
   let todayActiveKcal = $state<number | null>(null);
   let latestRestingHr = $state<number | null>(null);
+
+  /** Laufendes (nicht beendetes) Workout — "Fortsetzen" schlägt "Starten". */
+  const runningWorkout = $derived(recentWorkouts.find((w) => w.finishedAt === null) ?? null);
+  const lastFinished = $derived(recentWorkouts.find((w) => w.finishedAt !== null) ?? null);
+  /** Die Routine, die laut Wochentag heute dran ist. */
+  const todaysRoutine = $derived(
+    routines.find((r) => r.weekday === backendWeekdayIndex(new Date())) ?? null,
+  );
 
   function formatNumber(value: number): string {
     return value.toLocaleString(getLocale() === 'de' ? 'de-DE' : 'en-US');
@@ -73,15 +92,17 @@
   onMount(async () => {
     const today = todayDateString();
     try {
-      const [workoutsRes, weightRes, nutritionRes] = await Promise.all([
-        api.workouts.list({ limit: 3 }),
+      const [workoutsRes, weightRes, nutritionRes, routinesRes] = await Promise.all([
+        api.workouts.list({ limit: 5 }),
         api.weight.list({ limit: 1 }),
         api.stats.nutrition({ from: today, to: today, tzOffsetMinutes: currentTzOffsetMinutes() }),
+        api.routines.list().catch(() => ({ routines: [] as RoutineDto[] })),
       ]);
       recentWorkouts = workoutsRes.workouts;
       latestWeight = weightRes.entries[0] ?? null;
       todayNutrition = nutritionRes.days.find((d) => d.date === today) ?? null;
       nutritionTargets = nutritionRes.targets;
+      routines = routinesRes.routines;
     } catch {
       // Startseite bleibt auch ohne Daten benutzbar — kein Fehlerbanner nötig.
     } finally {
@@ -141,6 +162,34 @@
     return new Date(iso).toLocaleDateString(getLocale() === 'de' ? 'de-DE' : 'en-US');
   }
 
+  const todayLabel = $derived(
+    new Date().toLocaleDateString(getLocale() === 'de' ? 'de-DE' : 'en-US', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    }),
+  );
+
+  function routineExerciseLine(routine: RoutineDto): string {
+    return routine.items
+      .map((item) => item.exercise?.nameDe ?? item.exercise?.name)
+      .filter((name): name is string => !!name)
+      .join(', ');
+  }
+
+  async function startWorkout(routineId: string | null): Promise<void> {
+    starting = true;
+    startError = null;
+    try {
+      const id = crypto.randomUUID();
+      await upsertWorkout(id, { startedAt: new Date().toISOString(), routineId });
+      await goto(resolve('/workouts/[id]', { id }));
+    } catch (err) {
+      startError = describeError(err);
+      starting = false;
+    }
+  }
+
   async function addWater(ml: number): Promise<void> {
     waterBusy = true;
     // Optimistisch: der Balken reagiert sofort, der Server zieht nach. Schlägt
@@ -158,126 +207,106 @@
 </script>
 
 {#if user}
-  <section class="card">
-    <h1>{m().home.greeting} {user.username}</h1>
-    <p class="muted">
-      {user.role === 'admin' ? m().roles.admin : m().roles.user}
-    </p>
+  <h1>{m().home.todayTitle}</h1>
+  <p class="page-subtitle">{todayLabel}</p>
 
-    {#if user.role === 'admin'}
-      <p>
-        {m().home.adminLinkHint}
-        <a href={resolve('/admin')}>{m().home.goToAdmin}</a>
-      </p>
-    {/if}
-  </section>
-
-  <section class="card">
-    <h2>{m().home.quickActionsTitle}</h2>
-    <div class="quick-actions">
-      <a class="quick-action" href={resolve('/workouts')}>
-        <span class="quick-action-icon"><Icon name="dumbbell" size={24} /></span>
-        {m().home.startWorkout}
-      </a>
-      <a class="quick-action" href={resolve('/routines')}>
-        <span class="quick-action-icon"><Icon name="clipboard" size={24} /></span>
-        {m().home.viewRoutines}
-      </a>
-      <a class="quick-action" href={resolve('/exercises')}>
-        <span class="quick-action-icon"><Icon name="book" size={24} /></span>
-        {m().exercises.openLibrary}
-      </a>
-      <a class="quick-action" href={resolve('/weight')}>
-        <span class="quick-action-icon"><Icon name="scale" size={24} /></span>
-        {m().home.viewWeight}
-      </a>
-      <a class="quick-action" href={resolve('/goals')}>
-        <span class="quick-action-icon"><Icon name="target" size={24} /></span>
-        {m().nav.goals}
-      </a>
-      <a class="quick-action" href={resolve('/nutrition')}>
-        <span class="quick-action-icon"><Icon name="utensils" size={24} /></span>
-        {m().home.viewNutrition}
-      </a>
+  {#if loading}
+    <div class="skeleton-list">
+      <div class="skeleton-row"></div>
+      <div class="skeleton-row"></div>
     </div>
-  </section>
+  {:else}
+    <h2 class="section-label">
+      {m().home.overviewTitle}
+      <a class="link-more" href={resolve('/nutrition')}>{m().home.toDiary}</a>
+    </h2>
+    <DaySummaryCard day={todayNutrition} targets={nutritionTargets} burnedKcal={todayActiveKcal} />
 
-  {#if !loading}
     {#if healthTiles.length > 0}
-      <section class="card">
-        <h2>{m().home.healthTitle}</h2>
-        <div class="stat-tiles">
-          {#each healthTiles as tile (tile.key)}
-            <div class="stat-tile">
-              <span class="stat-tile-label">{tile.label}</span>
-              <span class="stat-tile-value"
-                >{tile.value}{#if tile.unit}<span class="stat-tile-unit">{tile.unit}</span
-                  >{/if}</span
-              >
-            </div>
-          {/each}
+      <div class="stat-tiles">
+        {#each healthTiles as tile (tile.key)}
+          <div class="stat-tile">
+            <span class="stat-tile-label">{tile.label}</span>
+            <span class="stat-tile-value"
+              >{tile.value}{#if tile.unit}<span class="stat-tile-unit">{tile.unit}</span
+                >{/if}</span
+            >
+          </div>
+        {/each}
+      </div>
+    {/if}
+
+    <h2 class="section-label">{m().nav.workouts}</h2>
+    {#if startError}
+      <p class="error" role="alert">{startError}</p>
+    {/if}
+    {#if runningWorkout}
+      <a class="list-card" href={resolve('/workouts/[id]', { id: runningWorkout.id })}>
+        <div class="list-card-main">
+          <span class="list-card-title">{m().workouts.inProgress}</span>
+          <span class="list-card-meta">
+            <span>{formatDate(runningWorkout.startedAt)}</span>
+            <span>
+              {runningWorkout.sets.length}
+              {runningWorkout.sets.length === 1 ? m().workouts.setsOne : m().workouts.setsOther}
+            </span>
+          </span>
         </div>
-      </section>
+        <span class="exercise-row-chevron"><Icon name="chevron-right" size={18} /></span>
+      </a>
+    {:else if todaysRoutine}
+      <div class="card routine-card">
+        <div class="routine-card-head">
+          <strong class="routine-card-name">{todaysRoutine.name}</strong>
+          <span class="weekday-badge">{m().home.todayBadge}</span>
+        </div>
+        {#if routineExerciseLine(todaysRoutine)}
+          <p class="routine-card-exercises">{routineExerciseLine(todaysRoutine)}</p>
+        {/if}
+        <button
+          type="button"
+          class="primary routine-card-start"
+          disabled={starting}
+          onclick={() => startWorkout(todaysRoutine.id)}
+        >
+          {m().workouts.startButton}
+        </button>
+      </div>
+    {:else}
+      <a class="list-card" href={resolve('/workouts')}>
+        <div class="list-card-main">
+          <span class="list-card-title">{m().workouts.startButton}</span>
+          {#if lastFinished}
+            <span class="list-card-meta">
+              <span>{m().home.lastWorkoutLabel} {formatDate(lastFinished.startedAt)}</span>
+              <span>{computeVolumeKg(lastFinished.sets)} {m().common.kg}</span>
+            </span>
+          {/if}
+        </div>
+        <span class="exercise-row-chevron"><Icon name="chevron-right" size={18} /></span>
+      </a>
     {/if}
 
-    <section class="card">
-      <h2>{m().home.todayNutritionTitle}</h2>
-      {#if todayNutrition && nutritionTargets?.kcalTarget != null}
-        <KcalRing kcal={todayNutrition.kcal} target={nutritionTargets.kcalTarget} />
-        <p class="kcal-consumed">
-          {roundKcal(todayNutrition.kcal)} / {nutritionTargets.kcalTarget}
-          {m().nutrition.kcalUnit}
-        </p>
-        <MacroBars day={todayNutrition} targets={nutritionTargets} />
-      {:else if todayNutrition}
-        <p class="latest-weight">{roundKcal(todayNutrition.kcal)} {m().nutrition.kcalUnit}</p>
-        <p class="muted">
-          {m().home.noTargetSet}
-          <a href={resolve('/goals')}>{m().home.setGoalsLink}</a>
-        </p>
-      {:else}
-        <p class="empty-state">{m().nutrition.emptyMealGroup}</p>
+    {#if profile?.waterTargetMl != null || profile?.fastingWindowH != null}
+      <h2 class="section-label">{m().home.habitsTitle}</h2>
+      {#if profile?.waterTargetMl != null}
+        <WaterCard
+          totalMl={waterMl}
+          targetMl={profile.waterTargetMl}
+          busy={waterBusy}
+          onAdd={addWater}
+        />
       {/if}
-      <a class="link-more" href={resolve('/nutrition')}>{m().home.logMeal}</a>
-    </section>
-
-    {#if profile?.waterTargetMl != null}
-      <WaterCard
-        totalMl={waterMl}
-        targetMl={profile.waterTargetMl}
-        busy={waterBusy}
-        onAdd={addWater}
-      />
+      <FastingCard {lastMealAt} windowH={profile?.fastingWindowH ?? null} />
+    {:else}
+      <FastingCard {lastMealAt} windowH={null} />
     {/if}
 
-    <FastingCard {lastMealAt} windowH={profile?.fastingWindowH ?? null} />
-
-    <section class="card">
-      <h2>{m().home.recentWorkoutsTitle}</h2>
-      {#if recentWorkouts.length === 0}
-        <p class="empty-state">{m().home.noRecentWorkouts}</p>
-      {:else}
-        <ul class="plain-list">
-          {#each recentWorkouts as workout (workout.id)}
-            <li>
-              <a href={resolve('/workouts/[id]', { id: workout.id })}>
-                {formatDate(workout.startedAt)}
-              </a>
-              <span class="muted">
-                {workout.sets.length}
-                {workout.sets.length === 1 ? m().workouts.setsOne : m().workouts.setsOther} ·
-                {computeVolumeKg(workout.sets)}
-                {m().common.kg}
-              </span>
-            </li>
-          {/each}
-        </ul>
-        <a class="link-more" href={resolve('/workouts')}>{m().home.viewAll}</a>
-      {/if}
-    </section>
-
-    <section class="card">
-      <h2>{m().home.latestWeightTitle}</h2>
+    <h2 class="section-label">
+      {m().home.latestWeightTitle}
+      <a class="link-more" href={resolve('/weight')}>{m().home.viewAll}</a>
+    </h2>
+    <div class="card">
       {#if latestWeight}
         <p class="latest-weight">
           {latestWeight.weightKg} {m().common.kg}
@@ -286,7 +315,6 @@
       {:else}
         <p class="empty-state">{m().home.noWeightYet}</p>
       {/if}
-      <a class="link-more" href={resolve('/weight')}>{m().home.viewAll}</a>
-    </section>
+    </div>
   {/if}
 {/if}

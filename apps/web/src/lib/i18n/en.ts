@@ -104,6 +104,12 @@ const en: Messages = {
     conflict: 'This entry already exists.',
   },
   home: {
+    todayTitle: 'Today',
+    overviewTitle: 'Overview',
+    toDiary: 'Open diary',
+    todayBadge: 'Scheduled today',
+    lastWorkoutLabel: 'Last:',
+    habitsTitle: 'Habits',
     kcalLeft: 'left',
     greeting: 'Signed in as',
     adminLinkHint: 'You have administrator privileges.',
@@ -327,6 +333,11 @@ const en: Messages = {
     overTargetLabel: 'over target',
     noTargetsHint: 'No targets are set for this day yet.',
     goToGoals: 'Set goals',
+    summary: {
+      eaten: 'Eaten',
+      burned: 'Burned',
+      target: 'Target',
+    },
     macros: {
       protein: 'Protein',
       carbs: 'Carbs',
