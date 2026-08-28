@@ -42,6 +42,9 @@ const en: Messages = {
     admin: 'Admin',
     settings: 'Settings',
     logout: 'Log out',
+    exercises: 'Exercises',
+    more: 'More',
+    openSettings: 'Open settings',
     loggingOut: 'Logging out…',
   },
   roles: {

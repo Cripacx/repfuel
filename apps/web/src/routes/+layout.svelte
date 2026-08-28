@@ -116,6 +116,19 @@
       </div>
       {#if getUser()}
         <span class="username">{getUser()?.username}</span>
+        <a
+          href={resolve('/settings')}
+          class="icon-btn"
+          class:active={isActiveNav('/settings')}
+          aria-label={m().nav.openSettings}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="3" />
+            <path
+              d="M19.4 13a8 8 0 0 0 0-2l2.1-1.6-2-3.4-2.5 1a8 8 0 0 0-1.7-1L14.9 3h-3.8l-.4 2.6a8 8 0 0 0-1.7 1l-2.5-1-2 3.4L6.6 11a8 8 0 0 0 0 2l-2.1 1.6 2 3.4 2.5-1a8 8 0 0 0 1.7 1l.4 2.6h3.8l.4-2.6a8 8 0 0 0 1.7-1l2.5 1 2-3.4L19.4 13Z"
+            />
+          </svg>
+        </a>
         <button type="button" class="logout-btn" onclick={handleLogout} disabled={loggingOut}>
           {loggingOut ? m().nav.loggingOut : m().nav.logout}
         </button>
@@ -131,7 +144,6 @@
       <a href={resolve('/routines')} class:active={isActiveNav('/routines')}
         >{m().nav.routines}</a
       >
-      <a href={resolve('/weight')} class:active={isActiveNav('/weight')}>{m().nav.weight}</a>
       <a href={resolve('/nutrition')} class:active={isActiveNav('/nutrition')}
         >{m().nav.nutrition}</a
       >
@@ -142,7 +154,6 @@
       {#if getUser()?.role === 'admin'}
         <a href={resolve('/admin')} class:active={isActiveNav('/admin')}>{m().nav.admin}</a>
       {/if}
-      <a href={resolve('/settings')} class:active={isActiveNav('/settings')}>{m().nav.settings}</a>
     </nav>
   {/if}
   <main class="app-main">
@@ -151,6 +162,14 @@
   {#if getUser()}
     <nav class="bottom-nav" aria-label={m().nav.home}>
       <div class="bottom-nav-inner">
+        <a href={resolve('/')} class:active={isActiveNav('/')}>
+          <span class="bottom-nav-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4v-5.5H9V20H5a1 1 0 0 1-1-1v-8.5Z" />
+            </svg>
+          </span>
+          {m().nav.home}
+        </a>
         <a href={resolve('/workouts')} class:active={isActiveNav('/workouts')}>
           <span class="bottom-nav-icon">
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -170,14 +189,13 @@
           </span>
           {m().nav.nutrition}
         </a>
-        <a href={resolve('/weight')} class:active={isActiveNav('/weight')}>
+        <a href={resolve('/stats')} class:active={isActiveNav('/stats')}>
           <span class="bottom-nav-icon">
             <svg viewBox="0 0 24 24" aria-hidden="true">
-              <rect x="4" y="5" width="16" height="14" rx="2" />
-              <path d="M12 15.5v-2.5M9.5 13l2.5.5 2.5-3" />
+              <path d="M5 20V12M10 20V6M15 20v-5M20 20V9" />
             </svg>
           </span>
-          {m().nav.weight}
+          {m().nav.stats}
         </a>
         {#if isAiEnabled()}
           <a href={resolve('/chat')} class:active={isActiveNav('/chat')}>
@@ -190,16 +208,6 @@
             {m().nav.coach}
           </a>
         {/if}
-        <a href={resolve('/settings')} class:active={isActiveNav('/settings')}>
-          <span class="bottom-nav-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z M19.4 13a8 8 0 0 0 0-2l2.1-1.6-2-3.4-2.5 1a8 8 0 0 0-1.7-1L14.9 3h-3.8l-.4 2.6a8 8 0 0 0-1.7 1l-2.5-1-2 3.4L6.6 11a8 8 0 0 0 0 2l-2.1 1.6 2 3.4 2.5-1a8 8 0 0 0 1.7 1l.4 2.6h3.8l.4-2.6a8 8 0 0 0 1.7-1l2.5 1 2-3.4L19.4 13Z"
-              />
-            </svg>
-          </span>
-          {m().nav.settings}
-        </a>
       </div>
     </nav>
   {/if}

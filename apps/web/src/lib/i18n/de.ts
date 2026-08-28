@@ -43,6 +43,9 @@ const de = {
     admin: 'Admin',
     settings: 'Einstellungen',
     logout: 'Abmelden',
+    exercises: 'Übungen',
+    more: 'Mehr',
+    openSettings: 'Einstellungen öffnen',
     loggingOut: 'Wird abgemeldet…',
   },
   roles: {
