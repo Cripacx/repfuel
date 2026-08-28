@@ -1,10 +1,18 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { BodyWeightDto, NutritionDayDto, NutritionTargets, WorkoutDto } from '@repfuel/shared';
+  import type {
+    BodyWeightDto,
+    NutritionDayDto,
+    NutritionTargets,
+    ProfileDto,
+    WorkoutDto,
+  } from '@repfuel/shared';
   import { resolve } from '$app/paths';
   import { api } from '$lib/api.js';
+  import FastingCard from '$lib/components/FastingCard.svelte';
   import KcalRing from '$lib/components/KcalRing.svelte';
   import MacroBars from '$lib/components/MacroBars.svelte';
+  import WaterCard from '$lib/components/WaterCard.svelte';
   import { getUser } from '$lib/auth.svelte.js';
   import { latestMetricEntry, sumMetricValues } from '$lib/health/dashboard.js';
   import { getLocale, m } from '$lib/i18n/index.js';
@@ -21,6 +29,10 @@
 
   let recentWorkouts = $state<WorkoutDto[]>([]);
   let latestWeight = $state<BodyWeightDto | null>(null);
+  let profile = $state<ProfileDto | null>(null);
+  let waterMl = $state(0);
+  let waterBusy = $state(false);
+  let lastMealAt = $state<string | null>(null);
   let todayNutrition = $state<NutritionDayDto | null>(null);
   let nutritionTargets = $state<NutritionTargets | null>(null);
   let loading = $state(true);
@@ -75,6 +87,27 @@
       loading = false;
     }
 
+    // Wasser und Fasten sind optional konfiguriert — schlägt einer der Abrufe
+    // fehl, fehlt nur die jeweilige Karte.
+    try {
+      const tz = currentTzOffsetMinutes();
+      const bounds = localDayBoundsUtc(today, tz);
+      const [profileRes, waterRes, mealsRes] = await Promise.all([
+        api.profile.get(),
+        api.water.total({ from: bounds.from, to: bounds.to }),
+        api.meals.list({ from: bounds.from, to: bounds.to, limit: 100 }),
+      ]);
+      profile = profileRes.profile;
+      waterMl = waterRes.water.totalMl;
+      lastMealAt =
+        mealsRes.meals
+          .map((meal) => meal.eatenAt)
+          .sort()
+          .at(-1) ?? null;
+    } catch {
+      // Karten bleiben aus.
+    }
+
     // Health-Kacheln sind best-effort (Gesundheitsdaten sind optional) — ein
     // fehlgeschlagener Abruf blendet nur die jeweilige Kachel aus, nie die Seite.
     try {
@@ -105,6 +138,21 @@
 
   function formatDate(iso: string): string {
     return new Date(iso).toLocaleDateString(getLocale() === 'de' ? 'de-DE' : 'en-US');
+  }
+
+  async function addWater(ml: number): Promise<void> {
+    waterBusy = true;
+    // Optimistisch: der Balken reagiert sofort, der Server zieht nach. Schlägt
+    // das Loggen fehl, wird der Wert zurückgenommen.
+    const previous = waterMl;
+    waterMl += ml;
+    try {
+      await api.water.log({ ml });
+    } catch {
+      waterMl = previous;
+    } finally {
+      waterBusy = false;
+    }
   }
 </script>
 
@@ -187,6 +235,17 @@
       {/if}
       <a class="link-more" href={resolve('/nutrition')}>{m().home.logMeal}</a>
     </section>
+
+    {#if profile?.waterTargetMl != null}
+      <WaterCard
+        totalMl={waterMl}
+        targetMl={profile.waterTargetMl}
+        busy={waterBusy}
+        onAdd={addWater}
+      />
+    {/if}
+
+    <FastingCard {lastMealAt} windowH={profile?.fastingWindowH ?? null} />
 
     <section class="card">
       <h2>{m().home.recentWorkoutsTitle}</h2>

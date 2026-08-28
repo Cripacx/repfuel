@@ -27,6 +27,11 @@
   let proteinTargetG = $state<number | ''>('');
   let carbsTargetG = $state<number | ''>('');
   let fatTargetG = $state<number | ''>('');
+  // Wasser und Fasten werden nicht berechnet, sondern gesetzt — sie hängen
+  // nicht am Kalorienbedarf und werden deshalb von der Live-Berechnung nicht
+  // angefasst. Leer = Karte auf der Startseite bleibt aus.
+  let waterTargetMl = $state<number | ''>('');
+  let fastingWindowH = $state<number | ''>('');
   /** true, sobald gespeicherte oder manuell bearbeitete Ziele existieren — verhindert, dass die
    * Live-Berechnung sie bei jeder Eingabeänderung stillschweigend überschreibt. */
   let targetsManuallyEdited = $state(false);
@@ -52,6 +57,8 @@
       if (profile.proteinTargetG != null) proteinTargetG = profile.proteinTargetG;
       if (profile.carbsTargetG != null) carbsTargetG = profile.carbsTargetG;
       if (profile.fatTargetG != null) fatTargetG = profile.fatTargetG;
+      if (profile.waterTargetMl != null) waterTargetMl = profile.waterTargetMl;
+      if (profile.fastingWindowH != null) fastingWindowH = profile.fastingWindowH;
       if (
         profile.kcalTarget != null ||
         profile.proteinTargetG != null ||
@@ -125,11 +132,15 @@
         proteinTargetG: proteinTargetG === '' ? null : Number(proteinTargetG),
         carbsTargetG: carbsTargetG === '' ? null : Number(carbsTargetG),
         fatTargetG: fatTargetG === '' ? null : Number(fatTargetG),
+        waterTargetMl: waterTargetMl === '' ? null : Number(waterTargetMl),
+        fastingWindowH: fastingWindowH === '' ? null : Number(fastingWindowH),
       });
       kcalTarget = updated.kcalTarget ?? '';
       proteinTargetG = updated.proteinTargetG ?? '';
       carbsTargetG = updated.carbsTargetG ?? '';
       fatTargetG = updated.fatTargetG ?? '';
+      waterTargetMl = updated.waterTargetMl ?? '';
+      fastingWindowH = updated.fastingWindowH ?? '';
       targetsManuallyEdited = true;
       saved = true;
     } catch (err) {
@@ -317,6 +328,34 @@
             max="1000"
             bind:value={fatTargetG}
             oninput={markTargetsEdited}
+          />
+        </div>
+      </div>
+
+      <h3>{m().goals.habitsTitle}</h3>
+      <p class="hint">{m().goals.habitsHint}</p>
+      <div class="target-grid">
+        <div>
+          <label for="goals-water-target">{m().goals.waterTargetLabel}</label>
+          <input
+            id="goals-water-target"
+            type="number"
+            inputmode="numeric"
+            min="100"
+            max="10000"
+            step="100"
+            bind:value={waterTargetMl}
+          />
+        </div>
+        <div>
+          <label for="goals-fasting-window">{m().goals.fastingWindowLabel}</label>
+          <input
+            id="goals-fasting-window"
+            type="number"
+            inputmode="numeric"
+            min="1"
+            max="23"
+            bind:value={fastingWindowH}
           />
         </div>
       </div>

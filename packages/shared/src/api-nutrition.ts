@@ -40,6 +40,10 @@ export interface ProfileDto {
   proteinTargetG: number | null;
   carbsTargetG: number | null;
   fatTargetG: number | null;
+  /** Tagesziel Wasser in ml; null = keine Wasser-Karte. */
+  waterTargetMl: number | null;
+  /** Fastenfenster in Stunden; null = keine Fasten-Karte. */
+  fastingWindowH: number | null;
 }
 
 export interface NutritionTargets {
@@ -61,4 +65,12 @@ export interface NutritionDayDto {
 export interface NutritionStatsResponse {
   days: NutritionDayDto[];
   targets: NutritionTargets;
+}
+
+/**
+ * Summe der Wasseraufnahme über einen Zeitraum. Das Tagesziel steht im Profil
+ * und wird bewusst nicht mitgeliefert — das Health-Modul kennt keine Profile.
+ */
+export interface WaterTotalDto {
+  totalMl: number;
 }

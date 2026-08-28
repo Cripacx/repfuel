@@ -50,6 +50,13 @@
       "when": 1787910186184,
       "tag": "0006_kind_terrax",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1787913415828,
+      "tag": "0007_thankful_famine",
+      "breakpoints": true
     }
   ]
 }

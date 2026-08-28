@@ -77,5 +77,22 @@ export const updateProfileRequestSchema = z.object({
   proteinTargetG: z.number().int().min(0).max(1000).nullable().optional(),
   carbsTargetG: z.number().int().min(0).max(2000).nullable().optional(),
   fatTargetG: z.number().int().min(0).max(1000).nullable().optional(),
+  waterTargetMl: z.number().int().min(100).max(10000).nullable().optional(),
+  // 1–23 h: 0 wäre kein Fasten, 24 h kein Fenster mehr.
+  fastingWindowH: z.number().int().min(1).max(23).nullable().optional(),
 });
 export type UpdateProfileRequest = z.infer<typeof updateProfileRequestSchema>;
+
+/** Wasser loggen: positive Menge in ml, Zeitpunkt optional (Default: jetzt). */
+export const logWaterRequestSchema = z.object({
+  ml: z.number().int().min(1).max(5000),
+  at: isoDateTimeSchema.optional(),
+});
+export type LogWaterRequest = z.infer<typeof logWaterRequestSchema>;
+
+/** Zeitraum für die Wassersumme (lokale Tagesgrenzen berechnet der Client). */
+export const waterRangeQuerySchema = z.object({
+  from: isoDateTimeSchema,
+  to: isoDateTimeSchema,
+});
+export type WaterRangeQuery = z.infer<typeof waterRangeQuerySchema>;

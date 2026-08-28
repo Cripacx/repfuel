@@ -301,6 +301,12 @@ const de = {
     columnWeight: 'Gewicht',
   },
   nutrition: {
+    waterTitle: 'Wasser',
+    mlUnit: 'ml',
+    fastingTitle: 'Fasten',
+    fastingRemaining: 'übrig',
+    fastingComplete: 'Fenster geschafft',
+    fastingElapsed: 'Seit der letzten Mahlzeit:',
     previousMonth: 'Vorheriger Monat',
     nextMonth: 'Nächster Monat',
     monthOverview: 'Monatsübersicht',
@@ -370,6 +376,10 @@ const de = {
     },
   },
   goals: {
+    habitsTitle: 'Gewohnheiten',
+    habitsHint: 'Optional. Leer lassen blendet die jeweilige Karte auf der Startseite aus.',
+    waterTargetLabel: 'Wasser-Tagesziel (ml)',
+    fastingWindowLabel: 'Fastenfenster (h)',
     title: 'Ziele',
     loadError: 'Die Zieldaten konnten nicht geladen werden.',
     heightLabel: 'Größe (cm)',

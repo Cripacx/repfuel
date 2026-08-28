@@ -17,6 +17,8 @@ import type {
   ActivityStatsResponse,
   ExerciseDto,
   ExerciseFacetsDto,
+  LogWaterRequest,
+  WaterTotalDto,
   FoodDto,
   HealthStatsQuery,
   HealthStatsResponse,
@@ -262,6 +264,11 @@ export const api = {
   },
 
   // --- Gewicht ---
+  water: {
+    total: (params: { from: string; to: string }): Promise<{ water: WaterTotalDto }> =>
+      get(`/water${query({ from: params.from, to: params.to })}`),
+    log: (body: LogWaterRequest): Promise<void> => post('/water', body),
+  },
   weight: {
     list: (params: Partial<ListWeightQuery> = {}): Promise<{ entries: BodyWeightDto[] }> =>
       get(`/weight${query({ from: params.from, to: params.to, limit: params.limit })}`),

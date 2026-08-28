@@ -298,6 +298,12 @@ const en: Messages = {
     columnWeight: 'Weight',
   },
   nutrition: {
+    waterTitle: 'Water',
+    mlUnit: 'ml',
+    fastingTitle: 'Fasting',
+    fastingRemaining: 'left',
+    fastingComplete: 'Window complete',
+    fastingElapsed: 'Since your last meal:',
     previousMonth: 'Previous month',
     nextMonth: 'Next month',
     monthOverview: 'Month overview',
@@ -368,6 +374,10 @@ const en: Messages = {
     },
   },
   goals: {
+    habitsTitle: 'Habits',
+    habitsHint: 'Optional. Leave empty to hide the matching card on the start page.',
+    waterTargetLabel: 'Daily water target (ml)',
+    fastingWindowLabel: 'Fasting window (h)',
     title: 'Goals',
     loadError: 'Goal data could not be loaded.',
     heightLabel: 'Height (cm)',

@@ -8,10 +8,12 @@ import { createWeightRepo } from './repositories/weight-repo.js';
 import { healthRoutes } from './routes.js';
 import { ingestRoutes } from './ingest-routes.js';
 import { createIngestService, type IngestService } from './services/ingest-service.js';
+import { createWaterService } from './services/water-service.js';
 import { createWeightService, type WeightService } from './services/weight-service.js';
 
 export type { WeightService } from './services/weight-service.js';
 export type { IngestService } from './services/ingest-service.js';
+export type { WaterService } from './services/water-service.js';
 
 export interface HealthModuleOptions {
   db: Database;
@@ -27,14 +29,18 @@ export async function registerHealthModule(
   app: FastifyInstance,
   opts: HealthModuleOptions,
 ): Promise<HealthModuleApi> {
+  const metricRepo = createMetricRepo(opts.db);
+  const waterService = createWaterService(metricRepo);
   const weightRepo = createWeightRepo(opts.db);
   const weightService = createWeightService(weightRepo);
   const ingestService = createIngestService({
-    metricRepo: createMetricRepo(opts.db),
+    metricRepo,
     apiTokenRepo: createApiTokenRepo(opts.db),
     weightService,
   });
-  await app.register(healthRoutes({ weightService, guards: opts.guards }), { prefix: '/api/v1' });
+  await app.register(healthRoutes({ weightService, waterService, guards: opts.guards }), {
+    prefix: '/api/v1',
+  });
   await app.register(ingestRoutes({ ingestService, guards: opts.guards }), { prefix: '/api/v1' });
   return { weightService, ingestService };
 }

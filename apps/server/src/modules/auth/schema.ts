@@ -78,6 +78,10 @@ export const profiles = pgTable('profiles', {
   proteinTargetG: integer('protein_target_g'),
   carbsTargetG: integer('carbs_target_g'),
   fatTargetG: integer('fat_target_g'),
+  /** Tagesziel Wasser in ml (null = kein Ziel, Karte bleibt aus). */
+  waterTargetMl: integer('water_target_ml'),
+  /** Länge des Fastenfensters in Stunden (null = Fasten wird nicht angezeigt). */
+  fastingWindowH: integer('fasting_window_h'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 

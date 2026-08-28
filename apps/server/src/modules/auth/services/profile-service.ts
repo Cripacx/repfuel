@@ -12,6 +12,8 @@ const EMPTY_PROFILE: ProfileDto = {
   proteinTargetG: null,
   carbsTargetG: null,
   fatTargetG: null,
+  waterTargetMl: null,
+  fastingWindowH: null,
 };
 
 function toDto(row: ProfileRow | null): ProfileDto {
@@ -26,6 +28,8 @@ function toDto(row: ProfileRow | null): ProfileDto {
     proteinTargetG: row.proteinTargetG,
     carbsTargetG: row.carbsTargetG,
     fatTargetG: row.fatTargetG,
+    waterTargetMl: row.waterTargetMl,
+    fastingWindowH: row.fastingWindowH,
   };
 }
 
