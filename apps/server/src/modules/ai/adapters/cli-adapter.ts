@@ -110,16 +110,25 @@ export function createCliAdapter(deps: CliAdapterDeps): AIAdapter {
         const health = (await res.json()) as {
           ok: boolean;
           authenticated: boolean;
+          pending?: boolean;
           message?: string;
           model?: string;
         };
+        if (health.pending) {
+          // Die Probe läuft noch (Kaltstart) — kein Fehler, nur noch kein Ergebnis.
+          return {
+            ...base,
+            model: health.model ?? null,
+            message: health.message ?? 'Anmeldeprüfung läuft — Status gleich neu laden.',
+          };
+        }
         return {
           ...base,
           ok: health.ok && health.authenticated,
           model: health.model ?? 'claude-code',
           message: health.authenticated
             ? (health.message ?? null)
-            : (health.message ?? 'Nicht angemeldet — siehe docs/AI_CLI.md (drei Auth-Wege)'),
+            : (health.message ?? 'Nicht angemeldet — siehe docs/AI_CLI.md (Auth-Wege)'),
         };
       } catch {
         return { ...base, message: 'CLI-Sidecar nicht erreichbar — läuft das Compose-Profil cli-adapter?' };

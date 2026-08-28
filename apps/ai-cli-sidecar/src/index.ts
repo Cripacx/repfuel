@@ -165,27 +165,33 @@ async function handleChat(body: ChatRequest, res: http.ServerResponse): Promise<
   }
 }
 
-// Auth-Status-Cache: der Test-Aufruf kostet einen echten API-Call.
-let healthCache: { at: number; body: unknown } | null = null;
-const HEALTH_TTL_MS = 10 * 60 * 1000;
+// Auth-Status: der Test-Aufruf kostet einen echten API-Call und kann beim
+// Kaltstart oder mit kaputtem Token lange dauern. /health blockiert deshalb
+// NIE länger als HEALTH_WAIT_MS: die Probe läuft im Hintergrund weiter, bis
+// dahin wird `pending` gemeldet; die Probe selbst hat ein hartes Timeout.
+interface HealthBody {
+  ok: boolean;
+  authenticated: boolean;
+  pending?: boolean;
+  message?: string;
+  model?: string;
+}
 
-async function handleHealth(res: http.ServerResponse): Promise<void> {
-  if (healthCache && Date.now() - healthCache.at < HEALTH_TTL_MS) {
-    res.writeHead(200, { 'content-type': 'application/json' });
-    res.end(JSON.stringify(healthCache.body));
-    return;
-  }
-  let body: { ok: boolean; authenticated: boolean; message?: string; model?: string };
+let healthCache: { at: number; body: HealthBody } | null = null;
+let healthInFlight: Promise<HealthBody> | null = null;
+const HEALTH_TTL_MS = 10 * 60 * 1000;
+const HEALTH_WAIT_MS = 5_000;
+const PROBE_TIMEOUT_MS = 90_000;
+
+async function runHealthProbe(): Promise<HealthBody> {
   if (RUNTIME === 'codex') {
-    const probe = await codexHealthProbe(MODEL);
-    body = probe.ok
+    const probe = await codexHealthProbe(MODEL, PROBE_TIMEOUT_MS);
+    return probe.ok
       ? { ok: true, authenticated: true, model: MODEL ?? undefined }
       : { ok: false, authenticated: false, message: probe.message };
-    healthCache = { at: Date.now(), body };
-    res.writeHead(200, { 'content-type': 'application/json' });
-    res.end(JSON.stringify(body));
-    return;
   }
+  const abort = new AbortController();
+  const timer = setTimeout(() => abort.abort(), PROBE_TIMEOUT_MS);
   try {
     const stream = query({
       prompt: 'Reply with exactly: OK',
@@ -194,6 +200,7 @@ async function handleHealth(res: http.ServerResponse): Promise<void> {
         settingSources: [],
         disallowedTools: ['Bash', 'Read', 'Write'],
         model: MODEL ?? undefined,
+        abortController: abort,
       },
     });
     let model: string | undefined;
@@ -202,17 +209,62 @@ async function handleHealth(res: http.ServerResponse): Promise<void> {
       if (msg.type === 'system' && msg.subtype === 'init') model = msg.model;
       if (msg.type === 'result') succeeded = !msg.is_error;
     }
-    body = succeeded
+    return succeeded
       ? { ok: true, authenticated: true, model }
       : { ok: false, authenticated: false, message: 'Testaufruf fehlgeschlagen — Login prüfen' };
   } catch (err) {
-    body = {
+    if (abort.signal.aborted) {
+      return {
+        ok: false,
+        authenticated: false,
+        message: `Anmeldeprüfung nach ${PROBE_TIMEOUT_MS / 1000}s abgebrochen — Token/Netzwerk prüfen (docs/AI_CLI.md)`,
+      };
+    }
+    return {
       ok: false,
       authenticated: false,
       message: err instanceof Error ? err.message : 'Claude Code nicht nutzbar',
     };
+  } finally {
+    clearTimeout(timer);
   }
-  healthCache = { at: Date.now(), body };
+}
+
+async function handleHealth(res: http.ServerResponse): Promise<void> {
+  if (healthCache && Date.now() - healthCache.at < HEALTH_TTL_MS) {
+    res.writeHead(200, { 'content-type': 'application/json' });
+    res.end(JSON.stringify(healthCache.body));
+    return;
+  }
+  if (!healthInFlight) {
+    const probe = runHealthProbe()
+      .then((body) => {
+        healthCache = { at: Date.now(), body };
+        return body;
+      })
+      .finally(() => {
+        healthInFlight = null;
+      });
+    // Unbeobachtete Rejections abfangen — das Ergebnis holt sich der nächste Aufruf.
+    probe.catch(() => {});
+    healthInFlight = probe;
+  }
+  const pending: HealthBody = {
+    ok: false,
+    authenticated: false,
+    pending: true,
+    message: 'Anmeldeprüfung läuft — Status gleich neu laden.',
+  };
+  const body = await Promise.race([
+    healthInFlight.catch(
+      (err): HealthBody => ({
+        ok: false,
+        authenticated: false,
+        message: err instanceof Error ? err.message : 'health probe failed',
+      }),
+    ),
+    new Promise<HealthBody>((resolve) => setTimeout(() => resolve(pending), HEALTH_WAIT_MS)),
+  ]);
   res.writeHead(200, { 'content-type': 'application/json' });
   res.end(JSON.stringify(body));
 }

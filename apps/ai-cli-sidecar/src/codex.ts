@@ -87,8 +87,11 @@ export async function runCodexTurn(
   return { threadId, sawDone };
 }
 
-/** Auth-/Lauffähigkeits-Probe: ein Mini-Turn ohne MCP. */
-export async function codexHealthProbe(model: string | null): Promise<{
+/** Auth-/Lauffähigkeits-Probe: ein Mini-Turn ohne MCP, mit hartem Timeout. */
+export async function codexHealthProbe(
+  model: string | null,
+  timeoutMs = 90_000,
+): Promise<{
   ok: boolean;
   message?: string;
 }> {
@@ -103,17 +106,33 @@ export async function codexHealthProbe(model: string | null): Promise<{
       },
       stdio: ['ignore', 'ignore', 'pipe'],
     });
+    let timedOut = false;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      child.kill('SIGKILL');
+    }, timeoutMs);
     let stderr = '';
     child.stderr.on('data', (c: Buffer) => {
       stderr += c.toString();
     });
-    child.on('error', (err) => resolve({ ok: false, message: `codex nicht startbar: ${err.message}` }));
-    child.on('close', (code) =>
+    child.on('error', (err) => {
+      clearTimeout(timer);
+      resolve({ ok: false, message: `codex nicht startbar: ${err.message}` });
+    });
+    child.on('close', (code) => {
+      clearTimeout(timer);
+      if (timedOut) {
+        resolve({
+          ok: false,
+          message: `Anmeldeprüfung nach ${timeoutMs / 1000}s abgebrochen — Auth prüfen (docs/AI_CLI.md)`,
+        });
+        return;
+      }
       resolve(
         code === 0
           ? { ok: true }
           : { ok: false, message: stderr.trim().slice(0, 300) || `codex exec exit ${code}` },
-      ),
-    );
+      );
+    });
   });
 }
