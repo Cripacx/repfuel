@@ -22,6 +22,13 @@
       "when": 1787875345391,
       "tag": "0002_military_madripoor",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787877667025,
+      "tag": "0003_chunky_nick_fury",
+      "breakpoints": true
     }
   ]
 }

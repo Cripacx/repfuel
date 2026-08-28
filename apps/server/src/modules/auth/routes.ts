@@ -3,8 +3,11 @@ import type { RegistrationModeResponse } from '@repfuel/shared';
 import {
   loginOptionsRequestSchema,
   loginVerifyRequestSchema,
+  passwordLoginRequestSchema,
+  passwordRegisterRequestSchema,
   registerOptionsRequestSchema,
   registerVerifyRequestSchema,
+  setPasswordRequestSchema,
   updateMeRequestSchema,
   updateProfileRequestSchema,
 } from '@repfuel/shared';
@@ -67,6 +70,26 @@ export function authRoutes(deps: AuthRoutesDeps) {
       });
       reply.setCookie(SESSION_COOKIE, sid, cookieOptions);
       return { user };
+    });
+
+    app.post('/register-password', async (req, reply) => {
+      const body = passwordRegisterRequestSchema.parse(req.body);
+      const { user, sid } = await authService.registerWithPassword(body);
+      reply.setCookie(SESSION_COOKIE, sid, cookieOptions);
+      return { user };
+    });
+
+    app.post('/login-password', async (req, reply) => {
+      const body = passwordLoginRequestSchema.parse(req.body);
+      const { user, sid } = await authService.loginWithPassword(body);
+      reply.setCookie(SESSION_COOKIE, sid, cookieOptions);
+      return { user };
+    });
+
+    app.post('/password', { preHandler: guards.requireAuth }, async (req, reply) => {
+      const body = setPasswordRequestSchema.parse(req.body);
+      await authService.setOwnPassword(req.sessionUser!.id, body.password);
+      return reply.code(204).send();
     });
 
     app.post('/logout', async (req, reply) => {

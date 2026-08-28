@@ -31,11 +31,17 @@ export function fakeUserRepo(): UserRepo & { rows: UserRow[] } {
         username: input.username,
         role: input.role,
         locale: null,
+        passwordHash: null,
         createdAt: new Date(),
         disabledAt: null,
         deletedAt: null,
       };
       rows.push(row);
+      return row;
+    },
+    async setPasswordHash(id, passwordHash) {
+      const row = active().find((r) => r.id === id) ?? null;
+      if (row) row.passwordHash = passwordHash;
       return row;
     },
     async updateLocale(id, locale: Locale | null) {

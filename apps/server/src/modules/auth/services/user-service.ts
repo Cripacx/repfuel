@@ -26,7 +26,13 @@ export interface UserServiceDeps {
 }
 
 export function toSessionUser(row: UserRow): SessionUser {
-  return { id: row.id, username: row.username, role: row.role, locale: row.locale ?? null };
+  return {
+    id: row.id,
+    username: row.username,
+    role: row.role,
+    locale: row.locale ?? null,
+    hasPassword: row.passwordHash != null,
+  };
 }
 
 export function toAdminUserDto(row: UserRow): AdminUserDto {
@@ -119,6 +125,11 @@ export function createUserService(deps: UserServiceDeps) {
       const user = await userRepo.findById(userId);
       if (!user || user.disabledAt) return null;
       return user;
+    },
+
+    async setPasswordHash(userId: string, hash: string): Promise<void> {
+      const row = await userRepo.setPasswordHash(userId, hash);
+      if (!row) throw new AppError('not_found', 'User not found');
     },
 
     async getActiveUserByUsername(username: string): Promise<UserRow | null> {

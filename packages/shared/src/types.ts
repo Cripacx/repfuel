@@ -12,4 +12,6 @@ export interface SessionUser {
   username: string;
   role: UserRole;
   locale: Locale | null;
+  /** true, wenn das Konto ein Passwort gesetzt hat (zusätzlich zu Passkeys). */
+  hasPassword: boolean;
 }

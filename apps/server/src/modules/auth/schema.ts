@@ -22,6 +22,8 @@ export const users = pgTable('users', {
   username: text('username').notNull().unique(),
   role: text('role').$type<UserRole>().notNull().default('user'),
   locale: text('locale').$type<Locale>(),
+  /** scrypt-Hash; null = Konto nutzt ausschließlich Passkeys. */
+  passwordHash: text('password_hash'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   disabledAt: timestamp('disabled_at', { withTimezone: true }),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),

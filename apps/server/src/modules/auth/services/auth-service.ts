@@ -17,6 +17,7 @@ import { AppError } from '../../../core/errors.js';
 import type { EventBus } from '../../../core/event-bus.js';
 import type { KeyValueStore } from '../../../core/redis.js';
 import type { CredentialRepo } from '../repositories/credential-repo.js';
+import { hashPassword, verifyPassword } from './password-service.js';
 import { toSessionUser, type UserService } from './user-service.js';
 import type { SessionService } from './session-service.js';
 
@@ -203,6 +204,38 @@ export function createAuthService(deps: AuthServiceDeps) {
       );
       const sid = await deps.sessionService.create(user.id);
       return { user: toSessionUser(user), sid };
+    },
+
+    async registerWithPassword(input: {
+      username: string;
+      password: string;
+      inviteToken?: string;
+    }): Promise<{ user: SessionUser; sid: string }> {
+      const username = input.username.toLowerCase();
+      const user = await deps.userService.finalizeRegistration(username, input.inviteToken);
+      await deps.userService.setPasswordHash(user.id, await hashPassword(input.password));
+      const sid = await deps.sessionService.create(user.id);
+      await deps.eventBus.publish('auth.user_registered', { userId: user.id, role: user.role });
+      return { user: { ...toSessionUser(user), hasPassword: true }, sid };
+    },
+
+    async loginWithPassword(input: {
+      username: string;
+      password: string;
+    }): Promise<{ user: SessionUser; sid: string }> {
+      const user = await deps.userService.getActiveUserByUsername(input.username.toLowerCase());
+      // Kein Unterschied zwischen "Nutzer unbekannt", "kein Passwort gesetzt"
+      // und "Passwort falsch" — verhindert Username-Enumeration.
+      if (!user?.passwordHash || !(await verifyPassword(input.password, user.passwordHash))) {
+        throw new AppError('unauthorized', 'Invalid username or password');
+      }
+      const sid = await deps.sessionService.create(user.id);
+      return { user: toSessionUser(user), sid };
+    },
+
+    /** Setzt/ändert das Passwort des eingeloggten Nutzers. */
+    async setOwnPassword(userId: string, password: string): Promise<void> {
+      await deps.userService.setPasswordHash(userId, await hashPassword(password));
     },
 
     async logout(sid: string): Promise<void> {

@@ -65,6 +65,26 @@ export const loginOptionsRequestSchema = z.object({
 });
 export type LoginOptionsRequest = z.infer<typeof loginOptionsRequestSchema>;
 
+export const passwordSchema = z.string().min(8).max(128);
+
+export const passwordRegisterRequestSchema = z.object({
+  username: usernameSchema,
+  password: passwordSchema,
+  inviteToken: z.string().min(1).max(128).optional(),
+});
+export type PasswordRegisterRequest = z.infer<typeof passwordRegisterRequestSchema>;
+
+export const passwordLoginRequestSchema = z.object({
+  username: usernameSchema,
+  password: z.string().min(1).max(128),
+});
+export type PasswordLoginRequest = z.infer<typeof passwordLoginRequestSchema>;
+
+export const setPasswordRequestSchema = z.object({
+  password: passwordSchema,
+});
+export type SetPasswordRequest = z.infer<typeof setPasswordRequestSchema>;
+
 export const updateMeRequestSchema = z.object({
   locale: z.enum(['de', 'en']).nullable(),
 });

@@ -10,6 +10,7 @@ export interface UserRepo {
   list(): Promise<UserRow[]>;
   create(input: { username: string; role: UserRole }): Promise<UserRow>;
   updateLocale(id: string, locale: Locale | null): Promise<UserRow | null>;
+  setPasswordHash(id: string, passwordHash: string): Promise<UserRow | null>;
   setDisabled(id: string, disabled: boolean): Promise<UserRow | null>;
   softDelete(id: string): Promise<UserRow | null>;
 }
@@ -53,6 +54,14 @@ export function createUserRepo(db: Database): UserRepo {
       const rows = await db
         .update(users)
         .set({ locale })
+        .where(and(eq(users.id, id), notDeleted))
+        .returning();
+      return rows[0] ?? null;
+    },
+    async setPasswordHash(id, passwordHash) {
+      const rows = await db
+        .update(users)
+        .set({ passwordHash })
         .where(and(eq(users.id, id), notDeleted))
         .returning();
       return rows[0] ?? null;
