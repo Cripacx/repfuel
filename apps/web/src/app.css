@@ -439,9 +439,11 @@ button {
 button.primary,
 button.secondary,
 button.danger,
+button.tonal,
 a.primary,
 a.secondary,
 a.danger,
+a.tonal,
 .logout-btn {
   display: inline-flex;
   align-items: center;
@@ -469,11 +471,30 @@ a.danger,
 button.primary:active:not(:disabled),
 button.secondary:active:not(:disabled),
 button.danger:active:not(:disabled),
+button.tonal:active:not(:disabled),
 a.primary:active,
 a.secondary:active,
 a.danger:active,
+a.tonal:active,
 .logout-btn:active:not(:disabled) {
   transform: scale(0.97);
+}
+
+/* Tonal: getönte Akzentfläche für Karten-CTAs in Serie (Hevy-Muster) — die
+   EINE voll gesättigte Primäraktion der View bleibt reserviert. */
+button.tonal,
+a.tonal {
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+
+button.tonal:hover:not(:disabled),
+a.tonal:hover {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+button.tonal:disabled {
+  opacity: 0.45;
 }
 
 button.primary,
@@ -973,6 +994,11 @@ form label:has(input[type='radio']) {
   font-size: var(--text-lg);
   font-weight: var(--weight-heading);
   letter-spacing: var(--tracking-lg);
+}
+
+.section-label .link-more {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
 }
 
 .section-label:first-child {
@@ -2954,6 +2980,73 @@ input[type='checkbox'] {
   font-weight: var(--weight-heading);
   letter-spacing: var(--tracking-lg);
   overflow-wrap: anywhere;
+  color: inherit;
+  text-decoration: none;
+  min-height: var(--touch-target);
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Schnellstart-Zeilen (Hevy: "+ Start Empty Workout") — volle Breite, ruhig. */
+.quick-start-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 52px;
+  padding: 0 var(--space-4);
+  margin-bottom: var(--space-2);
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    transform var(--dur-press) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+
+.quick-start-row:hover {
+  background: var(--surface-2);
+}
+
+.quick-start-row:active {
+  transform: scale(0.985);
+}
+
+.quick-start-row:disabled {
+  opacity: 0.45;
+}
+
+.quick-start-row .exercise-row-chevron {
+  margin-left: auto;
+}
+
+/* Verlaufs-Feed: drei beschriftete Kennzahlen je Workout (Hevy-Muster). */
+.workout-feed-stats {
+  display: flex;
+  gap: var(--space-6);
+  margin-top: var(--space-2);
+}
+
+.workout-feed-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.workout-feed-stat-label {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.workout-feed-stat-value {
+  font-weight: var(--weight-heading);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Die Übungsliste ist Kontext, keine Liste zum Lesen — zwei Zeilen genügen. */
