@@ -9,6 +9,7 @@
   import CoachMemory from '$lib/components/CoachMemory.svelte';
   import { streamChatMessage } from '$lib/chat/stream.js';
   import ChatMessage from '$lib/components/chat/ChatMessage.svelte';
+  import Modal from '$lib/components/Modal.svelte';
   import ProposalCard from '$lib/components/chat/ProposalCard.svelte';
   import { describeError } from '$lib/errors.js';
   import { m } from '$lib/i18n/index.js';
@@ -26,7 +27,13 @@
   const MAX_TEXTAREA_HEIGHT = 160;
 
   let messages = $state<ChatMessageDto[]>([]);
+  /**
+   * Vorschläge leben NICHT im Nachrichtenfluss (sie würden dort jede neue
+   * Antwort nach oben aus dem Blick schieben), sondern in einer Leiste am
+   * Composer, die ein Sheet mit den Bestätigungskarten öffnet.
+   */
   let proposals = $state<ProposalDto[]>([]);
+  let proposalsOpen = $state(false);
   let loading = $state(true);
   let loadError = $state<string | null>(null);
   /** Teil-Zustand: Verlauf da, offene Vorschläge nicht ladbar. */
@@ -43,6 +50,7 @@
   let endMarker = $state<HTMLDivElement | null>(null);
 
   const canSend = $derived(draft.trim().length > 0 && !streaming && isOnline() && !loadError);
+  const pendingProposals = $derived(proposals.filter((p) => p.status === 'pending').length);
 
   async function loadProposals(): Promise<void> {
     proposalsError = null;
@@ -309,19 +317,31 @@
       </div>
     {/if}
 
-    {#if proposals.length > 0}
-      <section class="chat-proposals" aria-label={m().chat.proposals.pendingTitle}>
-        <h2 class="chat-proposals-title">{m().chat.proposals.pendingTitle}</h2>
-        {#each proposals as proposal (proposal.id)}
-          <ProposalCard {proposal} offline={!isOnline()} onResolved={onProposalResolved} />
-        {/each}
-      </section>
-    {/if}
-
     <div bind:this={endMarker}></div>
   {/if}
 
+  {#if proposalsOpen}
+    <Modal title={m().chat.proposals.pendingTitle} onClose={() => (proposalsOpen = false)}>
+      <div class="proposal-sheet">
+        {#each proposals as proposal (proposal.id)}
+          <ProposalCard {proposal} offline={!isOnline()} onResolved={onProposalResolved} />
+        {/each}
+      </div>
+    </Modal>
+  {/if}
+
   <div class="chat-composer">
+    {#if pendingProposals > 0}
+      <!-- Klebt mit dem Composer am unteren Rand: neue Vorschläge sind sichtbar,
+           ohne die Antwort des Coaches aus dem Blick zu schieben. -->
+      <button type="button" class="proposal-bar" onclick={() => (proposalsOpen = true)}>
+        <span class="proposal-bar-badge" aria-hidden="true">{pendingProposals}</span>
+        <span class="proposal-bar-text">
+          {pendingProposals === 1 ? m().chat.proposals.barOne : m().chat.proposals.barOther}
+        </span>
+        <span class="proposal-bar-cta">{m().chat.proposals.barReview}</span>
+      </button>
+    {/if}
     <label class="visually-hidden" for="chat-input">{m().chat.conversation.inputLabel}</label>
     <div class="chat-composer-row">
       <textarea

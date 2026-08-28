@@ -149,19 +149,37 @@ export function buildToolSet(deps: ToolDeps): ToolSet {
 
     search_exercises: tool({
       description:
-        'Übungskatalog durchsuchen (Name und/oder Muskelgruppe). Liefert exercise_ids für create_routine/update_routine und get_exercise_history. Ohne query: Liste nach Muskelgruppe. Muskelgruppen z.B. chest, back, shoulders, biceps, triceps, quads, hamstrings, glutes, calves, abs.',
+        'Übungskatalog durchsuchen. BEVORZUGT über muscle suchen (Muskelgruppen-Facette, z.B. Pectorals, Delts, Biceps, Triceps, Lats, Upper Back, Traps, Quads, Hamstrings, Glutes, Calves, Abs, Forearms) — Namenssuche (query) nur für konkrete Übungsnamen. Groß-/Kleinschreibung egal; bei unbekanntem muscle-Wert kommt die gültige Liste zurück. Liefert exercise_ids für create_routine/update_routine und get_exercise_history. Findet sich nichts Passendes: create_exercise.',
       inputSchema: z.object({
         query: z.string().min(2).max(100).optional(),
         muscle: z.string().min(2).max(50).optional(),
         limit: z.number().int().min(1).max(50).optional(),
       }),
       execute: async ({ query, muscle, limit }) => {
+        // Facetten-Werte sind exakt ("Pectorals") — Eingaben case-insensitiv
+        // auflösen, statt die KI raten zu lassen.
+        let resolvedMuscle = muscle;
+        if (muscle) {
+          const { muscles } = await deps.exerciseService.facets(userId);
+          resolvedMuscle = muscles.find((m) => m.toLowerCase() === muscle.toLowerCase());
+          if (!resolvedMuscle) {
+            return { error: `Unbekannte Muskelgruppe "${muscle}"`, availableMuscles: muscles };
+          }
+        }
         const rows = await deps.exerciseService.list(userId, {
           q: query,
-          muscle,
+          muscle: resolvedMuscle,
           limit: limit ?? 15,
           offset: 0,
         });
+        if (rows.length === 0) {
+          const { muscles } = await deps.exerciseService.facets(userId);
+          return {
+            results: [],
+            hint: 'Nichts gefunden — über muscle suchen oder mit create_exercise eine eigene Übung anlegen.',
+            availableMuscles: muscles,
+          };
+        }
         // Kompakte Projektion: die KI braucht IDs + Namen, keine Medien-URLs.
         return rows.map((exercise) => ({
           id: exercise.id,
@@ -170,6 +188,39 @@ export function buildToolSet(deps: ToolDeps): ToolSet {
           muscleGroups: exercise.muscleGroups,
           equipment: exercise.equipment,
         }));
+      },
+    }),
+
+    create_exercise: tool({
+      description:
+        'Eigene (Custom-)Übung des Nutzers anlegen, wenn search_exercises nichts Passendes findet. Existiert bereits eine sichtbare Übung mit exakt diesem Namen, wird die zurückgegeben statt ein Duplikat anzulegen. Liefert die exercise_id für create_routine/update_routine.',
+      inputSchema: z.object({
+        name: z.string().min(2).max(200),
+        muscle_groups: z.array(z.string().min(2).max(50)).min(1).max(10),
+        equipment: z.string().min(1).max(100).optional(),
+      }),
+      execute: async ({ name, muscle_groups, equipment }) => {
+        const existing = (
+          await deps.exerciseService.list(userId, { q: name, limit: 10, offset: 0 })
+        ).find(
+          (exercise) =>
+            exercise.name.toLowerCase() === name.toLowerCase() ||
+            exercise.nameDe?.toLowerCase() === name.toLowerCase(),
+        );
+        if (existing) {
+          return {
+            id: existing.id,
+            name: existing.name,
+            muscleGroups: existing.muscleGroups,
+            note: 'Übung existierte bereits — keine neue angelegt.',
+          };
+        }
+        const created = await deps.exerciseService.createCustom(userId, {
+          name,
+          muscleGroups: muscle_groups,
+          equipment: equipment ?? null,
+        });
+        return { id: created.id, name: created.name, muscleGroups: created.muscleGroups };
       },
     }),
 

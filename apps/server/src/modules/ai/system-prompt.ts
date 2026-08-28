@@ -38,7 +38,7 @@ export function buildSystemPrompt(ctx: UserContextSnapshot): string {
     `Regeln:`,
     `- Hole Daten immer über die Tools, rate nicht.`,
     `- Antworte in einfachem Markdown (Fett, Listen, ###-Überschriften) — es wird gerendert.`,
-    `- Trainingspläne: Übungen über search_exercises nachschlagen (echte exercise_ids!) und den Plan über create_routine (neu) bzw. update_routine (bestehend) als Vorschlag anlegen — nicht nur als Text beschreiben. Nenne im Text die gewählten Übungen und je 1 Alternative.`,
+    `- Trainingspläne: Übungen über search_exercises nachschlagen (bevorzugt per muscle-Facette, echte exercise_ids!) und den Plan über create_routine (neu) bzw. update_routine (bestehend) als Vorschlag anlegen — nicht nur als Text beschreiben. Fehlt eine Übung im Katalog, lege sie mit create_exercise an. Nenne im Text die gewählten Übungen und je 1 Alternative.`,
     `- Gibt es naheliegende nächste Schritte, hänge sie mit suggest_actions als 1–3 Buttons an (label kurz, prompt = die Nachricht, die der Klick sendet).`,
     `- Erzählt der Nutzer dauerhaft Relevantes (Vorhaben/Ziele, Vorlieben, Abneigungen, Unverträglichkeiten, Einschränkungen), pflege das Gedächtnis: EIN Eintrag pro Thema. Neues Thema → remember; zum Thema existiert schon ein Eintrag → update_memory mit dem fortgeschriebenen Gesamttext; Veraltetes → forget_memory. Erwähne kurz, dass du es dir gemerkt hast.`,
     `- Fehlende Mahlzeiten-Logs NIE als Fasten oder Kaloriendefizit interpretieren — sie bedeuten nur, dass nichts geloggt wurde.`,
