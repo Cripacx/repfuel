@@ -13,12 +13,15 @@ import { mcpRoutes } from './mcp/mcp-routes.js';
 import { createMcpTokenService, type McpTokenService } from './mcp/token-service.js';
 import { buildToolSet } from './tools.js';
 import { createChatRepo } from './repositories/chat-repo.js';
+import { createMemoryRepo } from './repositories/memory-repo.js';
 import { createProposalRepo } from './repositories/proposal-repo.js';
 import { aiRoutes } from './routes.js';
 import { createChatService, type ChatService } from './services/chat-service.js';
+import { createMemoryService, type MemoryService } from './services/memory-service.js';
 import { createProposalService } from './services/proposal-service.js';
 
 export type { ChatService } from './services/chat-service.js';
+export type { MemoryService } from './services/memory-service.js';
 export type { ProposalService } from './services/proposal-service.js';
 
 export interface AiModuleOptions {
@@ -45,6 +48,7 @@ export interface AiModuleOptions {
 
 export interface AiModuleApi {
   chatService: ChatService;
+  memoryService: MemoryService;
 }
 
 function buildAdapter(opts: AiModuleOptions, tokenService: McpTokenService): AIAdapter | null {
@@ -72,6 +76,7 @@ export async function registerAiModule(
 ): Promise<AiModuleApi> {
   const chatRepo = createChatRepo(opts.db);
   const proposalRepo = createProposalRepo(opts.db);
+  const memoryService = createMemoryService(createMemoryRepo(opts.db));
   const tokenService = createMcpTokenService(opts.kv);
   const adapter = buildAdapter(opts, tokenService);
 
@@ -87,6 +92,7 @@ export async function registerAiModule(
     provider: adapter ? opts.provider : 'none',
     profileService: opts.profileService,
     weightService: opts.weightService,
+    memoryService,
     toolDeps: ({ userId, sessionId, tzOffsetMinutes }) => ({
       userId,
       sessionId,
@@ -98,6 +104,7 @@ export async function registerAiModule(
       weightService: opts.weightService,
       ingestService: opts.ingestService,
       profileService: opts.profileService,
+      memoryService,
     }),
     createProposal: (input) =>
       proposalService.create({
@@ -109,7 +116,7 @@ export async function registerAiModule(
       }),
   });
 
-  await app.register(aiRoutes({ chatService, proposalService, guards: opts.guards }), {
+  await app.register(aiRoutes({ chatService, proposalService, memoryService, guards: opts.guards }), {
     prefix: '/api/v1',
   });
 
@@ -130,6 +137,7 @@ export async function registerAiModule(
           weightService: opts.weightService,
           ingestService: opts.ingestService,
           profileService: opts.profileService,
+          memoryService,
           createProposal: (input) =>
             proposalService.create({
               userId: claims.userId,
@@ -143,5 +151,5 @@ export async function registerAiModule(
     { prefix: '/internal/mcp' },
   );
 
-  return { chatService };
+  return { chatService, memoryService };
 }

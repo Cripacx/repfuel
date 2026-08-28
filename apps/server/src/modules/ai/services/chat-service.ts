@@ -14,6 +14,7 @@ import { AppError } from '../../../core/errors.js';
 import type { ProfileService } from '../../auth/index.js';
 import type { WeightService } from '../../health/index.js';
 import type { ChatRepo } from '../repositories/chat-repo.js';
+import type { MemoryService } from './memory-service.js';
 import type { ChatMessageRow, ChatSessionRow } from '../schema.js';
 import type { ToolDeps } from '../tools.js';
 import { buildToolSet } from '../tools.js';
@@ -24,6 +25,7 @@ export interface ChatServiceDeps {
   provider: AiProvider;
   profileService: ProfileService;
   weightService: WeightService;
+  memoryService: MemoryService;
   /** Baut die Tool-Dependencies für einen Chat-Turn (userId/session-gebunden). */
   toolDeps: (input: {
     userId: string;
@@ -79,6 +81,7 @@ export function createChatService(deps: ChatServiceDeps) {
   async function buildContext(user: SessionUser, tzOffsetMinutes: number): Promise<UserContextSnapshot> {
     const profile = await deps.profileService.get(user.id);
     const weights = await deps.weightService.list(user.id, { limit: 1 });
+    const memories = await deps.memoryService.list(user.id);
     const tzSign = tzOffsetMinutes <= 0 ? '+' : '-';
     const abs = Math.abs(tzOffsetMinutes);
     const localNow = new Date(Date.now() - tzOffsetMinutes * 60_000);
@@ -103,6 +106,11 @@ export function createChatService(deps: ChatServiceDeps) {
           }
         : null,
       latestWeightKg: weights[0]?.weightKg ?? null,
+      memories: memories.map((memory) => ({
+        id: memory.id,
+        category: memory.category,
+        content: memory.content,
+      })),
     };
   }
 

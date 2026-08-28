@@ -13,6 +13,7 @@ const userContext: UserContextSnapshot = {
   currentDate: '2026-08-28',
   profile: null,
   latestWeightKg: null,
+  memories: [],
 };
 
 const messages: ChatMessageDto[] = [

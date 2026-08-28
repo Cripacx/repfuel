@@ -616,6 +616,21 @@ const de = {
   },
   settings: {
     title: 'Profil',
+    memory: {
+      title: 'Coach-Gedächtnis',
+      hint: 'Dauerhafte Fakten, die der Coach bei Plänen und Vorschlägen berücksichtigt — erzähl sie ihm im Chat oder trage sie hier ein.',
+      empty: 'Noch nichts gemerkt. Sag dem Coach z. B. „Merk dir: ich mag keinen Brokkoli“.',
+      addPlaceholder: 'z. B. Ich trainiere nur Mo/Mi/Fr',
+      addButton: 'Merken',
+      deleteConfirm: 'Diesen Gedächtnis-Eintrag löschen?',
+      loadError: 'Das Gedächtnis konnte nicht geladen werden.',
+      categories: {
+        goal: 'Vorhaben',
+        preference: 'Vorliebe',
+        constraint: 'Einschränkung',
+        fact: 'Fakt',
+      },
+    },
     passwordSectionTitle: 'Passwort',
     aiSectionTitle: 'KI-Coach',
     aiConnected: 'Verbunden',

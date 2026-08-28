@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import type { ProposalDto, ToolDefinition, ToolSet } from '@repfuel/shared';
-import { updateProfileRequestSchema, updateRoutineRequestSchema } from '@repfuel/shared';
+import { MEMORY_CATEGORIES, updateProfileRequestSchema, updateRoutineRequestSchema } from '@repfuel/shared';
+import type { MemoryService } from './services/memory-service.js';
 import type { ProfileService } from '../auth/index.js';
 import type { IngestService, WeightService } from '../health/index.js';
 import type { FoodService, MealService } from '../nutrition/index.js';
@@ -23,6 +24,7 @@ export interface ToolDeps {
   weightService: WeightService;
   ingestService: IngestService;
   profileService: ProfileService;
+  memoryService: MemoryService;
   createProposal: (input: {
     kind: 'update_routine' | 'update_profile';
     summary: string;
@@ -188,6 +190,26 @@ export function buildToolSet(deps: ToolDeps): ToolSet {
           weightKg: weight_kg,
           measuredAt: measured_at ?? new Date().toISOString(),
         }),
+    }),
+
+    remember: tool({
+      description:
+        'Dauerhaft relevante Nutzer-Fakten ins Coach-Gedächtnis schreiben: Vorhaben/Ziele ("will im Mai einen Halbmarathon laufen"), Vorlieben & Abneigungen ("mag keinen Brokkoli"), Einschränkungen (Unverträglichkeiten, Verletzungen, Zeitbudget). KEINE Tagesdaten (Mahlzeiten/Sätze/Gewicht) — die stehen in den anderen Tools. Der Nutzer sieht und löscht Einträge im Profil.',
+      inputSchema: z.object({
+        category: z.enum(MEMORY_CATEGORIES),
+        content: z.string().min(2).max(500),
+      }),
+      execute: async ({ category, content }) => deps.memoryService.add(userId, category, content),
+    }),
+
+    forget_memory: tool({
+      description:
+        'Einen Eintrag aus dem Coach-Gedächtnis löschen (memory_id aus dem System-Prompt), z.B. wenn der Nutzer sagt, dass etwas nicht mehr gilt.',
+      inputSchema: z.object({ memory_id: z.string().uuid() }),
+      execute: async ({ memory_id }) => {
+        await deps.memoryService.remove(userId, memory_id);
+        return { status: 'deleted' };
+      },
     }),
 
     update_routine: tool({

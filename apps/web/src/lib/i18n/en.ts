@@ -615,6 +615,21 @@ const en: Messages = {
   },
   settings: {
     title: 'Profile',
+    memory: {
+      title: 'Coach memory',
+      hint: 'Durable facts the coach considers for plans and suggestions — tell it in chat or add them here.',
+      empty: `Nothing remembered yet. Tell the coach e.g. "Remember: I don't like broccoli".`,
+      addPlaceholder: 'e.g. I only train Mon/Wed/Fri',
+      addButton: 'Remember',
+      deleteConfirm: 'Delete this memory entry?',
+      loadError: 'The memory could not be loaded.',
+      categories: {
+        goal: 'Goal',
+        preference: 'Preference',
+        constraint: 'Constraint',
+        fact: 'Fact',
+      },
+    },
     passwordSectionTitle: 'Password',
     aiSectionTitle: 'AI coach',
     aiConnected: 'Connected',

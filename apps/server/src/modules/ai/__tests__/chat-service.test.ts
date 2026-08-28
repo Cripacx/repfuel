@@ -19,6 +19,7 @@ function setup(adapter: ReturnType<typeof scriptedAdapter> | null) {
     provider: adapter ? 'openai' : 'none',
     profileService: { get: vi.fn(async () => null) },
     weightService: { list: vi.fn(async () => []) },
+    memoryService: { list: vi.fn(async () => []) },
     toolDeps: () => ({}),
     createProposal: vi.fn(),
   } as unknown as ChatServiceDeps;

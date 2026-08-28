@@ -62,6 +62,24 @@ export interface AdapterStatus {
   message: string | null;
 }
 
+// ---------- Coach-Gedächtnis: dauerhafte Nutzer-Fakten für Pläne & Vorschläge ----------
+
+export const MEMORY_CATEGORIES = ['goal', 'preference', 'constraint', 'fact'] as const;
+export type MemoryCategory = (typeof MEMORY_CATEGORIES)[number];
+
+export interface CoachMemoryDto {
+  id: string;
+  category: MemoryCategory;
+  content: string;
+  createdAt: string;
+}
+
+export const addCoachMemoryRequestSchema = z.object({
+  category: z.enum(MEMORY_CATEGORIES),
+  content: z.string().min(2).max(500),
+});
+export type AddCoachMemoryRequest = z.infer<typeof addCoachMemoryRequestSchema>;
+
 /** Kompakter Profil-Snapshot für den System-Prompt (keine Rohdaten!). */
 export interface UserContextSnapshot {
   userId: string;
@@ -82,6 +100,8 @@ export interface UserContextSnapshot {
     fatTargetG: number | null;
   } | null;
   latestWeightKg: number | null;
+  /** Coach-Gedächtnis: vom Nutzer stammende, dauerhafte Fakten (klein halten). */
+  memories: { id: string; category: MemoryCategory; content: string }[];
 }
 
 /**

@@ -1,17 +1,24 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import type { ChatChunk } from '@repfuel/shared';
 import {
+  addCoachMemoryRequestSchema,
   chatSessionIdParamsSchema,
   postChatMessageRequestSchema,
   proposalIdParamsSchema,
+  uuidSchema,
 } from '@repfuel/shared';
+import { z } from 'zod';
 import type { AuthGuards } from '../auth/index.js';
 import type { ChatService } from './services/chat-service.js';
+import type { MemoryService } from './services/memory-service.js';
 import type { ProposalService } from './services/proposal-service.js';
+
+const memoryIdParams = z.object({ id: uuidSchema });
 
 export interface AiRoutesDeps {
   chatService: ChatService;
   proposalService: ProposalService;
+  memoryService: MemoryService;
   guards: AuthGuards;
 }
 
@@ -20,7 +27,7 @@ function sseWrite(reply: FastifyReply, chunk: ChatChunk): void {
 }
 
 export function aiRoutes(deps: AiRoutesDeps) {
-  const { chatService, proposalService, guards } = deps;
+  const { chatService, proposalService, memoryService, guards } = deps;
 
   return async function register(app: FastifyInstance) {
     app.get('/ai/status', async () => chatService.status());
@@ -82,6 +89,22 @@ export function aiRoutes(deps: AiRoutesDeps) {
           reply.raw.end();
         }
         return reply;
+      });
+
+      // Coach-Gedächtnis: der Nutzer sieht, ergänzt und löscht Einträge selbst.
+      authed.get('/ai/memories', async (req) => ({
+        memories: await memoryService.list(uid(req)),
+      }));
+
+      authed.post('/ai/memories', async (req) => {
+        const body = addCoachMemoryRequestSchema.parse(req.body);
+        return { memory: await memoryService.add(uid(req), body.category, body.content) };
+      });
+
+      authed.delete('/ai/memories/:id', async (req, reply) => {
+        const { id } = memoryIdParams.parse(req.params);
+        await memoryService.remove(uid(req), id);
+        return reply.code(204).send();
       });
 
       authed.get('/ai/proposals', async (req) => ({

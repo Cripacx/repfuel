@@ -1,5 +1,5 @@
 import { index, jsonb, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
-import type { ProposalKind, ProposalStatus, ToolCallInfo } from '@repfuel/shared';
+import type { MemoryCategory, ProposalKind, ProposalStatus, ToolCallInfo } from '@repfuel/shared';
 import { users } from '../auth/schema.js';
 
 export const chatSessions = pgTable(
@@ -50,6 +50,22 @@ export const aiProposals = pgTable(
   (t) => [index('ai_proposals_user_id_idx').on(t.userId)],
 );
 
+export const coachMemories = pgTable(
+  'coach_memories',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    category: text('category').$type<MemoryCategory>().notNull().default('fact'),
+    content: text('content').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  },
+  (t) => [index('coach_memories_user_id_idx').on(t.userId)],
+);
+
 export type ChatSessionRow = typeof chatSessions.$inferSelect;
 export type ChatMessageRow = typeof chatMessages.$inferSelect;
 export type AiProposalRow = typeof aiProposals.$inferSelect;
+export type CoachMemoryRow = typeof coachMemories.$inferSelect;

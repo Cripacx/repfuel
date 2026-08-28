@@ -1,5 +1,6 @@
 import type {
   ActivityDto,
+  AddCoachMemoryRequest,
   AdminInviteDto,
   AdminSettingsDto,
   AdminUserDto,
@@ -9,6 +10,7 @@ import type {
   BodyWeightDto,
   ChatMessageDto,
   ChatSessionDto,
+  CoachMemoryDto,
   CreateApiTokenRequest,
   CreateExerciseRequest,
   CreateFoodRequest,
@@ -325,6 +327,10 @@ export const api = {
   // --- KI (optional; `enabled: false` ⇒ alle KI-UI-Elemente ausblenden) ---
   ai: {
     status: (): Promise<AiStatusResponse> => get('/ai/status'),
+    listMemories: (): Promise<{ memories: CoachMemoryDto[] }> => get('/ai/memories'),
+    addMemory: (body: AddCoachMemoryRequest): Promise<{ memory: CoachMemoryDto }> =>
+      post('/ai/memories', body),
+    removeMemory: (id: string): Promise<void> => del(`/ai/memories/${id}`),
     listProposals: (): Promise<{ proposals: ProposalDto[] }> => get('/ai/proposals'),
     confirmProposal: (id: string): Promise<{ proposal: ProposalDto }> =>
       post(`/ai/proposals/${id}/confirm`),
