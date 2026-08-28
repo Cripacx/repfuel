@@ -6,3 +6,4 @@ export * from '../modules/auth/schema.js';
 export * from '../modules/workout/schema.js';
 export * from '../modules/health/schema.js';
 export * from '../modules/nutrition/schema.js';
+export * from '../modules/ai/schema.js';

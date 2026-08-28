@@ -10,3 +10,4 @@ export * from './schemas/nutrition.js';
 export * from './schemas/sync.js';
 export * from './api-nutrition.js';
 export * from './nutrition/targets.js';
+export * from './ai.js';

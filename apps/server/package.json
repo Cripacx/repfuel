@@ -15,10 +15,14 @@
     "db:migrate": "tsx src/db/migrate.ts"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.44",
+    "@ai-sdk/openai": "^4.0.50",
+    "@ai-sdk/openai-compatible": "^3.0.39",
     "@fastify/cookie": "^11.0.1",
     "@fastify/static": "^8.0.3",
     "@repfuel/shared": "workspace:*",
     "@simplewebauthn/server": "^13.1.1",
+    "ai": "^7.0.83",
     "drizzle-orm": "^0.44.2",
     "fastify": "^5.2.0",
     "ioredis": "^5.4.2",

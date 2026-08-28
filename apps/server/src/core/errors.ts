@@ -7,7 +7,9 @@ export type AppErrorCode =
   | 'conflict'
   | 'invalid_invite'
   | 'registration_closed'
-  | 'verification_failed';
+  | 'verification_failed'
+  | 'ai_disabled'
+  | 'upstream_error';
 
 const STATUS_BY_CODE: Record<AppErrorCode, number> = {
   bad_request: 400,
@@ -18,6 +20,8 @@ const STATUS_BY_CODE: Record<AppErrorCode, number> = {
   invalid_invite: 403,
   registration_closed: 403,
   verification_failed: 400,
+  ai_disabled: 503,
+  upstream_error: 502,
 };
 
 export class AppError extends Error {

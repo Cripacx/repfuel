@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { REGISTRATION_MODES } from '@repfuel/shared';
+import { AI_PROVIDERS, REGISTRATION_MODES } from '@repfuel/shared';
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
@@ -17,6 +17,15 @@ const envSchema = z.object({
   STATIC_DIR: z.string().default(''),
   SESSION_TTL_DAYS: z.coerce.number().int().min(1).max(365).default(30),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
+  /** KI ist strikt optional: none = Chat und alle KI-Features deaktiviert. */
+  AI_PROVIDER: z.enum(AI_PROVIDERS).default('none'),
+  AI_API_KEY: z.string().default(''),
+  /** Coach-Modell (Provider-spezifische Modell-ID; keine Defaults im Code). */
+  AI_MODEL: z.string().default(''),
+  /** Optionales Billig-Modell für Hilfsaufgaben (Fallback: AI_MODEL). */
+  AI_MODEL_LIGHT: z.string().default(''),
+  /** Für ollama/openrouter bzw. OpenAI-kompatible Endpunkte. */
+  AI_BASE_URL: z.string().default(''),
 });
 
 export type AppConfig = ReturnType<typeof loadConfig>;

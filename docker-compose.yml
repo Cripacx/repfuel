@@ -12,6 +12,11 @@ services:
       REGISTRATION_MODE: ${REGISTRATION_MODE:-open}
       SESSION_TTL_DAYS: ${SESSION_TTL_DAYS:-30}
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      AI_PROVIDER: ${AI_PROVIDER:-none}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-}
+      AI_MODEL_LIGHT: ${AI_MODEL_LIGHT:-}
+      AI_BASE_URL: ${AI_BASE_URL:-}
     depends_on:
       db:
         condition: service_healthy
@@ -45,6 +50,16 @@ services:
       timeout: 3s
       retries: 10
 
+  # Optional: lokales LLM — aktivieren mit `docker compose --profile ollama up -d`
+  # und AI_PROVIDER=ollama, AI_BASE_URL=http://ollama:11434/v1 in der .env.
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ['ollama']
+    restart: unless-stopped
+    volumes:
+      - ollama-data:/root/.ollama
+
 volumes:
   db-data:
   redis-data:
+  ollama-data:

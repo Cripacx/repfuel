@@ -13,6 +13,7 @@ import { registerAdminModule } from './modules/admin/index.js';
 import { registerAuthModule } from './modules/auth/index.js';
 import { registerHealthModule } from './modules/health/index.js';
 import { registerNutritionModule } from './modules/nutrition/index.js';
+import { registerAiModule } from './modules/ai/index.js';
 import { registerSyncModule } from './modules/sync/index.js';
 import { registerWorkoutModule } from './modules/workout/index.js';
 
@@ -113,6 +114,21 @@ export async function buildApp(config: AppConfig, deps: AppDeps): Promise<Fastif
     workoutService: workoutApi.workoutService,
     weightService: healthApi.weightService,
     mealService: nutritionApi.mealService,
+  });
+
+  await registerAiModule(app, {
+    db: deps.db,
+    guards: authApi.guards,
+    provider: config.AI_PROVIDER,
+    apiKey: config.AI_API_KEY || null,
+    model: config.AI_MODEL || null,
+    baseUrl: config.AI_BASE_URL || null,
+    profileService: authApi.profileService,
+    weightService: healthApi.weightService,
+    mealService: nutritionApi.mealService,
+    foodService: nutritionApi.foodService,
+    workoutService: workoutApi.workoutService,
+    routineService: workoutApi.routineService,
   });
 
   const seeded = await workoutApi.seedExercises();

@@ -8,7 +8,7 @@ import tseslint from 'typescript-eslint';
  * über deren öffentliche `index.ts` importieren — hier per Lint-Regel erzwungen.
  * Neue Module müssen in diese Liste aufgenommen werden.
  */
-const SERVER_MODULES = ['auth', 'admin', 'workout', 'health', 'nutrition', 'sync'];
+const SERVER_MODULES = ['auth', 'admin', 'workout', 'health', 'nutrition', 'sync', 'ai'];
 
 const moduleBoundaryZones = SERVER_MODULES.map((mod) => ({
   target: `./apps/server/src/modules/${mod}`,

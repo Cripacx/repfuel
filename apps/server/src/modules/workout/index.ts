@@ -9,7 +9,7 @@ import { createWorkoutRepo } from './repositories/workout-repo.js';
 import { workoutRoutes } from './routes.js';
 import { seedExercises } from './seed/seed-exercises.js';
 import { createExerciseService, type ExerciseService } from './services/exercise-service.js';
-import { createRoutineService } from './services/routine-service.js';
+import { createRoutineService, type RoutineService } from './services/routine-service.js';
 import { createWorkoutService, type WorkoutService } from './services/workout-service.js';
 
 export type { ExerciseService } from './services/exercise-service.js';
@@ -25,6 +25,7 @@ export interface WorkoutModuleOptions {
 export interface WorkoutModuleApi {
   exerciseService: ExerciseService;
   workoutService: WorkoutService;
+  routineService: RoutineService;
   /** Idempotenter Seed der Übungsbibliothek (beim App-Start aufrufen). */
   seedExercises: () => Promise<number>;
 }
@@ -51,5 +52,5 @@ export async function registerWorkoutModule(
     { prefix: '/api/v1' },
   );
 
-  return { exerciseService, workoutService, seedExercises: () => seedExercises(opts.db) };
+  return { exerciseService, workoutService, routineService, seedExercises: () => seedExercises(opts.db) };
 }
