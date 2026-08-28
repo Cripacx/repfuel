@@ -34,6 +34,10 @@ export function workoutRoutes(deps: WorkoutRoutesDeps) {
     const uid = (req: { sessionUser: { id: string } | null }) => req.sessionUser!.id;
 
     // --- Übungen ---
+    app.get('/exercises/facets', async (req) => {
+      return { facets: await exerciseService.facets(uid(req)) };
+    });
+
     app.get('/exercises', async (req) => {
       const query = listExercisesQuerySchema.parse(req.query);
       return { exercises: await exerciseService.list(uid(req), query) };

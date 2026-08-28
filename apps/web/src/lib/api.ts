@@ -15,6 +15,7 @@ import type {
   CreateRoutineRequest,
   CreatedApiTokenDto,
   ExerciseDto,
+  ExerciseFacetsDto,
   FoodDto,
   HealthStatsQuery,
   HealthStatsResponse,
@@ -222,6 +223,7 @@ export const api = {
           offset: params.offset,
         })}`,
       ),
+    facets: (): Promise<{ facets: ExerciseFacetsDto }> => get('/exercises/facets'),
     create: (body: CreateExerciseRequest): Promise<{ exercise: ExerciseDto }> =>
       post('/exercises', body),
   },

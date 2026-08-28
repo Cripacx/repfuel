@@ -187,6 +187,13 @@ const de = {
     sun: 'Sonntag',
   },
   exercises: {
+    libraryTitle: 'Übungen',
+    librarySubtitle: 'Alle Übungen mit Animation',
+    filterAllMuscles: 'Alle Muskeln',
+    filterAllEquipment: 'Alles Equipment',
+    filterReset: 'Filter zurücksetzen',
+    loadMore: 'Mehr laden',
+    openLibrary: 'Übungsbibliothek',
     searchLabel: 'Übung suchen',
     searchPlaceholder: 'Übung suchen…',
     noResults: 'Keine Übungen gefunden.',

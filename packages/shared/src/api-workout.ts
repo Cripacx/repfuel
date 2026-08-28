@@ -18,6 +18,14 @@ export interface ExerciseDto {
   userId: string | null;
 }
 
+/** Verfügbare Filterwerte der sichtbaren Übungsbibliothek. */
+export interface ExerciseFacetsDto {
+  /** Primäre Zielmuskeln, alphabetisch. */
+  muscles: string[];
+  /** Equipment-Werte, alphabetisch. */
+  equipment: string[];
+}
+
 export interface RoutineItemDto {
   id: string;
   exerciseId: string;

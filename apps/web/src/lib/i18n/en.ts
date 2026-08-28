@@ -184,6 +184,13 @@ const en: Messages = {
     sun: 'Sunday',
   },
   exercises: {
+    libraryTitle: 'Exercises',
+    librarySubtitle: 'Every exercise with an animation',
+    filterAllMuscles: 'All muscles',
+    filterAllEquipment: 'All equipment',
+    filterReset: 'Clear filters',
+    loadMore: 'Load more',
+    openLibrary: 'Exercise library',
     searchLabel: 'Search exercise',
     searchPlaceholder: 'Search exercise…',
     noResults: 'No exercises found.',

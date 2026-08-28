@@ -70,6 +70,7 @@
 <div class="page-header">
   <h1>{m().workouts.title}</h1>
   <div class="row-actions">
+    <a class="secondary" href={resolve('/exercises')}>{m().exercises.openLibrary}</a>
     <a class="secondary" href={resolve('/stats')}>{m().nav.stats}</a>
     <button type="button" class="primary" onclick={() => (showStartOptions = !showStartOptions)}>
       {m().workouts.startButton}

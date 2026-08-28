@@ -139,6 +139,10 @@
         <span class="quick-action-icon" aria-hidden="true">📋</span>
         {m().home.viewRoutines}
       </a>
+      <a class="quick-action" href={resolve('/exercises')}>
+        <span class="quick-action-icon" aria-hidden="true">📚</span>
+        {m().exercises.openLibrary}
+      </a>
       <a class="quick-action" href={resolve('/weight')}>
         <span class="quick-action-icon" aria-hidden="true">⚖️</span>
         {m().home.viewWeight}

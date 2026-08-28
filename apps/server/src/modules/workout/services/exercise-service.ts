@@ -1,4 +1,9 @@
-import type { CreateExerciseRequest, ExerciseDto, ListExercisesQuery } from '@repfuel/shared';
+import type {
+  CreateExerciseRequest,
+  ExerciseDto,
+  ExerciseFacetsDto,
+  ListExercisesQuery,
+} from '@repfuel/shared';
 import { AppError } from '../../../core/errors.js';
 import type { ExerciseRepo } from '../repositories/exercise-repo.js';
 import type { ExerciseRow } from '../schema.js';
@@ -21,6 +26,10 @@ export type ExerciseService = ReturnType<typeof createExerciseService>;
 
 export function createExerciseService(exerciseRepo: ExerciseRepo) {
   return {
+    async facets(userId: string): Promise<ExerciseFacetsDto> {
+      return exerciseRepo.facets(userId);
+    },
+
     async list(userId: string, query: ListExercisesQuery): Promise<ExerciseDto[]> {
       const rows = await exerciseRepo.list(userId, query);
       return rows.map(toExerciseDto);
