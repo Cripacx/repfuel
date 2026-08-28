@@ -1,10 +1,11 @@
 # DESIGN.md — repfuel
 
-Visueller Charakter: **Dark & fokussiert.** Ruhige, tiefdunkle Flächen, klare
-Hierarchie, genau eine kräftige Akzentfarbe (Amber). Die App soll sich im
-Studio anfühlen wie ein präzises Werkzeug — nicht wie ein Dashboard-Spielzeug.
-Brand lebt in präzisen Details (Zahlen, Fortschritt, Mikro-Interaktionen),
-nicht in Dekoration. Modus (impeccable): **Operate**.
+Visueller Charakter: **Kohle & Volt.** Ruhige, tiefdunkle Kohle-Flächen, klare
+Hierarchie, genau eine energetische Akzentfarbe (Volt — ein sportliches
+Gelbgrün). Die App soll sich im Studio anfühlen wie ein präzises Werkzeug mit
+Trainingsenergie — nicht wie ein Dashboard-Spielzeug. Brand lebt in präzisen
+Details (Zahlen, Fortschritt, Mikro-Interaktionen), nicht in Dekoration.
+Modus (impeccable): **Operate**.
 
 ## Farben (Tokens)
 
@@ -12,35 +13,36 @@ Alle Farben ausschließlich über CSS-Custom-Properties. Kein Hex im Komponenten
 
 ```css
 :root {
-  /* Flächen (dark-first, base nie reines Schwarz) */
-  --bg: #121417;            /* App-Hintergrund */
-  --surface: #1a1d21;       /* Karten, Sheets */
-  --surface-2: #22262b;     /* erhabene Elemente, Inputs */
-  --border: #2e3338;        /* Hairlines, 1px */
-  --border-strong: #3d434a;
+  /* Flächen (Kohle: dark-first, base nie reines Schwarz) */
+  --bg: #0e0f10;            /* App-Hintergrund */
+  --surface: #16181a;       /* Karten, Sheets */
+  --surface-2: #1e2124;     /* erhabene Elemente, Inputs */
+  --border: #2a2e33;        /* Hairlines, 1px */
+  --border-strong: #3c4249;
 
-  /* Text (off-white, nie #fff) */
-  --text: #e8eaed;          /* primär, Kontrast ≥ 12:1 auf --bg */
-  --text-muted: #a3aab3;    /* sekundär, Kontrast ≥ 4.5:1 */
-  --text-faint: #6b7178;    /* tertiär/Platzhalter, nur für Nicht-Kerninfo */
+  /* Text (off-white, leicht kühl-grünlich, nie #fff) */
+  --text: #f0f2ee;          /* primär, Kontrast ≥ 17:1 auf --bg */
+  --text-muted: #a6aeab;    /* sekundär, Kontrast ≥ 7:1 */
+  --text-faint: #6f7773;    /* tertiär/Platzhalter, nur für Nicht-Kerninfo */
 
-  /* Akzent: Amber — genau EINE Primäraktion pro View */
-  --accent: #f5a623;
-  --accent-hover: #ffb84d;
-  --accent-pressed: #d98f12;
-  --on-accent: #1a1205;     /* Text/Icon auf Akzentfläche */
-  --accent-subtle: rgb(245 166 35 / .12);  /* Hintergrund für Badges/aktive Tabs */
+  /* Akzent: Volt — genau EINE Primäraktion pro View */
+  --accent: #c8f542;
+  --accent-hover: #d9fa6e;
+  --accent-pressed: #a3cf25;
+  --on-accent: #141a02;     /* Text/Icon auf Akzentfläche (Kontrast 14:1) */
+  --accent-subtle: rgb(200 245 66 / .13);  /* Hintergrund für Badges/aktive Tabs */
 
-  /* Semantik (desaturiert für Dark Mode, nie Bedeutung nur über Farbe) */
-  --success: #4cc38a;
-  --danger: #e5534b;
-  --danger-subtle: rgb(229 83 75 / .12);
-  --warning: #d4a72c;
+  /* Semantik (desaturiert für Dark Mode, nie Bedeutung nur über Farbe).
+     Success ist Mintgrün und klar vom gelbgrünen Volt getrennt. */
+  --success: #3fd68f;
+  --danger: #ee5a52;
+  --danger-subtle: rgb(238 90 82 / .12);
+  --warning: #e8b93b;
 
   /* Makro-Farben (Charts, Fortschrittsbalken) */
-  --macro-protein: #4cc38a;
-  --macro-carbs: #5b9bd5;
-  --macro-fat: #d4a72c;
+  --macro-protein: #3fd68f;
+  --macro-carbs: #61a3f2;
+  --macro-fat: #e8b93b;
   --macro-kcal: var(--accent);
 }
 ```
@@ -58,7 +60,7 @@ Alle Farben ausschließlich über CSS-Custom-Properties. Kein Hex im Komponenten
 ## Space & Form
 
 - 4px-Skala: 4, 8, 12, 16, 24, 32, 48, 64 (`--space-1` … `--space-16`).
-- Radius: 8px Inputs/Buttons, 12px Karten, 16px Sheets/Modals; nested:
+- Radius: 10px Inputs/Buttons, 14px Karten, 20px Sheets/Modals; nested:
   `inner = outer − padding`.
 - Abstand innerhalb einer Gruppe (~12px) sichtbar kleiner als zwischen
   Gruppen (~32px).
@@ -77,12 +79,12 @@ Alle Farben ausschließlich über CSS-Custom-Properties. Kein Hex im Komponenten
 
 ## Komponenten
 
-- **Buttons:** `.primary` = Amber-Fläche, `--on-accent`-Text, genau einer pro
+- **Buttons:** `.primary` = Volt-Fläche, `--on-accent`-Text, genau einer pro
   View. `.secondary` = `--surface-2` + Border. `.danger` nur für destruktive
   Aktionen, immer mit Guard (Undo bevorzugt, sonst confirm). Disabled: 45%
   Opacity, kein Cursor-Wechsel-Trick.
-- **Karten:** `--surface`, 12px Radius, 16px Padding, 1px `--border`.
-- **Inputs:** `--surface-2`, 8px Radius, 44px Höhe, Fokus: 2px Akzent-Ring
+- **Karten:** `--surface`, 14px Radius, 16px Padding, 1px `--border`.
+- **Inputs:** `--surface-2`, 10px Radius, 44px Höhe, Fokus: 2px Akzent-Ring
   (Kontrast ≥ 3:1), Validierung on blur, danach live.
 - **Navigation:** Bottom-Tab-Bar auf Mobile (Training / Ernährung / Gewicht /
   mehr), aktiver Tab in Akzent + `--accent-subtle`-Fläche; Top-Bar nur mit

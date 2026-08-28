@@ -1,38 +1,38 @@
 /* repfuel — dunkles, fokussiertes Grundlayout. Kein CSS-Framework, mobile-first.
-   Token-Set nach DESIGN.md: dark & fokussiert, ein Akzent (Amber). */
+   Token-Set nach DESIGN.md: Kohle-Flächen, ein energetischer Volt-Akzent. */
 
 :root {
-  /* Flächen (dark-first, base nie reines Schwarz) */
-  --bg: #121417;
-  --surface: #1a1d21;
-  --surface-2: #22262b;
-  --border: #2e3338;
-  --border-strong: #3d434a;
+  /* Flächen (Kohle: dark-first, base nie reines Schwarz) */
+  --bg: #0e0f10;
+  --surface: #16181a;
+  --surface-2: #1e2124;
+  --border: #2a2e33;
+  --border-strong: #3c4249;
 
-  /* Text (off-white, nie #fff) */
-  --text: #e8eaed;
-  --text-muted: #a3aab3;
-  --text-faint: #6b7178;
+  /* Text (off-white mit leicht kühlem Grünstich, nie #fff) */
+  --text: #f0f2ee;
+  --text-muted: #a6aeab;
+  --text-faint: #6f7773;
 
-  /* Akzent: Amber — genau eine Primäraktion pro View */
-  --accent: #f5a623;
-  --accent-hover: #ffb84d;
-  --accent-pressed: #d98f12;
-  --on-accent: #1a1205;
-  --accent-subtle: rgb(245 166 35 / 0.12);
+  /* Akzent: Volt — genau eine Primäraktion pro View */
+  --accent: #c8f542;
+  --accent-hover: #d9fa6e;
+  --accent-pressed: #a3cf25;
+  --on-accent: #141a02;
+  --accent-subtle: rgb(200 245 66 / 0.13);
 
-  /* Semantik */
-  --success: #4cc38a;
-  --danger: #e5534b;
-  --danger-subtle: rgb(229 83 75 / 0.12);
-  --warning: #d4a72c;
-  --warning-subtle: rgb(212 167 44 / 0.14);
-  --success-subtle: rgb(76 195 138 / 0.14);
+  /* Semantik (desaturiert für Dark Mode, Bedeutung nie nur über Farbe) */
+  --success: #3fd68f;
+  --danger: #ee5a52;
+  --danger-subtle: rgb(238 90 82 / 0.12);
+  --warning: #e8b93b;
+  --warning-subtle: rgb(232 185 59 / 0.14);
+  --success-subtle: rgb(63 214 143 / 0.14);
 
   /* Makro-Farben (Charts, Fortschrittsbalken) */
-  --macro-protein: #4cc38a;
-  --macro-carbs: #5b9bd5;
-  --macro-fat: #d4a72c;
+  --macro-protein: #3fd68f;
+  --macro-carbs: #61a3f2;
+  --macro-fat: #e8b93b;
   --macro-kcal: var(--accent);
 
   /* Typografie */
@@ -60,10 +60,10 @@
   --space-12: 48px;
   --space-16: 64px;
 
-  /* Radius */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
+  /* Radius (moderne, weichere Register: Inputs/Buttons, Karten, Sheets) */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
 
   /* Motion — Antwort auf pointer-down, nicht erst auf click (apple-design §1).
      --dur-press ist bewusst kürzer als alles andere: Druckfeedback darf nicht
@@ -208,10 +208,10 @@ a {
 /* Mehr Kontrast: klar abgegrenzte Flächen statt zarter Hairlines. */
 @media (prefers-contrast: more) {
   :root {
-    --border: #5a626b;
-    --border-strong: #7b848e;
-    --text-muted: #c2c9d1;
-    --text-faint: #98a1aa;
+    --border: #59616a;
+    --border-strong: #7a838d;
+    --text-muted: #c5ccc8;
+    --text-faint: #9aa29d;
   }
 
   .topbar,

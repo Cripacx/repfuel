@@ -120,9 +120,9 @@
       return;
     }
 
-    const accent = readToken('--accent', '#f5a623');
-    const textMuted = readToken('--text-muted', '#a3aab3');
-    const border = readToken('--border', '#2e3338');
+    const accent = readToken('--accent', '#c8f542');
+    const textMuted = readToken('--text-muted', '#a6aeab');
+    const border = readToken('--border', '#2a2e33');
 
     chartInstance = new Chart(canvas, {
       type: 'line',
