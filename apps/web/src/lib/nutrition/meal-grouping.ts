@@ -18,6 +18,19 @@ export function groupMealsByType(meals: readonly MealDto[]): MealsByType {
   return grouped;
 }
 
+/**
+ * Vorbelegung des Mahlzeit-Typs nach Uhrzeit: wer um 8 Uhr loggt, loggt fast
+ * immer Frühstück — der Dialog soll die wahrscheinliche Wahl schon treffen,
+ * änderbar bleibt sie über den Segment-Schalter.
+ */
+export function suggestMealType(date: Date): MealType {
+  const hour = date.getHours() + date.getMinutes() / 60;
+  if (hour < 10.5) return 'breakfast';
+  if (hour < 14.5) return 'lunch';
+  if (hour < 17.5) return 'snack';
+  return 'dinner';
+}
+
 export interface NutritionTotals {
   kcal: number;
   proteinG: number;

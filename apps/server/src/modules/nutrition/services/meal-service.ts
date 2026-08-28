@@ -1,4 +1,5 @@
 import type {
+  FoodDto,
   ListMealsQuery,
   MealDto,
   NutritionDayDto,
@@ -87,6 +88,19 @@ export function createMealService(deps: {
     async remove(userId: string, id: string): Promise<void> {
       const row = await mealRepo.softDelete(userId, id);
       if (!row) throw new AppError('not_found', 'Meal not found');
+    },
+
+    /** Zuletzt geloggte Lebensmittel (distinct, jüngstes zuerst) — die
+     * Vorschlagsliste des Logging-Dialogs. */
+    async recentFoods(userId: string, limit: number): Promise<FoodDto[]> {
+      const ids = await mealRepo.recentFoodIds(userId, limit);
+      if (ids.length === 0) return [];
+      const rows = await foodRepo.findVisibleByIds(userId, ids);
+      const byId = new Map(rows.map((f) => [f.id, f]));
+      return ids
+        .map((id) => byId.get(id))
+        .filter((row): row is FoodRow => row !== undefined)
+        .map(toFoodDto);
     },
 
     /** Tagessummen (lokale Tage über tzOffsetMinutes) + Ziele aus dem Profil. */

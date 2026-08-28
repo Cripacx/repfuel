@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, isNull, lte, type SQL } from 'drizzle-orm';
+import { and, desc, eq, gte, isNotNull, isNull, lte, max, type SQL } from 'drizzle-orm';
 import type { MealType } from '@repfuel/shared';
 import type { Database } from '../../../core/db.js';
 import { meals, type MealRow } from '../schema.js';
@@ -18,6 +18,8 @@ export interface MealRepo {
   list(userId: string, filter: { from?: Date; to?: Date; limit: number }): Promise<MealRow[]>;
   upsert(input: MealUpsert): Promise<MealRow>;
   softDelete(userId: string, id: string): Promise<MealRow | null>;
+  /** Zuletzt geloggte Lebensmittel des Nutzers (distinct, jüngstes zuerst). */
+  recentFoodIds(userId: string, limit: number): Promise<string[]>;
 }
 
 export function createMealRepo(db: Database): MealRepo {
@@ -64,6 +66,16 @@ export function createMealRepo(db: Database): MealRepo {
         .where(and(eq(meals.id, id), eq(meals.userId, userId), isNull(meals.deletedAt)))
         .returning();
       return rows[0] ?? null;
+    },
+    async recentFoodIds(userId, limit) {
+      const rows = await db
+        .select({ foodId: meals.foodId, lastEatenAt: max(meals.eatenAt) })
+        .from(meals)
+        .where(and(eq(meals.userId, userId), isNull(meals.deletedAt), isNotNull(meals.foodId)))
+        .groupBy(meals.foodId)
+        .orderBy(desc(max(meals.eatenAt)))
+        .limit(limit);
+      return rows.map((r) => r.foodId).filter((id): id is string => id !== null);
     },
   };
 }

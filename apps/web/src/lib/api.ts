@@ -288,6 +288,8 @@ export const api = {
   foods: {
     search: (q: string, limit = 20): Promise<{ foods: FoodDto[] }> =>
       get(`/foods/search${query({ q, limit })}`),
+    recent: (limit = 20): Promise<{ foods: FoodDto[] }> =>
+      get(`/foods/recent${query({ limit })}`),
     byBarcode: (code: string): Promise<{ food: FoodDto }> =>
       get(`/foods/barcode/${encodeURIComponent(code)}`),
     create: (body: CreateFoodRequest): Promise<{ food: FoodDto }> => post('/foods', body),

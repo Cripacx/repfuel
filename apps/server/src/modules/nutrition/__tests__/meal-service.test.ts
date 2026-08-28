@@ -11,7 +11,7 @@ function setup(targets = { kcalTarget: 2500, proteinTargetG: 160, carbsTargetG: 
   const foodRepo = fakeFoodRepo([oats]);
   const mealRepo = fakeMealRepo();
   const service = createMealService({ mealRepo, foodRepo, getTargets: async () => targets });
-  return { service, mealRepo, oats };
+  return { service, mealRepo, foodRepo, oats };
 }
 
 describe('meal service', () => {
@@ -95,6 +95,42 @@ describe('meal service', () => {
       tzOffsetMinutes: 0,
     });
     expect(utcStats.days.map((d) => d.date)).toEqual(['2026-08-27', '2026-08-28']);
+  });
+
+  it('lists recently logged foods, newest first, skipping quick entries', async () => {
+    const { service, foodRepo } = setup();
+    const oats = makeFood({ name: 'Oats' });
+    const rice = makeFood({ name: 'Rice' });
+    foodRepo.rows.push(oats, rice);
+
+    await service.upsert(USER, randomUUID(), {
+      eatenAt: '2026-08-26T08:00:00.000Z',
+      mealType: 'breakfast',
+      foodId: oats.id,
+      amountG: 60,
+    });
+    await service.upsert(USER, randomUUID(), {
+      eatenAt: '2026-08-27T12:00:00.000Z',
+      mealType: 'lunch',
+      foodId: rice.id,
+      amountG: 120,
+    });
+    // Schnelleintrag ohne foodId taucht nicht in den Vorschlägen auf.
+    await service.upsert(USER, randomUUID(), {
+      eatenAt: '2026-08-28T09:00:00.000Z',
+      mealType: 'snack',
+      quickKcal: 200,
+    });
+    // Oats erneut gegessen — rückt nach vorn, bleibt aber distinct.
+    await service.upsert(USER, randomUUID(), {
+      eatenAt: '2026-08-28T10:00:00.000Z',
+      mealType: 'breakfast',
+      foodId: oats.id,
+      amountG: 60,
+    });
+
+    const foods = await service.recentFoods(USER, 20);
+    expect(foods.map((f) => f.name)).toEqual(['Oats', 'Rice']);
   });
 
   it('soft-deletes meals', async () => {

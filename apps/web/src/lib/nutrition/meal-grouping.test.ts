@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { MealDto } from '@repfuel/shared';
-import { groupMealsByType, sumNutrition } from './meal-grouping.js';
+import { groupMealsByType, sumNutrition, suggestMealType } from './meal-grouping.js';
 
 function meal(
   id: string,
@@ -51,6 +51,19 @@ describe('groupMealsByType', () => {
     ];
     const grouped = groupMealsByType(meals);
     expect(grouped.dinner.map((m) => m.id)).toEqual(['early', 'late']);
+  });
+});
+
+describe('suggestMealType', () => {
+  const at = (h: number, min = 0) => new Date(2026, 7, 28, h, min);
+
+  it('maps daytimes to the likely meal type', () => {
+    expect(suggestMealType(at(7))).toBe('breakfast');
+    expect(suggestMealType(at(10, 29))).toBe('breakfast');
+    expect(suggestMealType(at(12))).toBe('lunch');
+    expect(suggestMealType(at(15, 30))).toBe('snack');
+    expect(suggestMealType(at(19))).toBe('dinner');
+    expect(suggestMealType(at(23, 45))).toBe('dinner');
   });
 });
 

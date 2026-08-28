@@ -1,7 +1,8 @@
 <script lang="ts">
-  import type { FoodDto, MealDto, MealType } from '@repfuel/shared';
+  import { MEAL_TYPES, type FoodDto, type MealDto, type MealType } from '@repfuel/shared';
   import { api, ApiError } from '$lib/api.js';
   import BarcodeScanner from './BarcodeScanner.svelte';
+  import Icon from './Icon.svelte';
   import NumberStepper from './NumberStepper.svelte';
   import { debounce } from '$lib/debounce.js';
   import { describeError } from '$lib/errors.js';
@@ -11,18 +12,21 @@
   import { isOnline } from '$lib/offline/status.svelte.js';
 
   /**
-   * Inhalt des "Mahlzeit hinzufügen"-Modals: drei Eingabewege (Suche, Barcode-Scan,
-   * Schnelleintrag). Suche und Barcode münden beide in denselben Mengen-Schritt,
-   * bevor per PUT /meals/:uuid geloggt wird.
+   * Inhalt des "Mahlzeit loggen"-Sheets. Suche zuerst: das Feld ist fokussiert,
+   * die leere Suche zeigt die zuletzt geloggten Lebensmittel (der häufigste
+   * Fall ist Wiederholung), Barcode und Schnelleintrag sind einen Tipp
+   * entfernt. Alle Wege münden im selben Mengen-Schritt, bevor per
+   * PUT /meals/:uuid geloggt wird. Der Mahlzeit-Typ wird oben im Sheet
+   * gewählt (vorbelegt nach Uhrzeit), nicht vorher auf der Seite.
    */
   let {
-    mealType,
+    initialMealType,
     eatenAt,
     onSaved,
     dayKcal = 0,
     kcalTarget = null,
   }: {
-    mealType: MealType;
+    initialMealType: MealType;
     eatenAt: string;
     onSaved: (meal: MealDto) => void;
     /** Bereits geloggte Kalorien des Tages — für die Auswirkung dieser Auswahl. */
@@ -30,23 +34,46 @@
     kcalTarget?: number | null;
   } = $props();
 
+  // Bewusst nur der Startwert: der Nutzer wählt danach im Sheet selbst.
+  // svelte-ignore state_referenced_locally
+  let mealType = $state(initialMealType);
+
   const QUICK_AMOUNTS = [50, 100, 150, 200, 250];
 
-  type Tab = 'search' | 'barcode' | 'quick';
-  let tab = $state<Tab>('search');
+  /** Unteransicht innerhalb des Such-Schritts. */
+  type View = 'search' | 'barcode' | 'quick';
+  let view = $state<View>('search');
 
   // Food-Suche/Barcode sind laut Spec online-only (brauchen den Server/OFF) — offline
-  // bleibt nur der Schnelleintrag. Weg von einem gerade deaktivierten Tab wechseln,
-  // falls die Verbindung während des Ausfüllens wegfällt.
+  // bleibt nur der Schnelleintrag.
   $effect(() => {
-    if (!isOnline() && tab !== 'quick') {
-      tab = 'quick';
+    if (!isOnline() && view === 'barcode') {
+      view = 'quick';
     }
   });
 
   function foodLabel(food: FoodDto): string {
     return food.brand ? `${food.name} · ${food.brand}` : food.name;
   }
+
+  // --- Zuletzt geloggt ---
+  let recents = $state<FoodDto[]>([]);
+  let recentsLoading = $state(false);
+
+  $effect(() => {
+    if (!isOnline()) return;
+    recentsLoading = true;
+    void (async () => {
+      try {
+        const { foods } = await api.foods.recent(12);
+        recents = foods;
+      } catch {
+        // Ohne Vorschläge bleibt die Suche der Weg — kein Fehlerbanner nötig.
+      } finally {
+        recentsLoading = false;
+      }
+    })();
+  });
 
   // --- Suche ---
   let query = $state('');
@@ -78,6 +105,15 @@
   $effect(() => {
     runSearch(query);
   });
+
+  /* Autofokus auf das Suchfeld: Das Sheet existiert nur, um zu loggen — der
+     erste Tastendruck soll sofort suchen. `autofocus`-Attribut wäre a11y-Lint-
+     Thema; die Action fokussiert nach dem Mount (gleiche Wirkung, bewusst). */
+  function focusOnMount(node: HTMLInputElement) {
+    // Nach der Sheet-Animation, damit der Fokus das Sheet nicht verspringen lässt.
+    const t = setTimeout(() => node.focus(), 250);
+    return { destroy: () => clearTimeout(t) };
+  }
 
   // --- Eigenes Lebensmittel anlegen ---
   let showCustomFoodForm = $state(false);
@@ -142,7 +178,7 @@
     }
   }
 
-  // --- Menge (aus Suche oder Barcode) ---
+  // --- Menge (aus Suche, Vorschlägen oder Barcode) ---
   let selectedFood = $state<FoodDto | null>(null);
   let amountG = $state(100);
   let savingAmount = $state(false);
@@ -219,9 +255,21 @@
 </script>
 
 <div class="add-meal">
+  <!-- Mahlzeit-Typ: nach Uhrzeit vorbelegt, hier änderbar — gilt für alle Wege. -->
+  <div class="method-switch" role="group" aria-label={m().nutrition.addMeal.mealTypeLabel}>
+    {#each MEAL_TYPES as type (type)}
+      <button type="button" class:active={mealType === type} onclick={() => (mealType = type)}>
+        {m().nutrition.mealTypes[type]}
+      </button>
+    {/each}
+  </div>
+
   {#if selectedFood}
     <div class="amount-entry">
-      <button type="button" class="secondary" onclick={clearSelectedFood}>{m().common.back}</button>
+      <button type="button" class="back-link" onclick={clearSelectedFood}>
+        <Icon name="chevron-left" size={18} />
+        {m().common.back}
+      </button>
       <h3>{foodLabel(selectedFood)}</h3>
       <p class="muted">
         {roundKcal(selectedFood.kcalPer100)}
@@ -289,65 +337,124 @@
         </button>
       </div>
     </div>
-  {:else}
-    <nav class="tabs" aria-label={m().nutrition.addMeal.tabsLabel}>
-      <button
-        type="button"
-        class:active={tab === 'search'}
-        disabled={!isOnline()}
-        onclick={() => (tab = 'search')}
-      >
-        {m().nutrition.addMeal.tabSearch}
+  {:else if view === 'barcode'}
+    <button type="button" class="back-link" onclick={() => (view = 'search')}>
+      <Icon name="chevron-left" size={18} />
+      {m().nutrition.addMeal.backToSearch}
+    </button>
+    {#if barcodeLoading}
+      <p class="muted">{m().nutrition.addMeal.barcodeLookingUp}</p>
+    {:else}
+      {#if barcodeError}
+        <p class="error" role="alert">{barcodeError}</p>
+      {/if}
+      <BarcodeScanner onDetected={handleBarcodeDetected} />
+    {/if}
+  {:else if view === 'quick' || !isOnline()}
+    {#if isOnline()}
+      <button type="button" class="back-link" onclick={() => (view = 'search')}>
+        <Icon name="chevron-left" size={18} />
+        {m().nutrition.addMeal.backToSearch}
       </button>
-      <button
-        type="button"
-        class:active={tab === 'barcode'}
-        disabled={!isOnline()}
-        onclick={() => (tab = 'barcode')}
-      >
-        {m().nutrition.addMeal.tabBarcode}
-      </button>
-      <button type="button" class:active={tab === 'quick'} onclick={() => (tab = 'quick')}>
-        {m().nutrition.addMeal.tabQuick}
-      </button>
-    </nav>
-
-    {#if !isOnline()}
+    {:else}
       <p class="hint">{m().offline.searchUnavailableOffline}</p>
     {/if}
+    <label for="quick-kcal">{m().nutrition.addMeal.quickKcalLabel}</label>
+    <input
+      id="quick-kcal"
+      type="number"
+      inputmode="numeric"
+      min="1"
+      step="1"
+      bind:value={quickKcal}
+    />
+    {#if quickError}
+      <p class="error" role="alert">{quickError}</p>
+    {/if}
+    <button type="button" class="primary" onclick={saveQuick} disabled={savingQuick}>
+      {savingQuick ? m().common.saving : m().nutrition.addMeal.quickSaveButton}
+    </button>
+  {:else}
+    <div class="meal-search-row">
+      <div class="meal-search-field">
+        <span class="meal-search-icon"><Icon name="search" size={18} /></span>
+        <input
+          id="meal-food-search"
+          type="search"
+          autocomplete="off"
+          placeholder={m().nutrition.addMeal.searchPlaceholder}
+          aria-label={m().nutrition.addMeal.searchLabel}
+          bind:value={query}
+          use:focusOnMount
+        />
+      </div>
+      <button
+        type="button"
+        class="icon-btn"
+        onclick={() => (view = 'barcode')}
+        aria-label={m().nutrition.addMeal.scanBarcode}
+      >
+        <Icon name="barcode" />
+      </button>
+    </div>
 
-    {#if tab === 'search'}
-      <label for="meal-food-search">{m().nutrition.addMeal.searchLabel}</label>
-      <input
-        id="meal-food-search"
-        type="text"
-        autocomplete="off"
-        placeholder={m().nutrition.addMeal.searchPlaceholder}
-        bind:value={query}
-      />
-
-      {#if searching}
-        <p class="muted">{m().nutrition.addMeal.searching}</p>
-      {:else if searchError}
-        <p class="error" role="alert">{searchError}</p>
-      {:else if searchedOnce && results.length === 0}
-        <p class="empty-state">{m().nutrition.addMeal.noResults}</p>
-      {:else if results.length > 0}
+    {#if query.trim() === ''}
+      <!-- Der häufigste Fall ist Wiederholung: die leere Suche ist deshalb
+           keine leere Fläche, sondern die "Zuletzt geloggt"-Liste. -->
+      {#if recentsLoading}
+        <div class="skeleton-list">
+          <div class="skeleton-row"></div>
+          <div class="skeleton-row"></div>
+        </div>
+      {:else if recents.length > 0}
+        <p class="meal-section-label">{m().nutrition.addMeal.recentTitle}</p>
         <ul class="picker-results">
-          {#each results as food (food.id)}
+          {#each recents as food (food.id)}
             <li>
               <button type="button" class="picker-result-btn" onclick={() => selectFood(food)}>
-                {foodLabel(food)}
-                <span class="picker-result-meta">
-                  {roundKcal(food.kcalPer100)}
-                  {m().nutrition.kcalPer100}
+                <span class="picker-result-text">
+                  {foodLabel(food)}
+                  <span class="picker-result-meta">
+                    {roundKcal(food.kcalPer100)}
+                    {m().nutrition.kcalPer100}
+                  </span>
                 </span>
               </button>
             </li>
           {/each}
         </ul>
+      {:else}
+        <p class="empty-state">{m().nutrition.addMeal.recentEmpty}</p>
       {/if}
+    {:else if searching}
+      <p class="muted">{m().nutrition.addMeal.searching}</p>
+    {:else if searchError}
+      <p class="error" role="alert">{searchError}</p>
+    {:else if searchedOnce && results.length === 0}
+      <p class="empty-state">{m().nutrition.addMeal.noResults}</p>
+    {:else if results.length > 0}
+      <ul class="picker-results">
+        {#each results as food (food.id)}
+          <li>
+            <button type="button" class="picker-result-btn" onclick={() => selectFood(food)}>
+              <span class="picker-result-text">
+                {foodLabel(food)}
+                <span class="picker-result-meta">
+                  {roundKcal(food.kcalPer100)}
+                  {m().nutrition.kcalPer100}
+                </span>
+              </span>
+            </button>
+          </li>
+        {/each}
+      </ul>
+    {/if}
 
+    <div class="meal-alt-actions">
+      <button type="button" class="secondary" onclick={() => (view = 'quick')}>
+        <Icon name="bolt" size={18} />
+        {m().nutrition.addMeal.quickToggle}
+      </button>
       <button
         type="button"
         class="secondary"
@@ -356,97 +463,72 @@
       >
         {m().nutrition.addMeal.createCustomFoodToggle}
       </button>
+    </div>
 
-      {#if showCustomFoodForm}
-        <div class="card">
-          <label for="custom-food-name">{m().nutrition.addMeal.customFoodName}</label>
-          <input id="custom-food-name" type="text" bind:value={customName} />
+    {#if showCustomFoodForm}
+      <div class="card">
+        <label for="custom-food-name">{m().nutrition.addMeal.customFoodName}</label>
+        <input id="custom-food-name" type="text" bind:value={customName} />
 
-          <label for="custom-food-brand">{m().nutrition.addMeal.customFoodBrand}</label>
-          <input id="custom-food-brand" type="text" bind:value={customBrand} />
+        <label for="custom-food-brand">{m().nutrition.addMeal.customFoodBrand}</label>
+        <input id="custom-food-brand" type="text" bind:value={customBrand} />
 
-          <div class="field-row">
-            <div>
-              <label for="custom-food-kcal">{m().nutrition.addMeal.customFoodKcal}</label>
-              <input
-                id="custom-food-kcal"
-                type="number"
-                inputmode="decimal"
-                min="0"
-                step="1"
-                bind:value={customKcal}
-              />
-            </div>
-            <div>
-              <label for="custom-food-protein">{m().nutrition.macros.protein} (g/100g)</label>
-              <input
-                id="custom-food-protein"
-                type="number"
-                inputmode="decimal"
-                min="0"
-                step="0.1"
-                bind:value={customProtein}
-              />
-            </div>
+        <div class="field-row">
+          <div>
+            <label for="custom-food-kcal">{m().nutrition.addMeal.customFoodKcal}</label>
+            <input
+              id="custom-food-kcal"
+              type="number"
+              inputmode="decimal"
+              min="0"
+              step="1"
+              bind:value={customKcal}
+            />
           </div>
-          <div class="field-row">
-            <div>
-              <label for="custom-food-carbs">{m().nutrition.macros.carbs} (g/100g)</label>
-              <input
-                id="custom-food-carbs"
-                type="number"
-                inputmode="decimal"
-                min="0"
-                step="0.1"
-                bind:value={customCarbs}
-              />
-            </div>
-            <div>
-              <label for="custom-food-fat">{m().nutrition.macros.fat} (g/100g)</label>
-              <input
-                id="custom-food-fat"
-                type="number"
-                inputmode="decimal"
-                min="0"
-                step="0.1"
-                bind:value={customFat}
-              />
-            </div>
+          <div>
+            <label for="custom-food-protein">{m().nutrition.macros.protein} (g/100g)</label>
+            <input
+              id="custom-food-protein"
+              type="number"
+              inputmode="decimal"
+              min="0"
+              step="0.1"
+              bind:value={customProtein}
+            />
           </div>
-
-          {#if createFoodError}
-            <p class="error" role="alert">{createFoodError}</p>
-          {/if}
-          <button type="button" class="primary" onclick={createCustomFood} disabled={creatingFood}>
-            {creatingFood ? m().common.saving : m().nutrition.addMeal.createCustomFoodButton}
-          </button>
         </div>
-      {/if}
-    {:else if tab === 'barcode'}
-      {#if barcodeLoading}
-        <p class="muted">{m().nutrition.addMeal.barcodeLookingUp}</p>
-      {:else}
-        {#if barcodeError}
-          <p class="error" role="alert">{barcodeError}</p>
+        <div class="field-row">
+          <div>
+            <label for="custom-food-carbs">{m().nutrition.macros.carbs} (g/100g)</label>
+            <input
+              id="custom-food-carbs"
+              type="number"
+              inputmode="decimal"
+              min="0"
+              step="0.1"
+              bind:value={customCarbs}
+            />
+          </div>
+          <div>
+            <label for="custom-food-fat">{m().nutrition.macros.fat} (g/100g)</label>
+            <input
+              id="custom-food-fat"
+              type="number"
+              inputmode="decimal"
+              min="0"
+              step="0.1"
+              bind:value={customFat}
+            />
+          </div>
+        </div>
+
+        {#if createFoodError}
+          <p class="error" role="alert">{createFoodError}</p>
         {/if}
-        <BarcodeScanner onDetected={handleBarcodeDetected} />
-      {/if}
-    {:else}
-      <label for="quick-kcal">{m().nutrition.addMeal.quickKcalLabel}</label>
-      <input
-        id="quick-kcal"
-        type="number"
-        inputmode="numeric"
-        min="1"
-        step="1"
-        bind:value={quickKcal}
-      />
-      {#if quickError}
-        <p class="error" role="alert">{quickError}</p>
-      {/if}
-      <button type="button" class="primary" onclick={saveQuick} disabled={savingQuick}>
-        {savingQuick ? m().common.saving : m().nutrition.addMeal.quickSaveButton}
-      </button>
+        <button type="button" class="primary" onclick={createCustomFood} disabled={creatingFood}>
+          {creatingFood ? m().common.saving : m().nutrition.addMeal.createCustomFoodButton}
+        </button>
+      </div>
     {/if}
   {/if}
 </div>

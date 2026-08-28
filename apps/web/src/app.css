@@ -2958,6 +2958,116 @@ input[type='checkbox'] {
   font-variant-numeric: tabular-nums;
 }
 
+/* --- Mahlzeit loggen: Suche-zuerst-Sheet ------------------------------- */
+
+.meal-search-row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  margin-bottom: var(--space-3);
+}
+
+.meal-search-field {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.meal-search-field input {
+  width: 100%;
+  padding-left: calc(var(--space-3) + 18px + var(--space-2));
+}
+
+.meal-search-icon {
+  position: absolute;
+  left: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+.meal-section-label {
+  margin: var(--space-3) 0 var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-xs);
+}
+
+.meal-alt-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: var(--space-4);
+}
+
+.meal-alt-actions .secondary {
+  gap: var(--space-2);
+}
+
+/* Zurück-Pfad innerhalb des Sheets (Mengen-Schritt, Scanner, Schnelleintrag). */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  align-self: flex-start;
+  min-height: var(--touch-target);
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.back-link:hover {
+  color: var(--text);
+}
+
+/* Schwebende Primäraktion der Ernährungsseite: dort verankert, wo der Daumen
+   ruht (apple-design §12/Bottom-Ergonomie), über der Tab-Bar. */
+.fab {
+  position: fixed;
+  right: var(--space-4);
+  bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px) + var(--space-4));
+  z-index: 45;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 52px;
+  padding: 0 var(--space-6);
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgb(0 0 0 / 0.35), var(--shadow-lg);
+  transition:
+    transform var(--dur-press) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+
+.fab:hover {
+  background: var(--accent-hover);
+}
+
+.fab:active {
+  transform: scale(0.95);
+  background: var(--accent-pressed);
+}
+
+@media (min-width: 768px) {
+  .fab {
+    bottom: var(--space-6);
+  }
+}
+
 /* --- Mahlzeit hinzufügen: Auswirkung auf den Tag ---------------------- */
 
 .day-impact {

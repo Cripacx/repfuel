@@ -22,7 +22,7 @@
     todayDateString,
   } from '$lib/nutrition/day-range.js';
   import { round1, roundKcal } from '$lib/nutrition/format.js';
-  import { groupMealsByType } from '$lib/nutrition/meal-grouping.js';
+  import { groupMealsByType, suggestMealType } from '$lib/nutrition/meal-grouping.js';
   import { computeProgress } from '$lib/nutrition/progress.js';
   import { hydrateMeals, listMealsLocal, removeMeal, upsertMeal } from '$lib/offline/repo.js';
 
@@ -36,7 +36,10 @@
   let loading = $state(true);
   let loadError = $state<string | null>(null);
 
-  let addMealType = $state<MealType | null>(null);
+  // Sheet-Zustand: der Typ wird im Sheet gewählt (vorbelegt nach Uhrzeit bzw.
+  // durch das "+" der jeweiligen Gruppe).
+  let addOpen = $state(false);
+  let addInitialType = $state<MealType>('breakfast');
 
   let editingMealId = $state<string | null>(null);
   let editAmount = $state(100);
@@ -149,11 +152,12 @@
     });
   }
 
-  function openAddMeal(type: MealType): void {
-    addMealType = type;
+  function openAddMeal(type?: MealType): void {
+    addInitialType = type ?? suggestMealType(new Date());
+    addOpen = true;
   }
   function closeAddMeal(): void {
-    addMealType = null;
+    addOpen = false;
   }
 
   function handleMealSaved(meal: MealDto): void {
@@ -531,10 +535,17 @@
   {/each}
 {/if}
 
-{#if addMealType}
-  <Modal title={`${m().nutrition.addMeal.title} — ${m().nutrition.mealTypes[addMealType]}`} onClose={closeAddMeal}>
+{#if !loading}
+  <button type="button" class="fab" onclick={() => openAddMeal()}>
+    <Icon name="plus" />
+    {m().nutrition.addMeal.fabLabel}
+  </button>
+{/if}
+
+{#if addOpen}
+  <Modal title={m().nutrition.addMeal.title} onClose={closeAddMeal}>
     <AddMealForm
-      mealType={addMealType}
+      initialMealType={addInitialType}
       eatenAt={defaultEatenAtIso(selectedDate)}
       onSaved={handleMealSaved}
       dayKcal={statsDay?.kcal ?? 0}

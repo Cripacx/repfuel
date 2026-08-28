@@ -110,6 +110,18 @@ export function fakeMealRepo(): MealRepo & { rows: MealRow[] } {
       if (row) row.deletedAt = new Date();
       return row;
     },
+    async recentFoodIds(userId, limit) {
+      const lastEaten = new Map<string, number>();
+      for (const r of rows) {
+        if (r.userId !== userId || r.deletedAt || !r.foodId) continue;
+        const prev = lastEaten.get(r.foodId) ?? 0;
+        if (r.eatenAt.getTime() > prev) lastEaten.set(r.foodId, r.eatenAt.getTime());
+      }
+      return [...lastEaten.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, limit)
+        .map(([foodId]) => foodId);
+    },
   };
 }
 

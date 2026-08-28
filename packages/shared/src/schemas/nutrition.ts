@@ -27,6 +27,11 @@ export const foodSearchQuerySchema = z.object({
 });
 export type FoodSearchQuery = z.infer<typeof foodSearchQuerySchema>;
 
+export const recentFoodsQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
+export type RecentFoodsQuery = z.infer<typeof recentFoodsQuerySchema>;
+
 export const barcodeParamsSchema = z.object({
   code: z.string().regex(/^\d{6,14}$/, 'invalid barcode'),
 });

@@ -4,6 +4,7 @@ import {
   createFoodRequestSchema,
   foodSearchQuerySchema,
   listMealsQuerySchema,
+  recentFoodsQuerySchema,
   nutritionStatsQuerySchema,
   upsertMealRequestSchema,
   uuidSchema,
@@ -31,6 +32,11 @@ export function nutritionRoutes(deps: NutritionRoutesDeps) {
     app.get('/foods/search', async (req) => {
       const { q, limit } = foodSearchQuerySchema.parse(req.query);
       return { foods: await foodService.search(uid(req), q, limit) };
+    });
+
+    app.get('/foods/recent', async (req) => {
+      const { limit } = recentFoodsQuerySchema.parse(req.query);
+      return { foods: await mealService.recentFoods(uid(req), limit) };
     });
 
     app.get('/foods/barcode/:code', async (req) => {
