@@ -8,6 +8,8 @@ export interface ExerciseDto {
   /** Deutscher Name, falls vorhanden (nur wger-Altbestand). */
   nameDe: string | null;
   muscleGroups: string[];
+  /** Schritt-für-Schritt-Anleitung (en, aus dem Dataset; leer bei custom). */
+  instructions: string[];
   equipment: string | null;
   /** Standbild/Thumbnail, z.B. /media/img/0001-2gPfomN.jpg. */
   mediaUrl: string | null;

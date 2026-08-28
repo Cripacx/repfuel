@@ -212,6 +212,9 @@ const de = {
     nameRequired: 'Bitte gib einen Namen ein.',
     animationPlay: 'Animation abspielen',
     animationPause: 'Animation anhalten',
+    howToTitle: 'Ausführung',
+    howToEnglishHint: 'Anleitung auf Englisch — der Übungsdatensatz führt kein Deutsch.',
+    noInstructions: 'Für diese Übung liegt keine Anleitung vor.',
   },
   routines: {
     title: 'Routinen',

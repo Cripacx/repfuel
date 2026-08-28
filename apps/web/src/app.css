@@ -2724,17 +2724,115 @@ input[type='checkbox'] {
 }
 
 .exercise-library li {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  /* 56–64px Zeilenhöhe wie in DESIGN.md für Listenzeilen festgelegt. */
-  min-height: 64px;
-  padding: var(--space-2) 0;
   border-bottom: 1px solid var(--border);
 }
 
 .exercise-library li:last-child {
   border-bottom: 0;
+}
+
+/* Die ganze Zeile ist das Ziel (Detail-Sheet), nicht ein 16px-Icon. */
+.exercise-row-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  /* 56–64px Zeilenhöhe wie in DESIGN.md für Listenzeilen festgelegt. */
+  min-height: 64px;
+  padding: var(--space-2) 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform var(--dur-press) var(--ease-out), opacity var(--dur-fast) var(--ease-out);
+}
+
+.exercise-row-btn:active {
+  transform: scale(0.985);
+}
+
+.exercise-row-chevron {
+  margin-left: auto;
+  display: inline-flex;
+  color: var(--text-faint);
+}
+
+/* --- Übungs-Detail (Sheet) -------------------------------------------- */
+
+.exercise-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.exercise-detail-section h3 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-lg);
+}
+
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* Tags sind Metadaten, keine Aktionen — deshalb keine Pill-Buttons,
+   sondern ruhige Flächen. */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 var(--space-3);
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.tag-equipment {
+  background: var(--accent-subtle);
+  border-color: transparent;
+  color: var(--accent);
+}
+
+/* Schrittliste: Volt-Nummern-Punkte führen das Auge, der Text bleibt ruhig. */
+.howto-steps {
+  list-style: none;
+  counter-reset: howto;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.howto-steps li {
+  counter-increment: howto;
+  position: relative;
+  padding-left: calc(28px + var(--space-3));
+  min-height: 28px;
+}
+
+.howto-steps li::before {
+  content: counter(howto);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--accent-subtle);
+  color: var(--accent);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-heading);
+  font-variant-numeric: tabular-nums;
 }
 
 .exercise-library-text {

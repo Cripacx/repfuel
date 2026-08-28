@@ -23,6 +23,8 @@ export const exercises = pgTable(
     name: text('name').notNull(),
     nameDe: text('name_de'),
     muscleGroups: jsonb('muscle_groups').$type<string[]>().notNull().default([]),
+    /** Schritt-für-Schritt-Anleitung (en, aus dem Dataset; leer bei custom). */
+    instructions: jsonb('instructions').$type<string[]>().notNull().default([]),
     equipment: text('equipment'),
     mediaUrl: text('media_url'),
     gifUrl: text('gif_url'),

@@ -57,6 +57,13 @@
       "when": 1787913415828,
       "tag": "0007_thankful_famine",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1787921749966,
+      "tag": "0008_ambitious_gideon",
+      "breakpoints": true
     }
   ]
 }

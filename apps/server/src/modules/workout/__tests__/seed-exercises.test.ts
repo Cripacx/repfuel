@@ -9,6 +9,7 @@ interface InsertedRow {
   name: string;
   nameDe: string | null;
   muscleGroups: string[];
+  instructions: string[];
   equipment: string | null;
   mediaUrl: string | null;
   gifUrl: string | null;
@@ -19,7 +20,7 @@ interface InsertedRow {
 /**
  * Minimaler Fake der Drizzle-Insert-Chain, der nur die für
  * seedExercises() genutzten Methoden abbildet (insert -> values ->
- * onConflictDoNothing). Kein echter DB-Zugriff nötig.
+ * onConflictDoUpdate). Kein echter DB-Zugriff nötig.
  */
 function fakeDb() {
   let inserted: InsertedRow[] = [];
@@ -32,7 +33,7 @@ function fakeDb() {
         values(rows: InsertedRow[]) {
           inserted = rows;
           return {
-            onConflictDoNothing(opts: { target: unknown }) {
+            onConflictDoUpdate(opts: { target: unknown; set: unknown }) {
               conflictTarget = opts.target;
               return Promise.resolve();
             },
@@ -55,6 +56,7 @@ describe('gymvisual-exercises.json snapshot', () => {
     datasetId: string;
     name: string;
     muscleGroups: string[];
+    instructions: string[];
     equipment: string | null;
     image: string;
     gif: string;
@@ -71,6 +73,15 @@ describe('gymvisual-exercises.json snapshot', () => {
       expect(entry.name.trim().length).toBeGreaterThan(0);
       expect(entry.image).toMatch(/^[0-9]{4}-[A-Za-z0-9]+\.jpg$/);
       expect(entry.gif).toMatch(/^[0-9]{4}-[A-Za-z0-9]+\.gif$/);
+    }
+  });
+
+  it('every entry carries a step-by-step instruction (en)', () => {
+    for (const entry of data) {
+      expect(entry.instructions.length).toBeGreaterThan(0);
+      for (const step of entry.instructions) {
+        expect(step.trim().length).toBeGreaterThan(0);
+      }
     }
   });
 

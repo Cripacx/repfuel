@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { sql } from 'drizzle-orm';
 import { z } from 'zod';
 import type { Database } from '../../../core/db.js';
 import { exercises } from '../schema.js';
@@ -15,6 +16,7 @@ const seedExerciseSchema = z.object({
   datasetId: z.string().regex(/^[0-9]{4}$/),
   name: z.string().min(1),
   muscleGroups: z.array(z.string().min(1)),
+  instructions: z.array(z.string().min(1)),
   equipment: z.string().min(1).nullable(),
   image: z.string().min(1),
   gif: z.string().min(1),
@@ -44,8 +46,9 @@ function loadSeedExercises(): SeedExercise[] {
 /**
  * Seeded die globale Übungsbibliothek aus dem Dataset-Snapshot
  * (source='gymvisual', userId=null). Idempotent: bereits vorhandene
- * Dataset-IDs werden übersprungen (onConflictDoNothing auf
- * exercises.datasetId).
+ * Dataset-IDs behalten ihre Zeile, bekommen aber die Anleitung aus dem
+ * Snapshot nachgezogen (onConflictDoUpdate auf exercises.datasetId) —
+ * so erhalten Bestandsinstallationen die Beschreibungen ohne Re-Seed.
  *
  * @returns Anzahl der Übungen im Snapshot (nicht die Anzahl neu eingefügter
  *   Zeilen — bei wiederholtem Aufruf bleibt der Rückgabewert also gleich).
@@ -65,6 +68,7 @@ export async function seedExercises(db: Database): Promise<number> {
         name: entry.name,
         nameDe: null,
         muscleGroups: entry.muscleGroups,
+        instructions: entry.instructions,
         equipment: entry.equipment,
         mediaUrl: `${EXERCISE_IMAGE_BASE}/${entry.image}`,
         gifUrl: `${EXERCISE_GIF_BASE}/${entry.gif}`,
@@ -72,7 +76,10 @@ export async function seedExercises(db: Database): Promise<number> {
         userId: null,
       })),
     )
-    .onConflictDoNothing({ target: exercises.datasetId });
+    .onConflictDoUpdate({
+      target: exercises.datasetId,
+      set: { instructions: sql`excluded.instructions` },
+    });
 
   return seedData.length;
 }

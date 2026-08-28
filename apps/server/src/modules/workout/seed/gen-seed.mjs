@@ -30,6 +30,8 @@ const seed = raw
       name: titleCase(e.name),
       muscleGroups: muscles,
       equipment: titleCase(e.equipment),
+      // Schritt-Anleitung (nur en — der Datensatz führt kein Deutsch, siehe README).
+      instructions: e.instruction_steps?.en ?? [],
       image: e.image.replace(/^images\//, ''),
       gif: e.gif_url.replace(/^videos\//, ''),
     };

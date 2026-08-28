@@ -1,7 +1,10 @@
 <script lang="ts">
   import type { ExerciseDto } from '@repfuel/shared';
   import { api } from '$lib/api.js';
+  import ExerciseAnimation from '$lib/components/ExerciseAnimation.svelte';
   import ExerciseThumb from '$lib/components/ExerciseThumb.svelte';
+  import Icon from '$lib/components/Icon.svelte';
+  import Modal from '$lib/components/Modal.svelte';
   import { debounce } from '$lib/debounce.js';
   import { describeError } from '$lib/errors.js';
   import { m } from '$lib/i18n/index.js';
@@ -105,6 +108,11 @@
     muscle = null;
     equipment = null;
   }
+
+  // --- Detail-Sheet -------------------------------------------------------
+  // Alle Daten stecken bereits in der Listen-DTO — das Sheet öffnet ohne
+  // weiteren Request und damit ohne Ladezustand.
+  let detail = $state<ExerciseDto | null>(null);
 </script>
 
 <svelte:head><title>{m().exercises.libraryTitle}</title></svelte:head>
@@ -184,13 +192,16 @@
   <ul class="exercise-library">
     {#each exercises as exercise (exercise.id)}
       <li>
-        <ExerciseThumb mediaUrl={exercise.mediaUrl} name={exerciseLabel(exercise)} />
-        <span class="exercise-library-text">
-          <span class="exercise-library-name">{exerciseLabel(exercise)}</span>
-          {#if exerciseMeta(exercise)}
-            <span class="exercise-library-meta">{exerciseMeta(exercise)}</span>
-          {/if}
-        </span>
+        <button type="button" class="exercise-row-btn" onclick={() => (detail = exercise)}>
+          <ExerciseThumb mediaUrl={exercise.mediaUrl} name={exerciseLabel(exercise)} />
+          <span class="exercise-library-text">
+            <span class="exercise-library-name">{exerciseLabel(exercise)}</span>
+            {#if exerciseMeta(exercise)}
+              <span class="exercise-library-meta">{exerciseMeta(exercise)}</span>
+            {/if}
+          </span>
+          <span class="exercise-row-chevron"><Icon name="chevron-right" size={18} /></span>
+        </button>
       </li>
     {/each}
   </ul>
@@ -208,4 +219,37 @@
       © Gym visual
     </a>
   </p>
+{/if}
+
+{#if detail}
+  <Modal title={exerciseLabel(detail)} onClose={() => (detail = null)}>
+    <div class="exercise-detail">
+      <ExerciseAnimation mediaUrl={detail.mediaUrl} gifUrl={detail.gifUrl} />
+
+      <div class="tag-row">
+        {#each detail.muscleGroups as group (group)}
+          <span class="tag">{group}</span>
+        {/each}
+        {#if detail.equipment}
+          <span class="tag tag-equipment">{detail.equipment}</span>
+        {/if}
+      </div>
+
+      <section class="exercise-detail-section">
+        <h3>{m().exercises.howToTitle}</h3>
+        {#if detail.instructions.length > 0}
+          {#if m().exercises.howToEnglishHint}
+            <p class="hint">{m().exercises.howToEnglishHint}</p>
+          {/if}
+          <ol class="howto-steps">
+            {#each detail.instructions as step, i (i)}
+              <li>{step}</li>
+            {/each}
+          </ol>
+        {:else}
+          <p class="empty-state">{m().exercises.noInstructions}</p>
+        {/if}
+      </section>
+    </div>
+  </Modal>
 {/if}

@@ -209,6 +209,9 @@ const en: Messages = {
     nameRequired: 'Please enter a name.',
     animationPlay: 'Play animation',
     animationPause: 'Pause animation',
+    howToTitle: 'How to',
+    howToEnglishHint: '',
+    noInstructions: 'No instructions available for this exercise.',
   },
   routines: {
     title: 'Routines',

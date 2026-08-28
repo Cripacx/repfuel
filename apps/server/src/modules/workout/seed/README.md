@@ -12,6 +12,9 @@ verwendet (dort via `scripts/fetch-media.sh` bzw. den `media`-Service in
 - **Anzahl Übungen:** 1324 (alle Einträge des Datensatzes)
 - **Sprachen:** der Datensatz führt Anleitungen in en/es/it/tr/ru/zh/hi/pl/ko/fr
   — **kein Deutsch**. `nameDe` bleibt für diese Übungen daher `null`.
+- **Anleitungen:** `instructions` enthält die englischen Schritt-Anleitungen
+  (`instruction_steps.en` des Datensatzes). Sie gehören zur MIT-Datenschicht
+  und werden beim Seed per Upsert auch in Bestandsinstallationen nachgezogen.
 
 ## Lizenz — zwei getrennte Ebenen
 
