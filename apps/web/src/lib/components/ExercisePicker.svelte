@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ExerciseDto } from '@repfuel/shared';
+  import { EXERCISE_MEDIA_ATTRIBUTION_URL, type ExerciseDto } from '@repfuel/shared';
   import { api } from '$lib/api.js';
   import { debounce } from '$lib/debounce.js';
   import ExerciseThumb from './ExerciseThumb.svelte';
@@ -118,6 +118,15 @@
         </li>
       {/each}
     </ul>
+    {#if results.some((exercise) => exercise.mediaUrl !== null)}
+      <!-- Lizenzbedingung für die Übungsmedien — nicht entfernen, siehe
+           apps/server/src/modules/workout/seed/README.md. -->
+      <p class="picker-attribution">
+        <a href={EXERCISE_MEDIA_ATTRIBUTION_URL} target="_blank" rel="external noreferrer noopener">
+          © Gym visual
+        </a>
+      </p>
+    {/if}
   {/if}
 
   <button

@@ -43,6 +43,13 @@
       "when": 1787893128026,
       "tag": "0005_big_energizer",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1787910186184,
+      "tag": "0006_kind_terrax",
+      "breakpoints": true
     }
   ]
 }

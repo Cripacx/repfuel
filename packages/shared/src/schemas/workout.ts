@@ -5,8 +5,17 @@ export const isoDateTimeSchema = z.string().datetime({ offset: true });
 
 // --- Übungen ---
 
-export const EXERCISE_SOURCES = ['wger', 'custom'] as const;
+export const EXERCISE_SOURCES = ['wger', 'gymvisual', 'custom'] as const;
 export type ExerciseSource = (typeof EXERCISE_SOURCES)[number];
+
+/**
+ * Pflicht-Attribution für die Übungsmedien (Thumbnails + Animationen) des
+ * Datensatzes hasaneyldrm/exercises-dataset. Die Medien selbst sind NICHT
+ * MIT-lizenziert, sondern Eigentum von Gym visual; jede Anzeige muss diesen
+ * Hinweis führen (siehe apps/server/src/modules/workout/seed/README.md).
+ */
+export const EXERCISE_MEDIA_ATTRIBUTION = '© Gym visual — https://gymvisual.com/';
+export const EXERCISE_MEDIA_ATTRIBUTION_URL = 'https://gymvisual.com/';
 
 export const createExerciseRequestSchema = z.object({
   name: z.string().min(1).max(200),

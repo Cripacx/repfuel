@@ -30,7 +30,9 @@ vollwertig.
 
 - Projektname immer klein: „repfuel". Keine Marken-Anleihen bei Kommerz-Apps.
 - Deutsch und Englisch sind gleichwertig; alle UI-Texte über i18n.
-- Übungsdaten aus der wger-DB (CC-BY-SA 4.0, Attribution bleibt).
+- Übungsdaten aus hasaneyldrm/exercises-dataset (MIT). Die Bilder/Animationen
+  gehören Gym visual, liegen nicht im Repo/Image und werden einmalig vom
+  Self-Hoster geladen — Attribution „© Gym visual" bleibt sichtbar.
 - Lebensmitteldaten aus Open Food Facts (Attribution bleibt).
 - Mobile-first: Der Logging-Flow ist für eine Hand + verschwitzte Finger
   gebaut (Touch-Targets ≥ 44px, Stepper statt Freitext wo möglich).

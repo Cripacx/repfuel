@@ -5,11 +5,14 @@ import type { ExerciseSource } from './schemas/workout.js';
 export interface ExerciseDto {
   id: string;
   name: string;
-  /** Deutscher Name, falls vorhanden (wger-Übersetzung). */
+  /** Deutscher Name, falls vorhanden (nur wger-Altbestand). */
   nameDe: string | null;
   muscleGroups: string[];
   equipment: string | null;
+  /** Standbild/Thumbnail, z.B. /media/img/0001-2gPfomN.jpg. */
   mediaUrl: string | null;
+  /** Animation, z.B. /media/gif/0001-2gPfomN.gif. */
+  gifUrl: string | null;
   source: ExerciseSource;
   /** null = globale Übung, sonst eigene Übung des Nutzers. */
   userId: string | null;

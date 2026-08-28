@@ -15,6 +15,13 @@ const envSchema = z.object({
   REGISTRATION_MODE: z.enum(REGISTRATION_MODES).default('open'),
   /** Verzeichnis mit dem gebauten Frontend (SPA). Leer = kein Static-Serving (Dev). */
   STATIC_DIR: z.string().default(''),
+  /**
+   * Verzeichnis mit den Übungsmedien (Unterordner img/ und gif/), ausgeliefert
+   * unter /media. Die Medien liegen bewusst nicht im Repo/Image — sie werden
+   * einmalig vom Self-Hoster geladen (siehe docker-compose.yml).
+   * Leer = kein Media-Serving, Übungen werden ohne Bild angezeigt.
+   */
+  MEDIA_DIR: z.string().default(''),
   SESSION_TTL_DAYS: z.coerce.number().int().min(1).max(365).default(30),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
   /** KI ist strikt optional: none = Chat und alle KI-Features deaktiviert. */

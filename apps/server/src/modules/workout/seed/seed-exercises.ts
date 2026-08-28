@@ -4,39 +4,48 @@ import type { Database } from '../../../core/db.js';
 import { exercises } from '../schema.js';
 
 /**
- * Schema für einen Eintrag in wger-exercises.json (Snapshot der wger
- * Exercise-DB, siehe README.md in diesem Ordner).
+ * Schema für einen Eintrag in gymvisual-exercises.json (Datenschicht des
+ * Datensatzes hasaneyldrm/exercises-dataset, siehe README.md in diesem Ordner).
+ *
+ * `image`/`gif` sind reine Dateinamen. Die Medien liegen NICHT im Repo: sie
+ * werden vom Self-Hoster einmalig nach MEDIA_DIR geladen und unter /media
+ * ausgeliefert (siehe docker-compose.yml).
  */
 const seedExerciseSchema = z.object({
-  wgerId: z.number().int().positive(),
+  datasetId: z.string().regex(/^[0-9]{4}$/),
   name: z.string().min(1),
-  nameDe: z.string().min(1).nullable(),
   muscleGroups: z.array(z.string().min(1)),
   equipment: z.string().min(1).nullable(),
-  mediaUrl: z.string().min(1).nullable(),
+  image: z.string().min(1),
+  gif: z.string().min(1),
 });
 
 const seedExercisesSchema = z.array(seedExerciseSchema);
 
 export type SeedExercise = z.infer<typeof seedExerciseSchema>;
 
+/** Öffentliche URL-Präfixe der unter MEDIA_DIR ausgelieferten Übungsmedien. */
+export const EXERCISE_IMAGE_BASE = '/media/img';
+export const EXERCISE_GIF_BASE = '/media/gif';
+
 /**
  * Lädt den Übungs-Snapshot zur Laufzeit relativ zur eigenen Modul-URL.
  * So funktioniert der Zugriff sowohl unter tsx (src/) als auch im
  * kompilierten Build (dist/), sofern die JSON-Datei beim Build mitkopiert
- * wird (siehe README.md).
+ * wird (siehe build-Script in apps/server/package.json).
  */
 function loadSeedExercises(): SeedExercise[] {
-  const url = new URL('./wger-exercises.json', import.meta.url);
+  const url = new URL('./gymvisual-exercises.json', import.meta.url);
   const raw = readFileSync(url, 'utf-8');
   const parsed: unknown = JSON.parse(raw);
   return seedExercisesSchema.parse(parsed);
 }
 
 /**
- * Seeded die globale Übungsbibliothek aus dem wger-Snapshot (source='wger',
- * userId=null). Idempotent: bereits vorhandene wger-IDs werden übersprungen
- * (onConflictDoNothing auf exercises.wgerId).
+ * Seeded die globale Übungsbibliothek aus dem Dataset-Snapshot
+ * (source='gymvisual', userId=null). Idempotent: bereits vorhandene
+ * Dataset-IDs werden übersprungen (onConflictDoNothing auf
+ * exercises.datasetId).
  *
  * @returns Anzahl der Übungen im Snapshot (nicht die Anzahl neu eingefügter
  *   Zeilen — bei wiederholtem Aufruf bleibt der Rückgabewert also gleich).
@@ -52,17 +61,18 @@ export async function seedExercises(db: Database): Promise<number> {
     .insert(exercises)
     .values(
       seedData.map((entry) => ({
-        wgerId: entry.wgerId,
+        datasetId: entry.datasetId,
         name: entry.name,
-        nameDe: entry.nameDe,
+        nameDe: null,
         muscleGroups: entry.muscleGroups,
         equipment: entry.equipment,
-        mediaUrl: entry.mediaUrl,
-        source: 'wger' as const,
+        mediaUrl: `${EXERCISE_IMAGE_BASE}/${entry.image}`,
+        gifUrl: `${EXERCISE_GIF_BASE}/${entry.gif}`,
+        source: 'gymvisual' as const,
         userId: null,
       })),
     )
-    .onConflictDoNothing({ target: exercises.wgerId });
+    .onConflictDoNothing({ target: exercises.datasetId });
 
   return seedData.length;
 }

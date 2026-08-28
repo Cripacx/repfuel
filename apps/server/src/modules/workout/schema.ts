@@ -16,13 +16,16 @@ export const exercises = pgTable(
   'exercises',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    /** wger-Übungs-ID für idempotenten Seed (null bei custom). */
+    /** wger-Übungs-ID des Altbestands (null bei gymvisual/custom). */
     wgerId: integer('wger_id').unique(),
+    /** Dataset-ID (z.B. "0001") für idempotenten Seed (null bei wger/custom). */
+    datasetId: text('dataset_id').unique(),
     name: text('name').notNull(),
     nameDe: text('name_de'),
     muscleGroups: jsonb('muscle_groups').$type<string[]>().notNull().default([]),
     equipment: text('equipment'),
     mediaUrl: text('media_url'),
+    gifUrl: text('gif_url'),
     source: text('source').$type<ExerciseSource>().notNull().default('custom'),
     /** null = globale Übung (Seed), sonst eigene Übung des Nutzers. */
     userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),

@@ -40,6 +40,14 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
+    // Standalone-Node-Skripte (z. B. Seed-Generator) laufen außerhalb des
+    // TS-Builds und brauchen die Node-Globals.
+    files: ['**/*.mjs'],
+    languageOptions: {
+      globals: { console: 'readonly', process: 'readonly' },
+    },
+  },
+  {
     files: ['**/*.ts'],
     plugins: { import: importPlugin },
     settings: {

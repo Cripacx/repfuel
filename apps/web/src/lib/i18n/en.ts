@@ -194,6 +194,8 @@ const en: Messages = {
     customEquipmentPlaceholder: 'e.g. Cable machine',
     createButton: 'Create exercise',
     nameRequired: 'Please enter a name.',
+    animationPlay: 'Play animation',
+    animationPause: 'Pause animation',
   },
   routines: {
     title: 'Routines',

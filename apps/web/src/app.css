@@ -1037,6 +1037,24 @@ a.list-card:hover {
   font-size: var(--text-xs);
 }
 
+/* Pflicht-Attribution der Übungsmedien (Gym visual). Nicht entfernen — siehe
+   apps/server/src/modules/workout/seed/README.md. */
+.picker-attribution {
+  margin: var(--space-2) 0 0;
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+}
+
+.picker-attribution a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.picker-attribution a:hover {
+  color: var(--text-muted);
+}
+
 .item-row {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);

@@ -197,6 +197,8 @@ const de = {
     customEquipmentPlaceholder: 'z. B. Kabelzug',
     createButton: 'Übung erstellen',
     nameRequired: 'Bitte gib einen Namen ein.',
+    animationPlay: 'Animation abspielen',
+    animationPause: 'Animation anhalten',
   },
   routines: {
     title: 'Routinen',

@@ -11,6 +11,7 @@ export function toExerciseDto(row: ExerciseRow): ExerciseDto {
     muscleGroups: row.muscleGroups,
     equipment: row.equipment,
     mediaUrl: row.mediaUrl,
+    gifUrl: row.gifUrl,
     source: row.source,
     userId: row.userId,
   };

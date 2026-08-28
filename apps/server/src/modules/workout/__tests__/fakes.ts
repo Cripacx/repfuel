@@ -13,6 +13,7 @@ export function makeExercise(overrides: Partial<ExerciseRow> = {}): ExerciseRow 
     muscleGroups: ['Pectoralis major'],
     equipment: 'Barbell',
     mediaUrl: null,
+    gifUrl: null,
     source: 'custom',
     userId: null,
     createdAt: new Date(),

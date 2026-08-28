@@ -5,6 +5,7 @@
   import { page } from '$app/state';
   import { api } from '$lib/api.js';
   import ExercisePicker from '$lib/components/ExercisePicker.svelte';
+  import ExerciseAnimation from '$lib/components/ExerciseAnimation.svelte';
   import ExerciseThumb from '$lib/components/ExerciseThumb.svelte';
   import NumberStepper from '$lib/components/NumberStepper.svelte';
   import { describeError } from '$lib/errors.js';
@@ -36,6 +37,7 @@
     exerciseId: string;
     exerciseName: string;
     exerciseMediaUrl: string | null;
+    exerciseGifUrl: string | null;
     targetSets: number | null;
     targetReps: number | null;
     targetWeightKg: number | null;
@@ -95,6 +97,7 @@
         exerciseId,
         exerciseName: cached ? exerciseLabel(cached) : exerciseId,
         exerciseMediaUrl: cached?.mediaUrl ?? null,
+        exerciseGifUrl: cached?.gifUrl ?? null,
         targetSets: targets.targetSets,
         targetReps: targets.targetReps,
         targetWeightKg: targets.targetWeightKg,
@@ -494,6 +497,11 @@
             </span>
           {/if}
         </div>
+
+        <ExerciseAnimation
+          mediaUrl={section.exerciseMediaUrl}
+          gifUrl={section.exerciseGifUrl}
+        />
 
         {#each section.loggedSets as set, i (set.id)}
           <div class="set-row logged">

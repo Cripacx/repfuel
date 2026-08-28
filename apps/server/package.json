@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc -p tsconfig.json && mkdir -p dist/modules/workout/seed && cp src/modules/workout/seed/wger-exercises.json dist/modules/workout/seed/",
+    "build": "tsc -p tsconfig.json && mkdir -p dist/modules/workout/seed && cp src/modules/workout/seed/gymvisual-exercises.json dist/modules/workout/seed/",
     "start": "node dist/index.js",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit",

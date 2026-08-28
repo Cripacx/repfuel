@@ -150,12 +150,28 @@ export async function buildApp(config: AppConfig, deps: AppDeps): Promise<Fastif
   const seeded = await workoutApi.seedExercises();
   app.log.info({ seeded }, 'exercise library seeded (idempotent)');
 
+  // Übungsmedien (Thumbnails + Animationen). Eigener Mount vor dem SPA-Static,
+  // damit /media/** nicht im SPA-Fallback landet. decorateReply: false, weil
+  // reply.sendFile vom SPA-Static kommt und nur einmal dekoriert werden darf.
+  if (config.MEDIA_DIR) {
+    await app.register(fastifyStatic, {
+      root: path.resolve(config.MEDIA_DIR),
+      prefix: '/media/',
+      decorateReply: false,
+      wildcard: false,
+      index: false,
+      // Medien sind unveränderlich (Dateiname enthält die Media-ID).
+      maxAge: '30d',
+      immutable: true,
+    });
+  }
+
   if (config.STATIC_DIR) {
     const staticRoot = path.resolve(config.STATIC_DIR);
     await app.register(fastifyStatic, { root: staticRoot, wildcard: true });
     // SPA-Fallback: unbekannte Nicht-API-Pfade liefern die index.html aus.
     app.setNotFoundHandler((req, reply) => {
-      if (req.url.startsWith('/api/')) {
+      if (req.url.startsWith('/api/') || req.url.startsWith('/media/')) {
         return reply.code(404).send({ error: 'not_found', message: 'Route not found' });
       }
       return reply.sendFile('index.html');

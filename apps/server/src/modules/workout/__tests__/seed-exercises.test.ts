@@ -5,12 +5,13 @@ import { exercises } from '../schema.js';
 import { seedExercises } from '../seed/seed-exercises.js';
 
 interface InsertedRow {
-  wgerId: number;
+  datasetId: string;
   name: string;
   nameDe: string | null;
   muscleGroups: string[];
   equipment: string | null;
   mediaUrl: string | null;
+  gifUrl: string | null;
   source: string;
   userId: string | null;
 }
@@ -48,38 +49,48 @@ function fakeDb() {
   };
 }
 
-describe('wger-exercises.json snapshot', () => {
-  const raw = readFileSync(new URL('../seed/wger-exercises.json', import.meta.url), 'utf-8');
+describe('gymvisual-exercises.json snapshot', () => {
+  const raw = readFileSync(new URL('../seed/gymvisual-exercises.json', import.meta.url), 'utf-8');
   const data = JSON.parse(raw) as Array<{
-    wgerId: number;
+    datasetId: string;
     name: string;
-    nameDe: string | null;
     muscleGroups: string[];
     equipment: string | null;
-    mediaUrl: string | null;
+    image: string;
+    gif: string;
   }>;
 
-  it('is non-empty and has no duplicate wgerId', () => {
+  it('is non-empty and has no duplicate datasetId', () => {
     expect(data.length).toBeGreaterThan(0);
-    const ids = new Set(data.map((e) => e.wgerId));
+    const ids = new Set(data.map((e) => e.datasetId));
     expect(ids.size).toBe(data.length);
   });
 
-  it('every entry has a non-empty English name', () => {
+  it('every entry has a name and a media reference', () => {
     for (const entry of data) {
       expect(entry.name.trim().length).toBeGreaterThan(0);
+      expect(entry.image).toMatch(/^[0-9]{4}-[A-Za-z0-9]+\.jpg$/);
+      expect(entry.gif).toMatch(/^[0-9]{4}-[A-Za-z0-9]+\.gif$/);
     }
   });
 
-  it('is sorted by name', () => {
-    const names = data.map((e) => e.name);
-    const sorted = [...names].sort((a, b) => a.localeCompare(b));
-    expect(names).toEqual(sorted);
+  it('is sorted by datasetId', () => {
+    const ids = data.map((e) => e.datasetId);
+    expect(ids).toEqual([...ids].sort((a, b) => a.localeCompare(b)));
+  });
+
+  it('carries no media files in the repo — only their file names', () => {
+    // Die Medien selbst gehören Gym visual und werden nicht mitausgeliefert;
+    // der Snapshot referenziert sie nur (siehe seed/README.md).
+    for (const entry of data) {
+      expect(entry.image).not.toContain('/');
+      expect(entry.gif).not.toContain('/');
+    }
   });
 });
 
 describe('seedExercises', () => {
-  it('inserts every snapshot entry with source=wger and userId=null', async () => {
+  it('inserts every snapshot entry with source=gymvisual and userId=null', async () => {
     const { db, getInserted, getConflictTarget } = fakeDb();
     const count = await seedExercises(db);
 
@@ -87,11 +98,21 @@ describe('seedExercises', () => {
     expect(count).toBe(inserted.length);
     expect(inserted.length).toBeGreaterThan(0);
     for (const row of inserted) {
-      expect(row.source).toBe('wger');
+      expect(row.source).toBe('gymvisual');
       expect(row.userId).toBeNull();
-      expect(typeof row.wgerId).toBe('number');
+      expect(row.datasetId).toMatch(/^[0-9]{4}$/);
       expect(row.name.length).toBeGreaterThan(0);
     }
-    expect(getConflictTarget()).toBe(exercises.wgerId);
+    expect(getConflictTarget()).toBe(exercises.datasetId);
+  });
+
+  it('builds media URLs under the /media mount', async () => {
+    const { db, getInserted } = fakeDb();
+    await seedExercises(db);
+
+    for (const row of getInserted()) {
+      expect(row.mediaUrl).toMatch(/^\/media\/img\/[0-9]{4}-[A-Za-z0-9]+\.jpg$/);
+      expect(row.gifUrl).toMatch(/^\/media\/gif\/[0-9]{4}-[A-Za-z0-9]+\.gif$/);
+    }
   });
 });

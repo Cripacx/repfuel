@@ -1,4 +1,31 @@
 services:
+  # Einmaliger Download der Übungsmedien (~140 MB) in das Volume `media-data`.
+  # Die Medien sind NICHT Teil dieses Repos oder des Images: sie gehören
+  # Gym visual (https://gymvisual.com/) und dürfen von uns nicht
+  # weiterverbreitet werden. Dieser Container holt sie einmalig auf DEINEN
+  # Server; Attribution "© Gym visual" bleibt in der App sichtbar.
+  # Details: apps/server/src/modules/workout/seed/README.md
+  exercise-media:
+    image: alpine/git
+    restart: 'no'
+    volumes:
+      - media-data:/out
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - |
+        if [ -z "$$(ls -A /out/img 2>/dev/null)" ]; then
+          echo "↓ Übungsmedien werden geladen (~140 MB, einmalig)…"
+          rm -rf /tmp/ds
+          git clone --depth 1 https://github.com/hasaneyldrm/exercises-dataset /tmp/ds
+          mkdir -p /out/img /out/gif
+          cp /tmp/ds/images/*.jpg /out/img/
+          cp /tmp/ds/videos/*.gif /out/gif/
+          rm -rf /tmp/ds
+          echo "✓ Übungsmedien bereit ($$(ls /out/img | wc -l) Bilder)."
+        else
+          echo "✓ Übungsmedien bereits vorhanden — Download übersprungen."
+        fi
+
   app:
     image: ghcr.io/cripacx/repfuel:latest
     build: .
@@ -12,16 +39,21 @@ services:
       REGISTRATION_MODE: ${REGISTRATION_MODE:-open}
       SESSION_TTL_DAYS: ${SESSION_TTL_DAYS:-30}
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      MEDIA_DIR: /app/media
       AI_PROVIDER: ${AI_PROVIDER:-none}
       AI_API_KEY: ${AI_API_KEY:-}
       AI_MODEL: ${AI_MODEL:-}
       AI_MODEL_LIGHT: ${AI_MODEL_LIGHT:-}
       AI_BASE_URL: ${AI_BASE_URL:-}
+    volumes:
+      - media-data:/app/media:ro
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+      exercise-media:
+        condition: service_completed_successfully
 
   db:
     image: postgres:17-alpine
@@ -77,6 +109,7 @@ services:
       - ollama-data:/root/.ollama
 
 volumes:
+  media-data:
   db-data:
   redis-data:
   ollama-data:
