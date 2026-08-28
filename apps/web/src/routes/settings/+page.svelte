@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { resolve } from '$app/paths';
   import { api } from '$lib/api.js';
   import { passwordsMatch, validatePasswordPolicy } from '$lib/auth-validation.js';
   import { getUser, setUser } from '$lib/auth.svelte.js';
@@ -66,6 +67,14 @@
 
 {#if user}
   <h1>{m().settings.title}</h1>
+
+  {#if user.role === 'admin'}
+    <section class="card">
+      <h2>{m().admin.title}</h2>
+      <p class="muted">{m().home.adminLinkHint}</p>
+      <a class="secondary" href={resolve('/admin')}>{m().home.goToAdmin}</a>
+    </section>
+  {/if}
 
   <section class="card">
     <h2>{m().settings.passwordSectionTitle}</h2>

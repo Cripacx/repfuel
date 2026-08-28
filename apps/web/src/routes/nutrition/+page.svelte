@@ -179,6 +179,11 @@
     }
   }
 
+  function overAmount(actual: number, target: number | null | undefined): number {
+    if (target == null) return 0;
+    return Math.max(0, Math.round(actual - target));
+  }
+
   function mealLabel(meal: MealDto): string {
     if (meal.food) {
       return meal.food.brand ? `${meal.food.name} · ${meal.food.brand}` : meal.food.name;
@@ -222,7 +227,7 @@
 
   <section class="card">
     <div class="progress-block">
-      <div class="progress-label">
+      <div class="progress-label" class:warning={kcalProgress?.over}>
         <span>{m().nutrition.kcal}</span>
         <span>
           {roundKcal(statsDay?.kcal ?? 0)}{targets?.kcalTarget != null
@@ -245,12 +250,18 @@
             style={`width:${kcalProgress.cappedPercent}%`}
           ></div>
         </div>
+        {#if kcalProgress.over}
+          <p class="over-hint">
+            +{overAmount(statsDay?.kcal ?? 0, targets?.kcalTarget)}
+            {m().nutrition.kcalUnit} {m().nutrition.overTargetLabel}
+          </p>
+        {/if}
       {/if}
     </div>
 
     <div class="macro-bars">
       <div class="progress-block">
-        <div class="progress-label">
+        <div class="progress-label" class:warning={proteinProgress?.over}>
           <span>{m().nutrition.macros.protein}</span>
           <span>
             {round1(statsDay?.proteinG ?? 0)}{targets?.proteinTargetG != null
@@ -266,10 +277,16 @@
               style={`width:${proteinProgress.cappedPercent}%`}
             ></div>
           </div>
+          {#if proteinProgress.over}
+            <p class="over-hint">
+              +{overAmount(statsDay?.proteinG ?? 0, targets?.proteinTargetG)} g
+              {m().nutrition.overTargetLabel}
+            </p>
+          {/if}
         {/if}
       </div>
       <div class="progress-block">
-        <div class="progress-label">
+        <div class="progress-label" class:warning={carbsProgress?.over}>
           <span>{m().nutrition.macros.carbs}</span>
           <span>
             {round1(statsDay?.carbsG ?? 0)}{targets?.carbsTargetG != null
@@ -285,10 +302,16 @@
               style={`width:${carbsProgress.cappedPercent}%`}
             ></div>
           </div>
+          {#if carbsProgress.over}
+            <p class="over-hint">
+              +{overAmount(statsDay?.carbsG ?? 0, targets?.carbsTargetG)} g
+              {m().nutrition.overTargetLabel}
+            </p>
+          {/if}
         {/if}
       </div>
       <div class="progress-block">
-        <div class="progress-label">
+        <div class="progress-label" class:warning={fatProgress?.over}>
           <span>{m().nutrition.macros.fat}</span>
           <span>
             {round1(statsDay?.fatG ?? 0)}{targets?.fatTargetG != null
@@ -304,6 +327,12 @@
               style={`width:${fatProgress.cappedPercent}%`}
             ></div>
           </div>
+          {#if fatProgress.over}
+            <p class="over-hint">
+              +{overAmount(statsDay?.fatG ?? 0, targets?.fatTargetG)} g
+              {m().nutrition.overTargetLabel}
+            </p>
+          {/if}
         {/if}
       </div>
     </div>

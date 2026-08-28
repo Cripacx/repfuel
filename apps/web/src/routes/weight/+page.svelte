@@ -86,6 +86,20 @@
     }
   }
 
+  /** Liest einen Farb-Token aus den CSS-Custom-Properties statt Hex-Werte hart zu kodieren
+   * (siehe DESIGN.md) — Chart.js kann selbst keine CSS-Variablen auflösen. */
+  function readToken(name: string, fallback: string): string {
+    const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return value || fallback;
+  }
+
+  function hexToRgba(hex: string, alpha: number): string {
+    const match = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex.trim());
+    if (!match) return hex;
+    const [, r, g, b] = match;
+    return `rgba(${parseInt(r ?? '0', 16)}, ${parseInt(g ?? '0', 16)}, ${parseInt(b ?? '0', 16)}, ${alpha})`;
+  }
+
   async function updateChart(canvas: HTMLCanvasElement, filtered: BodyWeightDto[]): Promise<void> {
     const { Chart } = await import('chart.js/auto');
     const labels = filtered.map((e) => formatDate(e.measuredAt));
@@ -99,6 +113,10 @@
       return;
     }
 
+    const accent = readToken('--accent', '#f5a623');
+    const textMuted = readToken('--text-muted', '#a3aab3');
+    const border = readToken('--border', '#2e3338');
+
     chartInstance = new Chart(canvas, {
       type: 'line',
       data: {
@@ -107,12 +125,12 @@
           {
             label: m().weight.title,
             data,
-            borderColor: '#2fae74',
-            backgroundColor: 'rgba(47, 174, 116, 0.15)',
+            borderColor: accent,
+            backgroundColor: hexToRgba(accent, 0.15),
             tension: 0.25,
             fill: true,
             pointRadius: 3,
-            pointBackgroundColor: '#2fae74',
+            pointBackgroundColor: accent,
           },
         ],
       },
@@ -121,8 +139,8 @@
         maintainAspectRatio: false,
         interaction: { intersect: false, mode: 'index' },
         scales: {
-          x: { ticks: { color: '#9aa3b2' }, grid: { color: '#242830' } },
-          y: { ticks: { color: '#9aa3b2' }, grid: { color: '#242830' } },
+          x: { ticks: { color: textMuted }, grid: { color: border } },
+          y: { ticks: { color: textMuted }, grid: { color: border } },
         },
         plugins: {
           legend: { display: false },

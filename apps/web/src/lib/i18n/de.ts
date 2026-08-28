@@ -287,6 +287,7 @@ const de = {
     kcal: 'Kalorien',
     kcalUnit: 'kcal',
     kcalPer100: 'kcal/100 g',
+    overTargetLabel: 'über Ziel',
     noTargetsHint: 'Für diesen Tag sind noch keine Ziele hinterlegt.',
     goToGoals: 'Ziele festlegen',
     macros: {

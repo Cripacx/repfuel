@@ -626,7 +626,7 @@
       <p class="error" role="alert">{logError}</p>
     {/if}
 
-    <button type="button" class="primary" onclick={finishWorkout}>
+    <button type="button" class="secondary" onclick={finishWorkout}>
       {m().workouts.session.finishButton}
     </button>
   {/if}

@@ -96,4 +96,48 @@
   <main class="app-main">
     {@render children()}
   </main>
+  {#if getUser()}
+    <nav class="bottom-nav" aria-label={m().nav.home}>
+      <div class="bottom-nav-inner">
+        <a href={resolve('/workouts')} class:active={isActiveNav('/workouts')}>
+          <span class="bottom-nav-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M6.5 8.5v7M4 9.5v5a1 1 0 0 0 1 1h1.5v-7H5a1 1 0 0 0-1 1ZM17.5 8.5v7M20 9.5v5a1 1 0 0 1-1 1h-1.5v-7H19a1 1 0 0 1 1 1ZM8.5 12h7"
+              />
+            </svg>
+          </span>
+          {m().nav.workouts}
+        </a>
+        <a href={resolve('/nutrition')} class:active={isActiveNav('/nutrition')}>
+          <span class="bottom-nav-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 12a8 8 0 0 0 16 0H4Z" />
+              <path d="M12 3v3M9 4.5l0.8 1.8M15 4.5l-0.8 1.8" />
+            </svg>
+          </span>
+          {m().nav.nutrition}
+        </a>
+        <a href={resolve('/weight')} class:active={isActiveNav('/weight')}>
+          <span class="bottom-nav-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="4" y="5" width="16" height="14" rx="2" />
+              <path d="M12 15.5v-2.5M9.5 13l2.5.5 2.5-3" />
+            </svg>
+          </span>
+          {m().nav.weight}
+        </a>
+        <a href={resolve('/settings')} class:active={isActiveNav('/settings')}>
+          <span class="bottom-nav-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z M19.4 13a8 8 0 0 0 0-2l2.1-1.6-2-3.4-2.5 1a8 8 0 0 0-1.7-1L14.9 3h-3.8l-.4 2.6a8 8 0 0 0-1.7 1l-2.5-1-2 3.4L6.6 11a8 8 0 0 0 0 2l-2.1 1.6 2 3.4 2.5-1a8 8 0 0 0 1.7 1l.4 2.6h3.8l.4-2.6a8 8 0 0 0 1.7-1l2.5 1 2-3.4L19.4 13Z"
+              />
+            </svg>
+          </span>
+          {m().nav.settings}
+        </a>
+      </div>
+    </nav>
+  {/if}
 </div>

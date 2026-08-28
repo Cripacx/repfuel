@@ -101,6 +101,12 @@
               style={`width:${kcalProgress.cappedPercent}%`}
             ></div>
           </div>
+          {#if kcalProgress.over && nutritionTargets?.kcalTarget != null}
+            <p class="over-hint">
+              +{Math.round(todayNutrition ? todayNutrition.kcal - nutritionTargets.kcalTarget : 0)}
+              {m().nutrition.kcalUnit} {m().nutrition.overTargetLabel}
+            </p>
+          {/if}
         {/if}
       {:else if todayNutrition}
         <p class="latest-weight">{roundKcal(todayNutrition.kcal)} {m().nutrition.kcalUnit}</p>

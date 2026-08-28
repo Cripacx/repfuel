@@ -284,6 +284,7 @@ const en: Messages = {
     kcal: 'Calories',
     kcalUnit: 'kcal',
     kcalPer100: 'kcal/100 g',
+    overTargetLabel: 'over target',
     noTargetsHint: 'No targets are set for this day yet.',
     goToGoals: 'Set goals',
     macros: {

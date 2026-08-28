@@ -62,10 +62,10 @@
     flex-shrink: 0;
     width: var(--exercise-thumb-size);
     height: var(--exercise-thumb-size);
-    border-radius: var(--radius);
+    border-radius: var(--radius-sm);
     overflow: hidden;
-    background: var(--color-surface-raised);
-    border: 1px solid var(--color-border);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
   }
 
   .exercise-thumb img {
@@ -77,6 +77,6 @@
   .exercise-thumb-fallback {
     width: 55%;
     height: 55%;
-    color: var(--color-text-muted);
+    color: var(--text-muted);
   }
 </style>
