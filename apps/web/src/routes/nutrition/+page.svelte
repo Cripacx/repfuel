@@ -163,7 +163,10 @@
   function handleMealSaved(meal: MealDto): void {
     meals = [...meals, meal];
     closeAddMeal();
-    void loadStats(selectedDate, meals);
+    // Lokal aggregieren statt den Server zu fragen: der Schreibpfad läuft
+    // asynchron über die Outbox — ein sofortiger Stats-Request verliert das
+    // Rennen und würde die Summe fälschlich auf den alten Stand setzen.
+    statsDay = aggregateDayFromMeals(selectedDate, meals);
   }
 
   async function deleteMeal(meal: MealDto): Promise<void> {
@@ -172,7 +175,7 @@
     try {
       await removeMeal(meal.id);
       meals = meals.filter((m2) => m2.id !== meal.id);
-      await loadStats(selectedDate, meals);
+      statsDay = aggregateDayFromMeals(selectedDate, meals);
     } catch (err) {
       loadError = describeError(err);
     }
@@ -210,7 +213,7 @@
           });
       meals = meals.map((m2) => (m2.id === updated.id ? updated : m2));
       editingMealId = null;
-      await loadStats(selectedDate, meals);
+      statsDay = aggregateDayFromMeals(selectedDate, meals);
     } catch (err) {
       editError = describeError(err);
     } finally {
