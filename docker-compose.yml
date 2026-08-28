@@ -103,10 +103,10 @@ services:
       AI_API_KEY: ${AI_API_KEY:-}
       CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
       CODEX_API_KEY: ${CODEX_API_KEY:-}
-    # Alternativ zu Token/Key: lokalen CLI-Login mounten.
+    # Alternativ zu Token/Key: lokalen CLI-Login mounten (Container läuft als User "node").
     # volumes:
-    #   - ~/.claude:/root/.claude
-    #   - ~/.codex:/root/.codex
+    #   - ~/.claude:/home/node/.claude
+    #   - ~/.codex:/home/node/.codex
 
   # Optional: lokales LLM — aktivieren mit `docker compose --profile ollama up -d`
   # und AI_PROVIDER=ollama, AI_BASE_URL=http://ollama:11434/v1 in der .env.

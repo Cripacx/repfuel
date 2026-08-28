@@ -34,7 +34,14 @@ COPY --from=build /repo/apps/ai-cli-sidecar/dist ./dist
 ENV PORT=8090
 EXPOSE 8090
 
+# Unprivilegiert laufen: Claude Code verweigert den Permission-Bypass als
+# root, und der Sidecar braucht ohnehin keine Root-Rechte. HOME muss für
+# CLI-Konfig/Binary-Cache (~/.claude, ~/.codex) beschreibbar sein.
+RUN mkdir -p /home/node/.claude /home/node/.codex && chown -R node:node /home/node
+USER node
+ENV HOME=/home/node
+
 # Auth (siehe docs/AI_CLI.md):
-#  - claude-local: CLAUDE_CODE_OAUTH_TOKEN per Env ODER ~/.claude als Volume
-#  - codex-local:  CODEX_API_KEY per Env ODER ~/.codex als Volume (codex login)
+#  - claude-local: AI_API_KEY (setup-token) per Env ODER ~/.claude als Volume
+#  - codex-local:  AI_API_KEY (OpenAI-Key) per Env ODER ~/.codex als Volume
 CMD ["node", "dist/index.js"]

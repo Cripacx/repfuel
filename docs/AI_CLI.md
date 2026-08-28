@@ -74,7 +74,7 @@ in `docker-compose.yml` beim Service `ai-cli` das Volume einkommentieren:
 
 ```yaml
 volumes:
-  - ~/.claude:/root/.claude
+  - ~/.claude:/home/node/.claude
 ```
 
 ### 3. Einmalig im Container anmelden
@@ -107,7 +107,7 @@ einkommentieren:
 
 ```yaml
 volumes:
-  - ~/.codex:/root/.codex
+  - ~/.codex:/home/node/.codex
 ```
 
 ### 3. Einmalig im Container anmelden
