@@ -7,5 +7,6 @@ export * from './schemas/admin.js';
 export * from './schemas/workout.js';
 export * from './schemas/health.js';
 export * from './schemas/nutrition.js';
+export * from './schemas/sync.js';
 export * from './api-nutrition.js';
 export * from './nutrition/targets.js';

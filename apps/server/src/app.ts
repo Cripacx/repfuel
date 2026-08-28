@@ -13,6 +13,7 @@ import { registerAdminModule } from './modules/admin/index.js';
 import { registerAuthModule } from './modules/auth/index.js';
 import { registerHealthModule } from './modules/health/index.js';
 import { registerNutritionModule } from './modules/nutrition/index.js';
+import { registerSyncModule } from './modules/sync/index.js';
 import { registerWorkoutModule } from './modules/workout/index.js';
 
 export interface AppDeps {
@@ -98,13 +99,20 @@ export async function buildApp(config: AppConfig, deps: AppDeps): Promise<Fastif
     eventBus,
     guards: authApi.guards,
   });
-  await registerHealthModule(app, { db: deps.db, guards: authApi.guards });
-  await registerNutritionModule(app, {
+  const healthApi = await registerHealthModule(app, { db: deps.db, guards: authApi.guards });
+  const nutritionApi = await registerNutritionModule(app, {
     db: deps.db,
     kv,
     guards: authApi.guards,
     getTargets: (userId) => authApi.profileService.getTargets(userId),
     onExternalError: (err, context) => app.log.warn({ err, context }, 'open food facts error'),
+  });
+
+  await registerSyncModule(app, {
+    guards: authApi.guards,
+    workoutService: workoutApi.workoutService,
+    weightService: healthApi.weightService,
+    mealService: nutritionApi.mealService,
   });
 
   const seeded = await workoutApi.seedExercises();

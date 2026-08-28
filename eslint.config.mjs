@@ -8,7 +8,7 @@ import tseslint from 'typescript-eslint';
  * über deren öffentliche `index.ts` importieren — hier per Lint-Regel erzwungen.
  * Neue Module müssen in diese Liste aufgenommen werden.
  */
-const SERVER_MODULES = ['auth', 'admin', 'workout', 'health', 'nutrition'];
+const SERVER_MODULES = ['auth', 'admin', 'workout', 'health', 'nutrition', 'sync'];
 
 const moduleBoundaryZones = SERVER_MODULES.map((mod) => ({
   target: `./apps/server/src/modules/${mod}`,
@@ -54,6 +54,13 @@ export default tseslint.config(
         'error',
         { basePath: import.meta.dirname, zones: moduleBoundaryZones },
       ],
+    },
+  },
+  {
+    // Tests dürfen Fakes/Interna anderer Module nutzen — Boundaries gelten für Laufzeitcode.
+    files: ['**/__tests__/**', '**/*.test.ts'],
+    rules: {
+      'import/no-restricted-paths': 'off',
     },
   },
 );

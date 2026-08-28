@@ -31,17 +31,23 @@ export const barcodeParamsSchema = z.object({
   code: z.string().regex(/^\d{6,14}$/, 'invalid barcode'),
 });
 
-export const upsertMealRequestSchema = z
-  .object({
-    eatenAt: isoDateTimeSchema,
-    mealType: z.enum(MEAL_TYPES),
-    foodId: uuidSchema.nullable().optional(),
-    amountG: z.number().min(0.1).max(10000).nullable().optional(),
-    quickKcal: z.number().min(0).max(10000).nullable().optional(),
-  })
-  .refine((v) => (v.foodId != null && v.amountG != null) !== (v.quickKcal != null), {
-    message: 'either foodId+amountG or quickKcal must be set',
-  });
+export const mealUpsertFieldsSchema = z.object({
+  eatenAt: isoDateTimeSchema,
+  mealType: z.enum(MEAL_TYPES),
+  foodId: uuidSchema.nullable().optional(),
+  amountG: z.number().min(0.1).max(10000).nullable().optional(),
+  quickKcal: z.number().min(0).max(10000).nullable().optional(),
+});
+
+export const mealEitherFoodOrQuick = (v: {
+  foodId?: string | null;
+  amountG?: number | null;
+  quickKcal?: number | null;
+}) => (v.foodId != null && v.amountG != null) !== (v.quickKcal != null);
+
+export const upsertMealRequestSchema = mealUpsertFieldsSchema.refine(mealEitherFoodOrQuick, {
+  message: 'either foodId+amountG or quickKcal must be set',
+});
 export type UpsertMealRequest = z.infer<typeof upsertMealRequestSchema>;
 
 export const listMealsQuerySchema = z.object({
