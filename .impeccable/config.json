@@ -8,6 +8,15 @@
         "value": "width",
         "createdAt": "2026-08-28T04:37:25.014Z",
         "reason": "Agent-Entscheid: 8px-Progress-Fill animiert width nur bei diskreten Datenupdates; transform:scaleX würde die runden Kappen (radius 999px) bei kleinen Werten verzerren — bewusste, domänen-angemessene Ausnahme"
+      },
+      {
+        "rule": "layout-transition",
+        "value": "*",
+        "files": [
+          "apps/web/src/app.css"
+        ],
+        "createdAt": "2026-08-28T05:03:30.400Z",
+        "reason": "Einzige layout-transition der Datei ist der 8px-Progress-Fill (width bei diskreten Updates); scaleX würde die runden Kappen verzerren — bereits triagierte, bewusste Ausnahme; wertgenauer Ignore griff nicht"
       }
     ]
   }
