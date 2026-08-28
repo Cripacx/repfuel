@@ -402,7 +402,9 @@ label {
 
 input[type='text'],
 input[type='number'],
-input[type='password'] {
+input[type='password'],
+input[type='search'],
+input[type='email'] {
   min-height: var(--touch-target);
   padding: 0 var(--space-3);
   border-radius: var(--radius-sm);
@@ -416,7 +418,9 @@ input[type='password'] {
 
 input[type='text']:focus,
 input[type='number']:focus,
-input[type='password']:focus {
+input[type='password']:focus,
+input[type='search']:focus,
+input[type='email']:focus {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
   border-color: var(--accent);
@@ -1230,7 +1234,9 @@ a.list-card:hover {
    apps/server/src/modules/workout/seed/README.md. */
 .picker-attribution {
   margin: var(--space-2) 0 0;
-  color: var(--text-faint);
+  /* --text-faint ist laut DESIGN.md für Nicht-Kerninfo gedacht und liegt bei
+     3,4:1. Eine lizenzpflichtige Attribution muss lesbar sein. */
+  color: var(--text-muted);
   font-size: var(--text-xs);
 }
 
@@ -1241,7 +1247,7 @@ a.list-card:hover {
 }
 
 .picker-attribution a:hover {
-  color: var(--text-muted);
+  color: var(--text);
 }
 
 .item-row {
@@ -2863,4 +2869,30 @@ input[type='checkbox'] {
 .locale-switch button:active,
 .method-switch button:active {
   transform: scale(0.96);
+}
+
+/* Karten-Abschlusslinks ("Alle anzeigen") stehen für sich, nicht im Fließtext —
+   also gilt das 44px-Ziel. Negative Ränder halten den optischen Abstand, damit
+   die Karte nicht auseinandergezogen wird. */
+.link-more {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-target);
+  margin: calc(var(--space-2) * -1) calc(var(--space-2) * -1) calc(var(--space-2) * -1);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  transition:
+    transform var(--dur-press) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+
+.link-more:active {
+  transform: scale(0.97);
+}
+
+/* Der Datums-Schalter der Monatsübersicht ist ein Ziel wie jedes andere. */
+.date-nav-label {
+  min-height: var(--touch-target);
+  display: inline-flex;
+  align-items: center;
 }

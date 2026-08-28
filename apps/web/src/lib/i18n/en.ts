@@ -33,6 +33,7 @@ const en: Messages = {
     en: 'English',
   },
   nav: {
+    goals: 'Goals',
     home: 'Home',
     workouts: 'Workouts',
     routines: 'Routines',

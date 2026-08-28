@@ -190,6 +190,10 @@
         <span class="quick-action-icon" aria-hidden="true">⚖️</span>
         {m().home.viewWeight}
       </a>
+      <a class="quick-action" href={resolve('/goals')}>
+        <span class="quick-action-icon" aria-hidden="true">🎯</span>
+        {m().nav.goals}
+      </a>
       <a class="quick-action" href={resolve('/nutrition')}>
         <span class="quick-action-icon" aria-hidden="true">🍽️</span>
         {m().home.viewNutrition}

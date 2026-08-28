@@ -34,6 +34,7 @@ const de = {
     en: 'Englisch',
   },
   nav: {
+    goals: 'Ziele',
     home: 'Start',
     workouts: 'Training',
     routines: 'Routinen',

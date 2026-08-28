@@ -115,9 +115,11 @@
     background: linear-gradient(to top, rgb(0 0 0 / 0.72), rgb(0 0 0 / 0));
   }
 
+  /* Lizenzpflichtige Attribution — muss lesbar bleiben, --text-faint liegt
+     unter 4,5:1. */
   .exercise-animation figcaption {
     font-size: var(--text-xs);
-    color: var(--text-faint);
+    color: var(--text-muted);
   }
 
   .exercise-animation figcaption a {
@@ -127,6 +129,6 @@
   }
 
   .exercise-animation figcaption a:hover {
-    color: var(--text-muted);
+    color: var(--text);
   }
 </style>
