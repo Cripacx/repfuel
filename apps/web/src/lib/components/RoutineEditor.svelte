@@ -6,6 +6,7 @@
   import { m } from '$lib/i18n/index.js';
   import { WEEKDAY_KEYS } from '$lib/workout/weekday.js';
   import ExercisePicker from './ExercisePicker.svelte';
+  import ExerciseThumb from './ExerciseThumb.svelte';
 
   interface EditableItem {
     key: string;
@@ -178,7 +179,13 @@
     {#each items as item, index (item.key)}
       <div class="item-row">
         <div class="item-row-header">
-          <span class="item-row-title">{exerciseLabel(item.exercise, item.exerciseId)}</span>
+          <span class="item-row-heading">
+            <ExerciseThumb
+              mediaUrl={item.exercise?.mediaUrl ?? null}
+              name={exerciseLabel(item.exercise, item.exerciseId)}
+            />
+            <span class="item-row-title">{exerciseLabel(item.exercise, item.exerciseId)}</span>
+          </span>
           <div class="item-row-actions">
             <button
               type="button"

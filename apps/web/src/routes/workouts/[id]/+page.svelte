@@ -5,6 +5,7 @@
   import { page } from '$app/state';
   import { api } from '$lib/api.js';
   import ExercisePicker from '$lib/components/ExercisePicker.svelte';
+  import ExerciseThumb from '$lib/components/ExerciseThumb.svelte';
   import NumberStepper from '$lib/components/NumberStepper.svelte';
   import { describeError } from '$lib/errors.js';
   import { m } from '$lib/i18n/index.js';
@@ -27,6 +28,7 @@
   interface SectionState {
     exerciseId: string;
     exerciseName: string;
+    exerciseMediaUrl: string | null;
     targetSets: number | null;
     targetReps: number | null;
     targetWeightKg: number | null;
@@ -85,6 +87,7 @@
       list.push({
         exerciseId,
         exerciseName: cached ? exerciseLabel(cached) : exerciseId,
+        exerciseMediaUrl: cached?.mediaUrl ?? null,
         targetSets: targets.targetSets,
         targetReps: targets.targetReps,
         targetWeightKg: targets.targetWeightKg,
@@ -411,7 +414,10 @@
       {#if section.loggedSets.length > 0}
         <div class="item-row">
           <div class="item-row-header">
-            <span class="item-row-title">{section.exerciseName}</span>
+            <span class="item-row-heading">
+              <ExerciseThumb mediaUrl={section.exerciseMediaUrl} name={section.exerciseName} />
+              <span class="item-row-title">{section.exerciseName}</span>
+            </span>
           </div>
           <ul class="plain-list">
             {#each section.loggedSets as set (set.id)}
@@ -440,7 +446,10 @@
     {#each sections as section (section.exerciseId)}
       <section class="exercise-section card">
         <div class="exercise-section-title">
-          <h2>{section.exerciseName}</h2>
+          <span class="exercise-section-heading">
+            <ExerciseThumb mediaUrl={section.exerciseMediaUrl} name={section.exerciseName} />
+            <h2>{section.exerciseName}</h2>
+          </span>
           {#if section.targetSets}
             <span class="muted">
               {section.targetSets} × {section.targetReps}{section.targetWeightKg

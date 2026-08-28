@@ -2,6 +2,7 @@
   import type { ExerciseDto } from '@repfuel/shared';
   import { api } from '$lib/api.js';
   import { debounce } from '$lib/debounce.js';
+  import ExerciseThumb from './ExerciseThumb.svelte';
   import { describeError } from '$lib/errors.js';
   import { m } from '$lib/i18n/index.js';
 
@@ -106,10 +107,13 @@
       {#each results as exercise (exercise.id)}
         <li>
           <button type="button" class="picker-result-btn" onclick={() => onSelect(exercise)}>
-            {exerciseLabel(exercise)}
-            {#if exercise.muscleGroups.length > 0}
-              <span class="picker-result-meta">{exercise.muscleGroups.join(', ')}</span>
-            {/if}
+            <ExerciseThumb mediaUrl={exercise.mediaUrl} name={exerciseLabel(exercise)} />
+            <span class="picker-result-text">
+              {exerciseLabel(exercise)}
+              {#if exercise.muscleGroups.length > 0}
+                <span class="picker-result-meta">{exercise.muscleGroups.join(', ')}</span>
+              {/if}
+            </span>
           </button>
         </li>
       {/each}

@@ -663,10 +663,12 @@ form label:has(input[type='radio']) {
 }
 
 .picker-result-btn {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
   width: 100%;
   text-align: left;
-  padding: var(--space-3);
+  padding: var(--space-2) var(--space-3);
   background: none;
   border: none;
   color: var(--color-text);
@@ -678,6 +680,10 @@ form label:has(input[type='radio']) {
 .picker-result-btn:hover,
 .picker-result-btn:focus-visible {
   background: var(--color-surface);
+}
+
+.picker-result-text {
+  min-width: 0;
 }
 
 .picker-result-meta {
@@ -702,8 +708,18 @@ form label:has(input[type='radio']) {
   margin-bottom: var(--space-3);
 }
 
+.item-row-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 1;
+  min-width: 0;
+}
+
 .item-row-title {
   font-weight: 700;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .item-row-actions {
@@ -745,9 +761,21 @@ form label:has(input[type='radio']) {
 .exercise-section-title {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-2);
   flex-wrap: wrap;
+}
+
+.exercise-section-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.exercise-section-heading h2 {
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .set-row {
