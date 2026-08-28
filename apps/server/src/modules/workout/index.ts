@@ -3,15 +3,18 @@ import type { FastifyInstance } from 'fastify';
 import type { Database } from '../../core/db.js';
 import type { EventBus } from '../../core/event-bus.js';
 import type { AuthGuards } from '../auth/index.js';
+import { createActivityRepo } from './repositories/activity-repo.js';
 import { createExerciseRepo } from './repositories/exercise-repo.js';
 import { createRoutineRepo } from './repositories/routine-repo.js';
 import { createWorkoutRepo } from './repositories/workout-repo.js';
 import { workoutRoutes } from './routes.js';
 import { seedExercises } from './seed/seed-exercises.js';
+import { createActivityService, type ActivityService } from './services/activity-service.js';
 import { createExerciseService, type ExerciseService } from './services/exercise-service.js';
 import { createRoutineService, type RoutineService } from './services/routine-service.js';
 import { createWorkoutService, type WorkoutService } from './services/workout-service.js';
 
+export type { ActivityService } from './services/activity-service.js';
 export type { ExerciseService } from './services/exercise-service.js';
 export type { RoutineService } from './services/routine-service.js';
 export type { WorkoutService } from './services/workout-service.js';
@@ -26,6 +29,7 @@ export interface WorkoutModuleApi {
   exerciseService: ExerciseService;
   workoutService: WorkoutService;
   routineService: RoutineService;
+  activityService: ActivityService;
   /** Idempotenter Seed der Übungsbibliothek (beim App-Start aufrufen). */
   seedExercises: () => Promise<number>;
 }
@@ -37,6 +41,7 @@ export async function registerWorkoutModule(
   const exerciseRepo = createExerciseRepo(opts.db);
   const routineRepo = createRoutineRepo(opts.db);
   const workoutRepo = createWorkoutRepo(opts.db);
+  const activityRepo = createActivityRepo(opts.db);
 
   const exerciseService = createExerciseService(exerciseRepo);
   const routineService = createRoutineService({ routineRepo, exerciseRepo, exerciseService });
@@ -46,11 +51,18 @@ export async function registerWorkoutModule(
     exerciseService,
     eventBus: opts.eventBus,
   });
+  const activityService = createActivityService(activityRepo);
 
   await app.register(
-    workoutRoutes({ exerciseService, routineService, workoutService, guards: opts.guards }),
+    workoutRoutes({ exerciseService, routineService, workoutService, activityService, guards: opts.guards }),
     { prefix: '/api/v1' },
   );
 
-  return { exerciseService, workoutService, routineService, seedExercises: () => seedExercises(opts.db) };
+  return {
+    exerciseService,
+    workoutService,
+    routineService,
+    activityService,
+    seedExercises: () => seedExercises(opts.db),
+  };
 }

@@ -3,15 +3,18 @@ import {
   createExerciseRequestSchema,
   createRoutineRequestSchema,
   lastSetsQuerySchema,
+  listActivitiesQuerySchema,
   listExercisesQuerySchema,
   listWorkoutsQuerySchema,
   updateRoutineRequestSchema,
+  upsertActivityRequestSchema,
   upsertSetRequestSchema,
   upsertWorkoutRequestSchema,
   uuidSchema,
 } from '@repfuel/shared';
 import { z } from 'zod';
 import type { AuthGuards } from '../auth/index.js';
+import type { ActivityService } from './services/activity-service.js';
 import type { ExerciseService } from './services/exercise-service.js';
 import type { RoutineService } from './services/routine-service.js';
 import type { WorkoutService } from './services/workout-service.js';
@@ -23,11 +26,12 @@ export interface WorkoutRoutesDeps {
   exerciseService: ExerciseService;
   routineService: RoutineService;
   workoutService: WorkoutService;
+  activityService: ActivityService;
   guards: AuthGuards;
 }
 
 export function workoutRoutes(deps: WorkoutRoutesDeps) {
-  const { exerciseService, routineService, workoutService, guards } = deps;
+  const { exerciseService, routineService, workoutService, activityService, guards } = deps;
 
   return async function register(app: FastifyInstance) {
     app.addHook('preHandler', guards.requireAuth);
@@ -70,6 +74,24 @@ export function workoutRoutes(deps: WorkoutRoutesDeps) {
     app.delete('/routines/:id', async (req, reply) => {
       const { id } = idParams.parse(req.params);
       await routineService.remove(uid(req), id);
+      return reply.code(204).send();
+    });
+
+    // --- Aktivitäten (Cardio & Co.) ---
+    app.get('/activities', async (req) => {
+      const query = listActivitiesQuerySchema.parse(req.query);
+      return { activities: await activityService.list(uid(req), query) };
+    });
+
+    app.put('/activities/:id', async (req) => {
+      const { id } = idParams.parse(req.params);
+      const body = upsertActivityRequestSchema.parse(req.body);
+      return { activity: await activityService.upsert(uid(req), id, body) };
+    });
+
+    app.delete('/activities/:id', async (req, reply) => {
+      const { id } = idParams.parse(req.params);
+      await activityService.remove(uid(req), id);
       return reply.code(204).send();
     });
 

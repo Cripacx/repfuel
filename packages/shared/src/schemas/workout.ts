@@ -94,3 +94,33 @@ export const lastSetsQuerySchema = z.object({
     .transform((s) => s.split(','))
     .pipe(z.array(uuidSchema).min(1).max(50)),
 });
+// ---------- Aktivitäten (Cardio & Co. neben Kraft-Workouts) ----------
+
+export const ACTIVITY_TYPES = [
+  'walk',
+  'run',
+  'bike',
+  'swim',
+  'row',
+  'hike',
+  'sport',
+  'other',
+] as const;
+export type ActivityType = (typeof ACTIVITY_TYPES)[number];
+
+export const upsertActivityRequestSchema = z.object({
+  activityType: z.enum(ACTIVITY_TYPES),
+  startedAt: isoDateTimeSchema,
+  durationMin: z.number().int().min(1).max(1440),
+  /** Optional — wer den Wert nicht kennt, loggt nur Typ und Dauer. */
+  kcal: z.number().int().min(0).max(10000).nullable().optional(),
+  notes: z.string().max(500).nullable().optional(),
+});
+export type UpsertActivityRequest = z.infer<typeof upsertActivityRequestSchema>;
+
+export const listActivitiesQuerySchema = z.object({
+  from: isoDateTimeSchema.optional(),
+  to: isoDateTimeSchema.optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+});
+export type ListActivitiesQuery = z.infer<typeof listActivitiesQuerySchema>;

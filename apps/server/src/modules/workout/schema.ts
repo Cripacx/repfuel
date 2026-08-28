@@ -9,7 +9,7 @@ import {
   timestamp,
   uuid,
 } from 'drizzle-orm/pg-core';
-import type { ExerciseSource } from '@repfuel/shared';
+import type { ActivityType, ExerciseSource } from '@repfuel/shared';
 import { users } from '../auth/schema.js';
 
 export const exercises = pgTable(
@@ -117,3 +117,24 @@ export type RoutineRow = typeof routines.$inferSelect;
 export type RoutineItemRow = typeof routineItems.$inferSelect;
 export type WorkoutRow = typeof workouts.$inferSelect;
 export type SetRow = typeof sets.$inferSelect;
+
+export const activities = pgTable(
+  'activities',
+  {
+    /** Client-generierte UUID (Upsert per PUT wie bei Workouts/Meals). */
+    id: uuid('id').primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    activityType: text('activity_type').$type<ActivityType>().notNull(),
+    startedAt: timestamp('started_at', { withTimezone: true }).notNull(),
+    durationMin: integer('duration_min').notNull(),
+    kcal: integer('kcal'),
+    notes: text('notes'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  },
+  (t) => [index('activities_user_id_idx').on(t.userId)],
+);
+
+export type ActivityRow = typeof activities.$inferSelect;

@@ -52,6 +52,12 @@
   let todaySteps = $state<number | null>(null);
   let todayActiveKcal = $state<number | null>(null);
   let latestRestingHr = $state<number | null>(null);
+  /** Summe der heute manuell geloggten Aktivitäten (kcal) — Fallback für "Verbrannt". */
+  let todayActivityKcal = $state<number | null>(null);
+
+  /** Health-Daten (Uhr/Handy) schlagen die manuelle Schätzung; nie addieren —
+   * eine getrackte Laufrunde wäre sonst doppelt gezählt. */
+  const burnedKcal = $derived(todayActiveKcal ?? todayActivityKcal);
 
   /** Laufendes (nicht beendetes) Workout — "Fortsetzen" schlägt "Starten". */
   const runningWorkout = $derived(recentWorkouts.find((w) => w.finishedAt === null) ?? null);
@@ -107,6 +113,17 @@
       // Startseite bleibt auch ohne Daten benutzbar — kein Fehlerbanner nötig.
     } finally {
       loading = false;
+    }
+
+    // Aktivitäten von heute (best effort) — nur für die "Verbrannt"-Spalte.
+    try {
+      const tz = currentTzOffsetMinutes();
+      const bounds = localDayBoundsUtc(today, tz);
+      const { activities } = await api.activities.list({ from: bounds.from, to: bounds.to });
+      const sum = activities.reduce((acc, a) => acc + (a.kcal ?? 0), 0);
+      todayActivityKcal = sum > 0 ? sum : null;
+    } catch {
+      // Spalte zeigt dann das Ziel.
     }
 
     // Wasser und Fasten sind optional konfiguriert — schlägt einer der Abrufe
@@ -220,7 +237,7 @@
       {m().home.overviewTitle}
       <a class="link-more" href={resolve('/nutrition')}>{m().home.toDiary}</a>
     </h2>
-    <DaySummaryCard day={todayNutrition} targets={nutritionTargets} burnedKcal={todayActiveKcal} />
+    <DaySummaryCard day={todayNutrition} targets={nutritionTargets} {burnedKcal} />
 
     {#if healthTiles.length > 0}
       <div class="stat-tiles">

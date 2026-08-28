@@ -1,4 +1,5 @@
 import type {
+  ActivityDto,
   AdminInviteDto,
   AdminSettingsDto,
   AdminUserDto,
@@ -24,6 +25,7 @@ import type {
   HealthStatsResponse,
   InstanceStatusDto,
   LastSetsResponse,
+  ListActivitiesQuery,
   ListExercisesQuery,
   ListWeightQuery,
   ListWorkoutsQuery,
@@ -48,6 +50,7 @@ import type {
   UpdateRoutineRequest,
   UpdateSettingsRequest,
   UpdateUserRequest,
+  UpsertActivityRequest,
   UpsertMealRequest,
   UpsertSetRequest,
   UpsertWeightRequest,
@@ -261,6 +264,15 @@ export const api = {
     ): Promise<{ set: SetDto }> => put(`/workouts/${workoutId}/sets/${setId}`, body),
     removeSet: (workoutId: string, setId: string): Promise<void> =>
       del(`/workouts/${workoutId}/sets/${setId}`),
+  },
+
+  // --- Aktivitäten (Cardio & Co.) ---
+  activities: {
+    list: (params: Partial<ListActivitiesQuery> = {}): Promise<{ activities: ActivityDto[] }> =>
+      get(`/activities${query({ from: params.from, to: params.to, limit: params.limit })}`),
+    upsert: (id: string, body: UpsertActivityRequest): Promise<{ activity: ActivityDto }> =>
+      put(`/activities/${id}`, body),
+    remove: (id: string): Promise<void> => del(`/activities/${id}`),
   },
 
   // --- Gewicht ---

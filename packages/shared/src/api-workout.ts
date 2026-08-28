@@ -1,4 +1,4 @@
-import type { ExerciseSource } from './schemas/workout.js';
+import type { ActivityType, ExerciseSource } from './schemas/workout.js';
 
 /** Response-DTOs der Workout-/Gewichts-API (M2). */
 
@@ -86,6 +86,15 @@ export interface LastSetsEntry {
 }
 
 export type LastSetsResponse = Record<string, LastSetsEntry>;
+
+export interface ActivityDto {
+  id: string;
+  activityType: ActivityType;
+  startedAt: string;
+  durationMin: number;
+  kcal: number | null;
+  notes: string | null;
+}
 
 export interface BodyWeightDto {
   id: string;
