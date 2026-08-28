@@ -35,7 +35,8 @@ const de = {
   },
   nav: {
     goals: 'Ziele',
-    home: 'Start',
+    home: 'Heute',
+    profile: 'Profil',
     workouts: 'Training',
     routines: 'Routinen',
     weight: 'Gewicht',
@@ -577,7 +578,7 @@ const de = {
     searchUnavailableOffline: 'Suche und Barcode-Scan sind offline nicht verfügbar. Nutze den Schnelleintrag oder versuche es wieder online.',
   },
   settings: {
-    title: 'Einstellungen',
+    title: 'Profil',
     passwordSectionTitle: 'Passwort',
     aiSectionTitle: 'KI-Coach',
     aiConnected: 'Verbunden',

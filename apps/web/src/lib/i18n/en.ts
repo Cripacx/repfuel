@@ -34,7 +34,8 @@ const en: Messages = {
   },
   nav: {
     goals: 'Goals',
-    home: 'Home',
+    home: 'Today',
+    profile: 'Profile',
     workouts: 'Workouts',
     routines: 'Routines',
     weight: 'Weight',
@@ -576,7 +577,7 @@ const en: Messages = {
       'Search and barcode scanning are unavailable offline. Use quick-entry or try again once online.',
   },
   settings: {
-    title: 'Settings',
+    title: 'Profile',
     passwordSectionTitle: 'Password',
     aiSectionTitle: 'AI coach',
     aiConnected: 'Connected',

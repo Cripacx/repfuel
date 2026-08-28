@@ -2859,6 +2859,47 @@ input[type='checkbox'] {
   font-size: var(--text-sm);
 }
 
+/* --- Profil: Konto-Karte ----------------------------------------------- */
+
+.account-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.account-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 1;
+  min-width: 180px;
+}
+
+.account-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--accent-subtle);
+  color: var(--accent);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-heading);
+}
+
+.account-name {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.account-card .locale-switch {
+  margin-left: auto;
+}
+
 /* --- Übungs-Verlauf (Statistiken, Detail-Sheet) ------------------------ */
 
 .history-list {

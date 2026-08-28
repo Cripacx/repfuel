@@ -7,7 +7,7 @@
   import { passwordsMatch, validatePasswordPolicy } from '$lib/auth-validation.js';
   import { getUser, setUser } from '$lib/auth.svelte.js';
   import { describeError } from '$lib/errors.js';
-  import { getLocale, m } from '$lib/i18n/index.js';
+  import { getLocale, m, setLocale } from '$lib/i18n/index.js';
   import {
     dismissDeadLetters,
     getDeadLetters,
@@ -17,10 +17,42 @@
     syncNow,
   } from '$lib/offline/status.svelte.js';
   import { getAiStatus, isAiEnabled } from '$lib/ai/status.svelte.js';
+  import { goto } from '$app/navigation';
+  import type { Locale } from '@repfuel/shared';
 
   const aiStatus = $derived(getAiStatus());
 
   const user = $derived(getUser());
+
+  // --- Konto: Sprache + Abmelden (aus der Topbar hierher gezogen) ---
+  let loggingOut = $state(false);
+
+  async function handleLogout(): Promise<void> {
+    loggingOut = true;
+    try {
+      await api.logout();
+    } catch {
+      // Egal ob der Server erreichbar war — lokal melden wir in jedem Fall ab.
+    } finally {
+      setUser(null);
+      loggingOut = false;
+      await goto(resolve('/login'));
+    }
+  }
+
+  async function handleLocaleChange(next: Locale): Promise<void> {
+    if (next === getLocale()) return;
+    setLocale(next);
+    const current = getUser();
+    if (!current) return;
+    try {
+      const { user: updated } = await api.updateMe({ locale: next });
+      setUser(updated);
+    } catch {
+      // Best effort: UI zeigt die neue Sprache bereits lokal, der Server-Sync
+      // wird beim nächsten erfolgreichen Aufruf nachgeholt.
+    }
+  }
 
   // --- Apple Health / Datenimport: API-Tokens ---
   let tokens = $state<ApiTokenDto[]>([]);
@@ -180,6 +212,40 @@
 
 {#if user}
   <h1>{m().settings.title}</h1>
+
+  <section class="card account-card">
+    <div class="account-identity">
+      <span class="account-avatar" aria-hidden="true">{user.username.slice(0, 1).toUpperCase()}</span>
+      <div class="account-name">
+        <strong>{user.username}</strong>
+        <span class="muted">{user.role === 'admin' ? m().roles.admin : m().roles.user}</span>
+      </div>
+    </div>
+
+    <div class="locale-switch" role="group" aria-label={m().language.label}>
+      <button
+        type="button"
+        class:active={getLocale() === 'de'}
+        onclick={() => handleLocaleChange('de')}
+      >
+        DE
+      </button>
+      <button
+        type="button"
+        class:active={getLocale() === 'en'}
+        onclick={() => handleLocaleChange('en')}
+      >
+        EN
+      </button>
+    </div>
+
+    {#if isAiEnabled()}
+      <a class="secondary" href={resolve('/chat')}>{m().nav.coach}</a>
+    {/if}
+    <button type="button" class="logout-btn" onclick={handleLogout} disabled={loggingOut}>
+      {loggingOut ? m().nav.loggingOut : m().nav.logout}
+    </button>
+  </section>
 
   <section class="card">
     <h2>{m().offline.title}</h2>

@@ -17,6 +17,12 @@
         ],
         "createdAt": "2026-08-28T05:03:30.400Z",
         "reason": "Einzige layout-transition der Datei ist der 8px-Progress-Fill (width bei diskreten Updates); scaleX würde die runden Kappen verzerren — bereits triagierte, bewusste Ausnahme; wertgenauer Ignore griff nicht"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(0.34, 1.4, 0.64, 1)",
+        "createdAt": "2026-08-28T13:41:59.877Z",
+        "reason": "CLAUDE.md/apple-design §4 verbindlich: leichter Bounce ausschliesslich nach echtem Momentum (Flick/Drag-Release); Token ist dafür dokumentiert und vorbestehend"
       }
     ]
   }
