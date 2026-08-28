@@ -379,6 +379,22 @@ const en: Messages = {
     incompleteForm: 'Please provide height, birth year, sex, activity level, and goal.',
     saved: 'Saved.',
   },
+  offline: {
+    badgeOffline: 'Offline',
+    pendingOne: 'change waiting to sync',
+    pendingOther: 'changes waiting to sync',
+    syncNow: 'Sync now',
+    syncing: 'Syncing…',
+    title: 'Offline sync',
+    hintOnline: 'Everything is synced.',
+    hintOffline:
+      "You're offline. Sets, meals, and weight are saved locally and sync automatically once you're back online.",
+    deadLettersTitle: 'Changes the server rejected',
+    deadLettersHint: 'The server could not accept these entries; they were removed from the queue.',
+    dismissDeadLetters: 'Dismiss',
+    searchUnavailableOffline:
+      'Search and barcode scanning are unavailable offline. Use quick-entry or try again once online.',
+  },
   settings: {
     title: 'Settings',
     passwordSectionTitle: 'Password',

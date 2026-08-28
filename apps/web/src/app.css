@@ -204,6 +204,41 @@ a {
   font-size: var(--text-sm);
 }
 
+.sync-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.sync-status-offline {
+  background: var(--warning-subtle);
+  color: var(--warning);
+}
+
+.sync-status-pending {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--accent-subtle);
+  color: var(--accent);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out), opacity var(--dur-fast) var(--ease-out);
+}
+
+.sync-status-pending:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.sync-status-pending:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .app-main {
   flex: 1;
   width: 100%;
@@ -471,6 +506,11 @@ button.danger:disabled {
 .tabs button.active {
   background: var(--accent-subtle);
   color: var(--accent);
+}
+
+.tabs button:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 .table-scroll {

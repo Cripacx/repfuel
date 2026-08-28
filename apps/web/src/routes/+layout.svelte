@@ -1,6 +1,7 @@
 <script lang="ts">
   import '../app.css';
-  import type { Snippet } from 'svelte';
+  import { onMount, type Snippet } from 'svelte';
+  import { browser } from '$app/environment';
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
@@ -8,10 +9,37 @@
   import { api } from '$lib/api.js';
   import { getUser, setUser } from '$lib/auth.svelte.js';
   import { getLocale, m, setLocale } from '$lib/i18n/index.js';
+  import {
+    getPendingCount,
+    initOfflineRuntime,
+    isOnline,
+    isSyncing,
+    syncNow,
+  } from '$lib/offline/status.svelte.js';
 
   let { children }: { children: Snippet } = $props();
 
   let loggingOut = $state(false);
+
+  onMount(() => {
+    // Sync-Trigger (App-Start/`online`/Intervall) nur im Browser — SPA, kein SSR.
+    const stopOfflineRuntime = initOfflineRuntime();
+
+    if (browser) {
+      // Manuelle SW-Registrierung statt Auto-Inject (siehe vite.config.ts:
+      // `injectRegister: false`) — hält die Registrierung an einer Stelle, die
+      // sichtbar nur im Browser-Build läuft. `registerType: 'autoUpdate'` lädt
+      // neue Versionen im Hintergrund nach; `immediate` registriert sofort statt
+      // erst beim `load`-Event (SvelteKit hat das DOM da schon gerendert).
+      void import('virtual:pwa-register').then(({ registerSW }) => {
+        registerSW({ immediate: true });
+      });
+    }
+
+    return () => {
+      stopOfflineRuntime();
+    };
+  });
 
   function isActiveNav(path: string): boolean {
     const current = page.url.pathname;
@@ -50,6 +78,25 @@
   <header class="topbar">
     <a class="brand" href={resolve('/')}>{m().common.appName}</a>
     <div class="topbar-actions">
+      {#if getUser() && (!isOnline() || getPendingCount() > 0)}
+        <div class="sync-status" role="status">
+          {#if !isOnline()}
+            <span class="badge sync-status-offline">{m().offline.badgeOffline}</span>
+          {/if}
+          {#if getPendingCount() > 0}
+            <button
+              type="button"
+              class="sync-status-pending"
+              onclick={() => syncNow()}
+              disabled={isSyncing() || !isOnline()}
+              title={m().offline.syncNow}
+            >
+              {getPendingCount()}
+              {getPendingCount() === 1 ? m().offline.pendingOne : m().offline.pendingOther}
+            </button>
+          {/if}
+        </div>
+      {/if}
       <div class="locale-switch" role="group" aria-label={m().language.label}>
         <button
           type="button"

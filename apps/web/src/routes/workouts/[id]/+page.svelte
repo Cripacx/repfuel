@@ -9,6 +9,13 @@
   import NumberStepper from '$lib/components/NumberStepper.svelte';
   import { describeError } from '$lib/errors.js';
   import { m } from '$lib/i18n/index.js';
+  import {
+    getWorkoutLocal,
+    hydrateWorkouts,
+    removeSet as repoRemoveSet,
+    upsertSet as repoUpsertSet,
+    upsertWorkout as repoUpsertWorkout,
+  } from '$lib/offline/repo.js';
   import { computeDraftRowCount, derivePrefill } from '$lib/workout/prefill.js';
   import {
     DEFAULT_REST_SECONDS,
@@ -170,29 +177,58 @@
 
   onMount(async () => {
     try {
-      const { workout: loaded } = await api.workouts.get(workoutId);
-      workout = loaded;
-      notes = loaded.notes ?? '';
-
-      const allExerciseIds = loaded.sets.map((s) => s.exerciseId);
-
-      if (loaded.routineId) {
-        const { routine: loadedRoutine } = await api.routines.get(loaded.routineId);
-        routine = loadedRoutine;
-        const updates: Record<string, ExerciseDto> = {};
-        for (const item of loadedRoutine.items) {
-          allExerciseIds.push(item.exerciseId);
-          if (item.exercise) updates[item.exerciseId] = item.exercise;
+      // Netzwerk zuerst versuchen (hydratisiert Dexie mit dem Server-Stand), aber immer
+      // aus Dexie rendern — so bleiben lokal noch nicht synchronisierte Sätze sichtbar,
+      // auch wenn der GET erfolgreich war, aber der Sync-Batch noch aussteht.
+      let remote: WorkoutDto | null = null;
+      let networkError = false;
+      try {
+        const res = await api.workouts.get(workoutId);
+        remote = res.workout;
+      } catch (err) {
+        if (err instanceof TypeError) {
+          networkError = true;
+        } else {
+          throw err;
         }
-        exerciseCache = { ...exerciseCache, ...updates };
+      }
+      if (remote) await hydrateWorkouts([remote]);
+      workout = (await getWorkoutLocal(workoutId)) ?? remote;
+
+      if (!workout) {
+        loadError = networkError ? describeError(new TypeError('offline')) : m().errors.notFound;
+        return;
+      }
+      notes = workout.notes ?? '';
+
+      const allExerciseIds = workout.sets.map((s) => s.exerciseId);
+
+      // Routinen sind kein Offline-Datentyp (M4-Scope: nur workouts/sets/meals/
+      // body_weight) — ohne sie fehlen offline nur die Zielwerte je Übung.
+      if (workout.routineId) {
+        try {
+          const { routine: loadedRoutine } = await api.routines.get(workout.routineId);
+          routine = loadedRoutine;
+          const updates: Record<string, ExerciseDto> = {};
+          for (const item of loadedRoutine.items) {
+            allExerciseIds.push(item.exerciseId);
+            if (item.exercise) updates[item.exerciseId] = item.exercise;
+          }
+          exerciseCache = { ...exerciseCache, ...updates };
+        } catch {
+          // best effort — Logging funktioniert auch ohne Routinen-Zielwerte.
+        }
       }
 
       const uniqueExerciseIds = allExerciseIds.filter((id, i) => allExerciseIds.indexOf(id) === i);
-      await resolveMissingExerciseNames(uniqueExerciseIds);
-
-      if (uniqueExerciseIds.length > 0) {
-        const { lastSets: loadedLastSets } = await api.workouts.lastSets(uniqueExerciseIds);
-        lastSets = loadedLastSets;
+      try {
+        await resolveMissingExerciseNames(uniqueExerciseIds);
+        if (uniqueExerciseIds.length > 0) {
+          const { lastSets: loadedLastSets } = await api.workouts.lastSets(uniqueExerciseIds);
+          lastSets = loadedLastSets;
+        }
+      } catch {
+        // Übungsnamen/Prefill sind best effort — offline bleiben Fallback-Werte.
       }
     } catch (err) {
       loadError = describeError(err);
@@ -291,7 +327,7 @@
     const setId = crypto.randomUUID();
     const position = nextSetPosition(workout.sets);
     try {
-      const { set } = await api.workouts.upsertSet(workout.id, setId, {
+      const set = await repoUpsertSet(workout.id, setId, {
         exerciseId,
         position,
         reps: draft.reps,
@@ -321,7 +357,7 @@
     if (!workout || !editDraft) return;
     logError = null;
     try {
-      const { set: updated } = await api.workouts.upsertSet(workout.id, set.id, {
+      const updated = await repoUpsertSet(workout.id, set.id, {
         exerciseId: set.exerciseId,
         position: set.position,
         reps: editDraft.reps,
@@ -341,7 +377,7 @@
     if (!confirm(m().workouts.session.deleteSetConfirm)) return;
     logError = null;
     try {
-      await api.workouts.removeSet(workout.id, set.id);
+      await repoRemoveSet(workout.id, set.id);
       workout = { ...workout, sets: workout.sets.filter((s) => s.id !== set.id) };
     } catch (err) {
       logError = describeError(err);
@@ -351,7 +387,7 @@
   async function saveNotes(): Promise<void> {
     if (!workout) return;
     try {
-      const { workout: updated } = await api.workouts.upsert(workout.id, {
+      const updated = await repoUpsertWorkout(workout.id, {
         startedAt: workout.startedAt,
         finishedAt: workout.finishedAt,
         routineId: workout.routineId,
@@ -368,7 +404,7 @@
     if (!confirm(m().workouts.session.finishConfirm)) return;
     logError = null;
     try {
-      const { workout: updated } = await api.workouts.upsert(workout.id, {
+      const updated = await repoUpsertWorkout(workout.id, {
         startedAt: workout.startedAt,
         finishedAt: new Date().toISOString(),
         routineId: workout.routineId,

@@ -27,6 +27,8 @@ import type {
   RoutineDto,
   SetDto,
   SetPasswordRequest,
+  SyncBatchRequest,
+  SyncBatchResponse,
   UpdateMeRequest,
   UpdateProfileRequest,
   UpdateRoutineRequest,
@@ -279,6 +281,11 @@ export const api = {
     upsert: (id: string, body: UpsertMealRequest): Promise<{ meal: MealDto }> =>
       put(`/meals/${id}`, body),
     remove: (id: string): Promise<void> => del(`/meals/${id}`),
+  },
+
+  // --- Offline-Sync ---
+  sync: {
+    batch: (body: SyncBatchRequest): Promise<SyncBatchResponse> => post('/sync/batch', body),
   },
 
   // --- Statistiken ---

@@ -5,6 +5,14 @@
   import { getUser, setUser } from '$lib/auth.svelte.js';
   import { describeError } from '$lib/errors.js';
   import { m } from '$lib/i18n/index.js';
+  import {
+    dismissDeadLetters,
+    getDeadLetters,
+    getPendingCount,
+    isOnline,
+    isSyncing,
+    syncNow,
+  } from '$lib/offline/status.svelte.js';
 
   const user = $derived(getUser());
 
@@ -67,6 +75,40 @@
 
 {#if user}
   <h1>{m().settings.title}</h1>
+
+  <section class="card">
+    <h2>{m().offline.title}</h2>
+    <p class="muted">{isOnline() ? m().offline.hintOnline : m().offline.hintOffline}</p>
+    {#if getPendingCount() > 0}
+      <p>
+        {getPendingCount()}
+        {getPendingCount() === 1 ? m().offline.pendingOne : m().offline.pendingOther}
+      </p>
+    {/if}
+    <button
+      type="button"
+      class="secondary"
+      onclick={() => syncNow()}
+      disabled={isSyncing() || !isOnline() || getPendingCount() === 0}
+    >
+      {isSyncing() ? m().offline.syncing : m().offline.syncNow}
+    </button>
+
+    {#if getDeadLetters().length > 0}
+      <div class="notice">
+        <h3>{m().offline.deadLettersTitle}</h3>
+        <p>{m().offline.deadLettersHint}</p>
+        <ul class="plain-list">
+          {#each getDeadLetters() as entry (entry.key)}
+            <li>{entry.entity} · {entry.error}</li>
+          {/each}
+        </ul>
+        <button type="button" class="secondary" onclick={() => dismissDeadLetters()}>
+          {m().offline.dismissDeadLetters}
+        </button>
+      </div>
+    {/if}
+  </section>
 
   {#if user.role === 'admin'}
     <section class="card">

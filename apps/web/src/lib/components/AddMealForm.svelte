@@ -7,6 +7,8 @@
   import { describeError } from '$lib/errors.js';
   import { m } from '$lib/i18n/index.js';
   import { round1, roundKcal } from '$lib/nutrition/format.js';
+  import { upsertMeal } from '$lib/offline/repo.js';
+  import { isOnline } from '$lib/offline/status.svelte.js';
 
   /**
    * Inhalt des "Mahlzeit hinzufügen"-Modals: drei Eingabewege (Suche, Barcode-Scan,
@@ -27,6 +29,15 @@
 
   type Tab = 'search' | 'barcode' | 'quick';
   let tab = $state<Tab>('search');
+
+  // Food-Suche/Barcode sind laut Spec online-only (brauchen den Server/OFF) — offline
+  // bleibt nur der Schnelleintrag. Weg von einem gerade deaktivierten Tab wechseln,
+  // falls die Verbindung während des Ausfüllens wegfällt.
+  $effect(() => {
+    if (!isOnline() && tab !== 'quick') {
+      tab = 'quick';
+    }
+  });
 
   function foodLabel(food: FoodDto): string {
     return food.brand ? `${food.name} · ${food.brand}` : food.name;
@@ -162,12 +173,11 @@
     savingAmount = true;
     amountError = null;
     try {
-      const { meal } = await api.meals.upsert(crypto.randomUUID(), {
-        eatenAt,
-        mealType,
-        foodId: selectedFood.id,
-        amountG,
-      });
+      const meal = await upsertMeal(
+        crypto.randomUUID(),
+        { eatenAt, mealType, foodId: selectedFood.id, amountG },
+        selectedFood,
+      );
       onSaved(meal);
     } catch (err) {
       amountError = describeError(err);
@@ -189,7 +199,7 @@
     }
     savingQuick = true;
     try {
-      const { meal } = await api.meals.upsert(crypto.randomUUID(), {
+      const meal = await upsertMeal(crypto.randomUUID(), {
         eatenAt,
         mealType,
         quickKcal: Number(quickKcal),
@@ -259,16 +269,30 @@
     </div>
   {:else}
     <nav class="tabs" aria-label={m().nutrition.addMeal.tabsLabel}>
-      <button type="button" class:active={tab === 'search'} onclick={() => (tab = 'search')}>
+      <button
+        type="button"
+        class:active={tab === 'search'}
+        disabled={!isOnline()}
+        onclick={() => (tab = 'search')}
+      >
         {m().nutrition.addMeal.tabSearch}
       </button>
-      <button type="button" class:active={tab === 'barcode'} onclick={() => (tab = 'barcode')}>
+      <button
+        type="button"
+        class:active={tab === 'barcode'}
+        disabled={!isOnline()}
+        onclick={() => (tab = 'barcode')}
+      >
         {m().nutrition.addMeal.tabBarcode}
       </button>
       <button type="button" class:active={tab === 'quick'} onclick={() => (tab = 'quick')}>
         {m().nutrition.addMeal.tabQuick}
       </button>
     </nav>
+
+    {#if !isOnline()}
+      <p class="hint">{m().offline.searchUnavailableOffline}</p>
+    {/if}
 
     {#if tab === 'search'}
       <label for="meal-food-search">{m().nutrition.addMeal.searchLabel}</label>

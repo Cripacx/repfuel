@@ -5,6 +5,7 @@
   import { api } from '$lib/api.js';
   import { describeError } from '$lib/errors.js';
   import { getLocale, m } from '$lib/i18n/index.js';
+  import { hydrateWeight, listWeightLocal, removeWeight, upsertWeight } from '$lib/offline/repo.js';
   import { filterByRange } from '$lib/weight-range.js';
 
   type Range = 30 | 90 | 365 | 'all';
@@ -42,9 +43,14 @@
   onMount(async () => {
     try {
       const { entries: loaded } = await api.weight.list({ limit: 2000 });
+      await hydrateWeight(loaded);
       entries = loaded;
     } catch (err) {
-      loadError = describeError(err);
+      if (!(err instanceof TypeError)) {
+        loadError = describeError(err);
+      } else {
+        entries = await listWeightLocal(2000);
+      }
     } finally {
       loading = false;
     }
@@ -64,7 +70,7 @@
     try {
       const measuredAt = new Date(`${newDate}T12:00:00`).toISOString();
       const id = crypto.randomUUID();
-      const { entry } = await api.weight.upsert(id, { weightKg: newWeight, measuredAt });
+      const entry = await upsertWeight(id, { weightKg: newWeight, measuredAt });
       entries = [...entries, entry];
       newWeight = '';
       newDate = todayDateInputValue();
@@ -79,7 +85,7 @@
     if (!confirm(m().weight.deleteConfirm)) return;
     loadError = null;
     try {
-      await api.weight.remove(entry.id);
+      await removeWeight(entry.id);
       entries = entries.filter((e) => e.id !== entry.id);
     } catch (err) {
       loadError = describeError(err);

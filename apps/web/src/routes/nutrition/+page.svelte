@@ -19,6 +19,7 @@
   import { round1, roundKcal } from '$lib/nutrition/format.js';
   import { groupMealsByType } from '$lib/nutrition/meal-grouping.js';
   import { computeProgress } from '$lib/nutrition/progress.js';
+  import { hydrateMeals, listMealsLocal, removeMeal, upsertMeal } from '$lib/offline/repo.js';
 
   const tzOffsetMinutes = currentTzOffsetMinutes();
 
@@ -53,17 +54,41 @@
   );
   const noTargetsSet = $derived(targets !== null && targets.kcalTarget == null);
 
-  async function loadStats(date: string): Promise<void> {
-    const res = await api.stats.nutrition({ from: date, to: date, tzOffsetMinutes });
-    statsDay = res.days.find((d) => d.date === date) ?? {
-      date,
-      kcal: 0,
-      proteinG: 0,
-      carbsG: 0,
-      fatG: 0,
-      mealCount: 0,
-    };
-    targets = res.targets;
+  function emptyDay(date: string): NutritionDayDto {
+    return { date, kcal: 0, proteinG: 0, carbsG: 0, fatG: 0, mealCount: 0 };
+  }
+
+  /** Summiert Tageswerte aus lokal gespiegelten Mahlzeiten — Offline-Fallback für
+   * `GET /stats/nutrition`, das kein eigener Offline-Entitätstyp ist (M4-Scope: nur
+   * workouts/sets/meals/body_weight). Ziele bleiben dabei auf dem zuletzt online
+   * geladenen Stand, da Profil/Ziele nicht in Dexie gespiegelt werden. */
+  function aggregateDayFromMeals(date: string, dayMeals: MealDto[]): NutritionDayDto {
+    return dayMeals.reduce(
+      (acc, meal) => ({
+        date,
+        kcal: acc.kcal + meal.kcal,
+        proteinG: acc.proteinG + meal.proteinG,
+        carbsG: acc.carbsG + meal.carbsG,
+        fatG: acc.fatG + meal.fatG,
+        mealCount: acc.mealCount + 1,
+      }),
+      emptyDay(date),
+    );
+  }
+
+  let lastKnownTargets: NutritionTargets | null = null;
+
+  async function loadStats(date: string, dayMeals: MealDto[]): Promise<void> {
+    try {
+      const res = await api.stats.nutrition({ from: date, to: date, tzOffsetMinutes });
+      statsDay = res.days.find((d) => d.date === date) ?? emptyDay(date);
+      targets = res.targets;
+      lastKnownTargets = res.targets;
+    } catch (err) {
+      if (!(err instanceof TypeError)) throw err;
+      statsDay = aggregateDayFromMeals(date, dayMeals);
+      targets = lastKnownTargets;
+    }
   }
 
   async function loadDay(date: string): Promise<void> {
@@ -71,11 +96,17 @@
     loadError = null;
     try {
       const bounds = localDayBoundsUtc(date, tzOffsetMinutes);
-      const [mealsRes] = await Promise.all([
-        api.meals.list({ from: bounds.from, to: bounds.to, limit: 500 }),
-        loadStats(date),
-      ]);
-      meals = mealsRes.meals;
+      let dayMeals: MealDto[];
+      try {
+        const mealsRes = await api.meals.list({ from: bounds.from, to: bounds.to, limit: 500 });
+        dayMeals = mealsRes.meals;
+        await hydrateMeals(dayMeals);
+      } catch (err) {
+        if (!(err instanceof TypeError)) throw err;
+        dayMeals = await listMealsLocal(bounds.from, bounds.to);
+      }
+      meals = dayMeals;
+      await loadStats(date, dayMeals);
     } catch (err) {
       loadError = describeError(err);
     } finally {
@@ -123,16 +154,16 @@
   function handleMealSaved(meal: MealDto): void {
     meals = [...meals, meal];
     closeAddMeal();
-    void loadStats(selectedDate);
+    void loadStats(selectedDate, meals);
   }
 
   async function deleteMeal(meal: MealDto): Promise<void> {
     if (!confirm(m().nutrition.deleteMealConfirm)) return;
     loadError = null;
     try {
-      await api.meals.remove(meal.id);
+      await removeMeal(meal.id);
       meals = meals.filter((m2) => m2.id !== meal.id);
-      await loadStats(selectedDate);
+      await loadStats(selectedDate, meals);
     } catch (err) {
       loadError = describeError(err);
     }
@@ -157,21 +188,20 @@
     editSaving = true;
     editError = null;
     try {
-      const { meal: updated } = meal.foodId
-        ? await api.meals.upsert(meal.id, {
-            eatenAt: meal.eatenAt,
-            mealType: meal.mealType,
-            foodId: meal.foodId,
-            amountG: editAmount,
-          })
-        : await api.meals.upsert(meal.id, {
+      const updated = meal.foodId
+        ? await upsertMeal(
+            meal.id,
+            { eatenAt: meal.eatenAt, mealType: meal.mealType, foodId: meal.foodId, amountG: editAmount },
+            meal.food,
+          )
+        : await upsertMeal(meal.id, {
             eatenAt: meal.eatenAt,
             mealType: meal.mealType,
             quickKcal: editQuickKcal === '' ? 0 : Number(editQuickKcal),
           });
       meals = meals.map((m2) => (m2.id === updated.id ? updated : m2));
       editingMealId = null;
-      await loadStats(selectedDate);
+      await loadStats(selectedDate, meals);
     } catch (err) {
       editError = describeError(err);
     } finally {

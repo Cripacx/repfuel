@@ -6,6 +6,7 @@
   import { api } from '$lib/api.js';
   import { describeError } from '$lib/errors.js';
   import { getLocale, m } from '$lib/i18n/index.js';
+  import { hydrateWorkouts, listWorkoutsLocal, upsertWorkout } from '$lib/offline/repo.js';
   import { computeDurationMinutes, computeVolumeKg } from '$lib/workout/volume.js';
 
   let workouts = $state<WorkoutDto[]>([]);
@@ -17,12 +18,22 @@
 
   onMount(async () => {
     try {
-      const [workoutsRes, routinesRes] = await Promise.all([
-        api.workouts.list({ limit: 50 }),
-        api.routines.list(),
-      ]);
-      workouts = workoutsRes.workouts;
-      routines = routinesRes.routines;
+      try {
+        const { workouts: loaded } = await api.workouts.list({ limit: 50 });
+        await hydrateWorkouts(loaded);
+        workouts = loaded;
+      } catch (err) {
+        if (!(err instanceof TypeError)) throw err;
+        workouts = await listWorkoutsLocal(50);
+      }
+      // Routinen sind kein Offline-Datentyp (M4-Scope) — ohne Netzwerk bleibt die
+      // Zuordnung "Workout -> Routinenname" in der Liste einfach leer.
+      try {
+        const { routines: loadedRoutines } = await api.routines.list();
+        routines = loadedRoutines;
+      } catch {
+        routines = [];
+      }
     } catch (err) {
       loadError = describeError(err);
     } finally {
@@ -44,7 +55,7 @@
     loadError = null;
     try {
       const id = crypto.randomUUID();
-      await api.workouts.upsert(id, {
+      await upsertWorkout(id, {
         startedAt: new Date().toISOString(),
         routineId,
       });
