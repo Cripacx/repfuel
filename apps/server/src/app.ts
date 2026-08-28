@@ -118,11 +118,14 @@ export async function buildApp(config: AppConfig, deps: AppDeps): Promise<Fastif
 
   await registerAiModule(app, {
     db: deps.db,
+    kv,
     guards: authApi.guards,
     provider: config.AI_PROVIDER,
     apiKey: config.AI_API_KEY || null,
     model: config.AI_MODEL || null,
     baseUrl: config.AI_BASE_URL || null,
+    sidecarUrl: config.AI_SIDECAR_URL,
+    mcpUrl: config.AI_MCP_URL,
     profileService: authApi.profileService,
     weightService: healthApi.weightService,
     mealService: nutritionApi.mealService,

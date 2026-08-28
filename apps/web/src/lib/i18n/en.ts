@@ -501,6 +501,10 @@ const en: Messages = {
   settings: {
     title: 'Settings',
     passwordSectionTitle: 'Password',
+    aiSectionTitle: 'AI coach',
+    aiConnected: 'Connected',
+    aiNotConnected: 'Not signed in',
+    aiCliHint: 'See docs/AI_CLI.md in the repository — three auth options for the CLI adapter.',
     passkeysRecommendedHint:
       'Passkeys are the recommended way to sign in — fast and secure, without typing a password.',
     passwordSetHint: 'This account also has a password set up.',

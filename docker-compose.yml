@@ -50,6 +50,23 @@ services:
       timeout: 3s
       retries: 10
 
+  # Optional: Claude-Code-CLI-Adapter — aktivieren mit
+  # `docker compose --profile cli-adapter up -d` und AI_PROVIDER=cli in der .env.
+  # Auth: CLAUDE_CODE_OAUTH_TOKEN in .env (empfohlen) ODER Host-Login mounten
+  # (Volume unten einkommentieren) ODER einmalig:
+  #   docker compose exec ai-cli npx @anthropic-ai/claude-code login
+  ai-cli:
+    image: ghcr.io/cripacx/repfuel-ai-cli:latest
+    build:
+      context: .
+      dockerfile: apps/ai-cli-sidecar/Dockerfile
+    profiles: ['cli-adapter']
+    restart: unless-stopped
+    environment:
+      CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
+    # volumes:
+    #   - ~/.claude:/root/.claude
+
   # Optional: lokales LLM — aktivieren mit `docker compose --profile ollama up -d`
   # und AI_PROVIDER=ollama, AI_BASE_URL=http://ollama:11434/v1 in der .env.
   ollama:

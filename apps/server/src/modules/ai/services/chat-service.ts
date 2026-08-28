@@ -83,9 +83,11 @@ export function createChatService(deps: ChatServiceDeps) {
     const abs = Math.abs(tzOffsetMinutes);
     const localNow = new Date(Date.now() - tzOffsetMinutes * 60_000);
     return {
+      userId: user.id,
       username: user.username,
       locale: user.locale ?? 'de',
       timezone: `UTC${tzSign}${String(Math.floor(abs / 60)).padStart(2, '0')}:${String(abs % 60).padStart(2, '0')}`,
+      tzOffsetMinutes,
       currentDate: localNow.toISOString().slice(0, 10),
       profile: profile
         ? {

@@ -13,6 +13,9 @@
     isSyncing,
     syncNow,
   } from '$lib/offline/status.svelte.js';
+  import { getAiStatus, isAiEnabled } from '$lib/ai/status.svelte.js';
+
+  const aiStatus = $derived(getAiStatus());
 
   const user = $derived(getUser());
 
@@ -109,6 +112,24 @@
       </div>
     {/if}
   </section>
+
+  {#if isAiEnabled() && aiStatus?.status}
+    <section class="card">
+      <h2>{m().settings.aiSectionTitle}</h2>
+      <p>
+        <span class={aiStatus.status.ok ? 'status-ok' : 'status-warn'}>
+          {aiStatus.status.ok ? m().settings.aiConnected : m().settings.aiNotConnected}
+        </span>
+        · {aiStatus.status.provider}{aiStatus.status.model ? ` · ${aiStatus.status.model}` : ''}
+      </p>
+      {#if aiStatus.status.message}
+        <p class="muted">{aiStatus.status.message}</p>
+      {/if}
+      {#if !aiStatus.status.ok && aiStatus.status.provider === 'cli'}
+        <p class="muted">{m().settings.aiCliHint}</p>
+      {/if}
+    </section>
+  {/if}
 
   {#if user.role === 'admin'}
     <section class="card">

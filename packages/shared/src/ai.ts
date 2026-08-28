@@ -64,9 +64,11 @@ export interface AdapterStatus {
 
 /** Kompakter Profil-Snapshot für den System-Prompt (keine Rohdaten!). */
 export interface UserContextSnapshot {
+  userId: string;
   username: string;
   locale: string;
   timezone: string;
+  tzOffsetMinutes: number;
   currentDate: string;
   profile: {
     heightCm: number | null;

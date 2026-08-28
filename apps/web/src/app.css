@@ -2300,3 +2300,14 @@ input[type='checkbox'] {
     max-width: 94%;
   }
 }
+
+/* Adapter-Status in den Einstellungen */
+.status-ok {
+  color: var(--success);
+  font-weight: var(--weight-medium);
+}
+
+.status-warn {
+  color: var(--warning);
+  font-weight: var(--weight-medium);
+}

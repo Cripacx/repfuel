@@ -26,6 +26,10 @@ const envSchema = z.object({
   AI_MODEL_LIGHT: z.string().default(''),
   /** Für ollama/openrouter bzw. OpenAI-kompatible Endpunkte. */
   AI_BASE_URL: z.string().default(''),
+  /** CLI-Sidecar (AI_PROVIDER=cli): HTTP-Endpunkt im Compose-Netz. */
+  AI_SIDECAR_URL: z.string().default('http://ai-cli:8090'),
+  /** URL, unter der der Sidecar den MCP-Wrapper dieses Servers erreicht. */
+  AI_MCP_URL: z.string().default('http://app:8080/internal/mcp'),
 });
 
 export type AppConfig = ReturnType<typeof loadConfig>;

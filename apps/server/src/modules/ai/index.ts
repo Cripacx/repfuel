@@ -2,11 +2,16 @@
 import type { FastifyInstance } from 'fastify';
 import type { AIAdapter, AiProvider } from '@repfuel/shared';
 import type { Database } from '../../core/db.js';
+import type { KeyValueStore } from '../../core/redis.js';
 import type { AuthGuards, ProfileService } from '../auth/index.js';
 import type { WeightService } from '../health/index.js';
 import type { FoodService, MealService } from '../nutrition/index.js';
 import type { RoutineService, WorkoutService } from '../workout/index.js';
 import { createApiAdapter, type ApiAdapterConfig } from './adapters/api-adapter.js';
+import { createCliAdapter } from './adapters/cli-adapter.js';
+import { mcpRoutes } from './mcp/mcp-routes.js';
+import { createMcpTokenService, type McpTokenService } from './mcp/token-service.js';
+import { buildToolSet } from './tools.js';
 import { createChatRepo } from './repositories/chat-repo.js';
 import { createProposalRepo } from './repositories/proposal-repo.js';
 import { aiRoutes } from './routes.js';
@@ -18,11 +23,15 @@ export type { ProposalService } from './services/proposal-service.js';
 
 export interface AiModuleOptions {
   db: Database;
+  kv: KeyValueStore;
   guards: AuthGuards;
   provider: AiProvider;
   apiKey: string | null;
   model: string | null;
   baseUrl: string | null;
+  /** CLI-Sidecar (Adapter 3): HTTP-Endpunkt + MCP-URL, die der Sidecar nutzt. */
+  sidecarUrl: string;
+  mcpUrl: string;
   profileService: ProfileService;
   weightService: WeightService;
   mealService: MealService;
@@ -37,9 +46,15 @@ export interface AiModuleApi {
   chatService: ChatService;
 }
 
-function buildAdapter(opts: AiModuleOptions): AIAdapter | null {
+function buildAdapter(opts: AiModuleOptions, tokenService: McpTokenService): AIAdapter | null {
   if (opts.adapterOverride !== undefined) return opts.adapterOverride;
-  if (opts.provider === 'none' || opts.provider === 'cli') return null; // CLI-Adapter folgt in M6
+  if (opts.provider === 'none') return null;
+  if (opts.provider === 'cli') {
+    return createCliAdapter({
+      config: { sidecarUrl: opts.sidecarUrl, mcpUrl: opts.mcpUrl },
+      tokenService,
+    });
+  }
   if (!opts.model) return null;
   const config: ApiAdapterConfig = {
     provider: opts.provider,
@@ -56,7 +71,8 @@ export async function registerAiModule(
 ): Promise<AiModuleApi> {
   const chatRepo = createChatRepo(opts.db);
   const proposalRepo = createProposalRepo(opts.db);
-  const adapter = buildAdapter(opts);
+  const tokenService = createMcpTokenService(opts.kv);
+  const adapter = buildAdapter(opts, tokenService);
 
   const proposalService = createProposalService({
     proposalRepo,
@@ -94,6 +110,35 @@ export async function registerAiModule(
   await app.register(aiRoutes({ chatService, proposalService, guards: opts.guards }), {
     prefix: '/api/v1',
   });
+
+  // MCP-Wrapper für den CLI-Sidecar: dieselben Tools, Auth per Session-Token.
+  await app.register(
+    mcpRoutes({
+      tokenService,
+      appVersion: '0.1.0',
+      buildTools: (claims) =>
+        buildToolSet({
+          userId: claims.userId,
+          sessionId: claims.chatSessionId,
+          tzOffsetMinutes: claims.tzOffsetMinutes,
+          mealService: opts.mealService,
+          foodService: opts.foodService,
+          workoutService: opts.workoutService,
+          routineService: opts.routineService,
+          weightService: opts.weightService,
+          profileService: opts.profileService,
+          createProposal: (input) =>
+            proposalService.create({
+              userId: claims.userId,
+              sessionId: claims.chatSessionId,
+              kind: input.kind,
+              summary: input.summary,
+              payload: input.payload,
+            }),
+        }),
+    }),
+    { prefix: '/internal/mcp' },
+  );
 
   return { chatService };
 }

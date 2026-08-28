@@ -20,6 +20,7 @@
     "@ai-sdk/openai-compatible": "^3.0.39",
     "@fastify/cookie": "^11.0.1",
     "@fastify/static": "^8.0.3",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@repfuel/shared": "workspace:*",
     "@simplewebauthn/server": "^13.1.1",
     "ai": "^7.0.83",

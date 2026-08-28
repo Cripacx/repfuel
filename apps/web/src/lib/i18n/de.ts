@@ -501,6 +501,10 @@ const de = {
   settings: {
     title: 'Einstellungen',
     passwordSectionTitle: 'Passwort',
+    aiSectionTitle: 'KI-Coach',
+    aiConnected: 'Verbunden',
+    aiNotConnected: 'Nicht angemeldet',
+    aiCliHint: 'Anleitung: docs/AI_CLI.md im Repository — drei Auth-Wege für den CLI-Adapter.',
     passkeysRecommendedHint:
       'Passkeys sind der empfohlene Weg, dich anzumelden — schnell und sicher, ohne ein Passwort einzutippen.',
     passwordSetHint: 'Für dieses Konto ist zusätzlich ein Passwort eingerichtet.',
