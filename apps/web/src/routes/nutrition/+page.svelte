@@ -11,6 +11,7 @@
   import { describeError } from '$lib/errors.js';
   import { getLocale, m } from '$lib/i18n/index.js';
   import { monthBounds, monthKeyOf } from '$lib/nutrition/month-grid.js';
+  import { DUR_EXIT, DUR_STATE, arrive } from '$lib/motion.js';
   import {
     currentTzOffsetMinutes,
     defaultEatenAtIso,
@@ -289,7 +290,13 @@
 </div>
 
 {#if calendarOpen}
-  <section class="card">
+  <!-- Klappt aus dem Datum darüber auf und wieder dorthin zurück — der Schalter
+       ist die Herkunft, nicht irgendein Rand. -->
+  <section
+    class="card"
+    in:arrive={{ duration: DUR_STATE }}
+    out:arrive={{ duration: DUR_EXIT }}
+  >
     <MonthCalendar
       month={calendarMonth}
       {selectedDate}

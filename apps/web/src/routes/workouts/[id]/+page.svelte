@@ -20,6 +20,7 @@
   } from '$lib/offline/repo.js';
   import { computeDraftRowCount, derivePrefill } from '$lib/workout/prefill.js';
   import { suggestOverload, summarizeLastSets } from '$lib/workout/progression.js';
+  import { DUR_EXIT, DUR_STATE, arrive, riseFromBottom } from '$lib/motion.js';
   import {
     DEFAULT_REST_SECONDS,
     REST_TIMER_OPTIONS_SECONDS,
@@ -50,6 +51,12 @@
   const workoutId = $derived(page.params.id ?? '');
 
   let workout = $state<WorkoutDto | null>(null);
+  /**
+   * Erst nach dem ersten Laden dürfen Sätze animiert eintreffen. Sonst würde
+   * beim Öffnen eines Workouts die gesamte bestehende Liste einfliegen —
+   * Choreografie beim Seitenaufbau, die nur Zeit kostet und nichts erklärt.
+   */
+  let listReady = $state(false);
   let routine = $state<RoutineDto | null>(null);
   let lastSets = $state<LastSetsResponse>({});
   let exerciseCache = $state<Record<string, ExerciseDto>>({});
@@ -239,6 +246,7 @@
       loadError = describeError(err);
     } finally {
       loading = false;
+      listReady = true;
     }
   });
 
@@ -531,7 +539,7 @@
         {/if}
 
         {#each section.loggedSets as set, i (set.id)}
-          <div class="set-row logged">
+          <div class="set-row logged" in:arrive={{ duration: listReady ? DUR_STATE : 0 }}>
             <span class="set-row-label">{i + 1}</span>
             {#if editingSetId === set.id && editDraft}
               <div class="set-row-field">
@@ -664,7 +672,11 @@
     {/if}
 
     {#if restActive}
-      <div class="rest-timer">
+      <div
+        class="rest-timer"
+        in:riseFromBottom={{ duration: DUR_STATE }}
+        out:riseFromBottom={{ duration: DUR_EXIT }}
+      >
         <span class="rest-timer-time">{formatCountdown(restRemaining)}</span>
         <span class="rest-timer-track" aria-hidden="true">
           <span
