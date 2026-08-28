@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { MEAL_TYPES, type MealDto, type MealType, type NutritionDayDto, type NutritionTargets } from '@repfuel/shared';
   import { resolve } from '$app/paths';
+  import { requestConfirm } from '$lib/confirm.svelte.js';
   import { api } from '$lib/api.js';
   import AddMealForm from '$lib/components/AddMealForm.svelte';
   import Modal from '$lib/components/Modal.svelte';
@@ -160,7 +161,7 @@
   }
 
   async function deleteMeal(meal: MealDto): Promise<void> {
-    if (!confirm(m().nutrition.deleteMealConfirm)) return;
+    if (!(await requestConfirm({ message: m().nutrition.deleteMealConfirm }))) return;
     loadError = null;
     try {
       await removeMeal(meal.id);

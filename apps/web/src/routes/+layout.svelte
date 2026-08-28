@@ -7,6 +7,7 @@
   import { page } from '$app/state';
   import type { Locale } from '@repfuel/shared';
   import { isAiEnabled } from '$lib/ai/status.svelte.js';
+  import ConfirmHost from '$lib/components/ConfirmHost.svelte';
   import { api } from '$lib/api.js';
   import { getUser, setUser } from '$lib/auth.svelte.js';
   import { getLocale, m, setLocale } from '$lib/i18n/index.js';
@@ -159,6 +160,8 @@
   <main class="app-main">
     {@render children()}
   </main>
+
+  <ConfirmHost />
   {#if getUser()}
     <nav class="bottom-nav" aria-label={m().nav.home}>
       <div class="bottom-nav-inner">

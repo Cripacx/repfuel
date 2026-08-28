@@ -7,6 +7,7 @@ import type { MessageTree, Widen } from './message-tree.js';
  */
 const de = {
   common: {
+    confirmTitle: 'Bestätigen',
     appName: 'repfuel',
     loading: 'Lädt…',
     cancel: 'Abbrechen',

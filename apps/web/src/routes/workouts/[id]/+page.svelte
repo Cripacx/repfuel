@@ -3,6 +3,7 @@
   import type { ExerciseDto, LastSetsResponse, RoutineDto, SetDto, WorkoutDto } from '@repfuel/shared';
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
+  import { requestConfirm } from '$lib/confirm.svelte.js';
   import { api } from '$lib/api.js';
   import ExercisePicker from '$lib/components/ExercisePicker.svelte';
   import ExerciseAnimation from '$lib/components/ExerciseAnimation.svelte';
@@ -388,7 +389,7 @@
 
   async function deleteSet(set: SetDto): Promise<void> {
     if (!workout) return;
-    if (!confirm(m().workouts.session.deleteSetConfirm)) return;
+    if (!(await requestConfirm({ message: m().workouts.session.deleteSetConfirm }))) return;
     logError = null;
     try {
       await repoRemoveSet(workout.id, set.id);
@@ -415,7 +416,7 @@
 
   async function finishWorkout(): Promise<void> {
     if (!workout) return;
-    if (!confirm(m().workouts.session.finishConfirm)) return;
+    if (!(await requestConfirm({ message: m().workouts.session.finishConfirm }))) return;
     logError = null;
     try {
       const updated = await repoUpsertWorkout(workout.id, {

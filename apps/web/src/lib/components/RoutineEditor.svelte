@@ -1,6 +1,7 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import type { ExerciseDto, RoutineDto, RoutineItemInput } from '@repfuel/shared';
+  import { requestConfirm } from '$lib/confirm.svelte.js';
   import { api } from '$lib/api.js';
   import { describeError } from '$lib/errors.js';
   import { m } from '$lib/i18n/index.js';
@@ -127,7 +128,7 @@
 
   async function handleDelete(): Promise<void> {
     if (!routine) return;
-    if (!confirm(m().routines.confirmDelete)) return;
+    if (!(await requestConfirm({ message: m().routines.confirmDelete }))) return;
     deleting = true;
     formError = null;
     try {

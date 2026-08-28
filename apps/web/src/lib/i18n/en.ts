@@ -6,6 +6,7 @@ import type { Messages } from './de.js';
  */
 const en: Messages = {
   common: {
+    confirmTitle: 'Confirm',
     appName: 'repfuel',
     loading: 'Loading…',
     cancel: 'Cancel',

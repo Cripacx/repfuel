@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import type { RoutineDto } from '@repfuel/shared';
   import { resolve } from '$app/paths';
+  import { requestConfirm } from '$lib/confirm.svelte.js';
   import { api } from '$lib/api.js';
   import { describeError } from '$lib/errors.js';
   import { m } from '$lib/i18n/index.js';
@@ -28,7 +29,7 @@
   }
 
   async function removeRoutine(routine: RoutineDto): Promise<void> {
-    if (!confirm(m().routines.confirmDelete)) return;
+    if (!(await requestConfirm({ message: m().routines.confirmDelete }))) return;
     loadError = null;
     try {
       await api.routines.remove(routine.id);

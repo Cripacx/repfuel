@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import type { ApiTokenDto, CreatedApiTokenDto } from '@repfuel/shared';
   import { resolve } from '$app/paths';
+  import { requestConfirm } from '$lib/confirm.svelte.js';
   import { api } from '$lib/api.js';
   import { passwordsMatch, validatePasswordPolicy } from '$lib/auth-validation.js';
   import { getUser, setUser } from '$lib/auth.svelte.js';
@@ -83,7 +84,7 @@
   }
 
   async function revokeToken(token: ApiTokenDto): Promise<void> {
-    if (!confirm(m().settings.healthImport.confirmRevoke)) return;
+    if (!(await requestConfirm({ message: m().settings.healthImport.confirmRevoke }))) return;
     tokensError = null;
     revokingId = token.id;
     try {

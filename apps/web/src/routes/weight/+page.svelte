@@ -2,6 +2,7 @@
   import { onDestroy, onMount } from 'svelte';
   import type { BodyWeightDto } from '@repfuel/shared';
   import type { Chart as ChartInstance } from 'chart.js';
+  import { requestConfirm } from '$lib/confirm.svelte.js';
   import { api } from '$lib/api.js';
   import { describeError } from '$lib/errors.js';
   import { getLocale, m } from '$lib/i18n/index.js';
@@ -82,7 +83,7 @@
   }
 
   async function removeEntry(entry: BodyWeightDto): Promise<void> {
-    if (!confirm(m().weight.deleteConfirm)) return;
+    if (!(await requestConfirm({ message: m().weight.deleteConfirm }))) return;
     loadError = null;
     try {
       await removeWeight(entry.id);

@@ -4,6 +4,7 @@
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
   import { getAiStatus, isAiEnabled, isAiStatusLoaded } from '$lib/ai/status.svelte.js';
+  import { requestConfirm } from '$lib/confirm.svelte.js';
   import { api } from '$lib/api.js';
   import { describeError } from '$lib/errors.js';
   import { getLocale, m } from '$lib/i18n/index.js';
@@ -62,7 +63,7 @@
   }
 
   async function removeSession(session: ChatSessionDto): Promise<void> {
-    if (!confirm(m().chat.sessions.deleteConfirm)) return;
+    if (!(await requestConfirm({ message: m().chat.sessions.deleteConfirm }))) return;
     actionError = null;
     try {
       await api.chat.deleteSession(session.id);

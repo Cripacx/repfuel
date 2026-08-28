@@ -7,6 +7,7 @@
     InstanceStatusDto,
     RegistrationMode,
   } from '@repfuel/shared';
+  import { requestConfirm } from '$lib/confirm.svelte.js';
   import { api } from '$lib/api.js';
   import { describeError } from '$lib/errors.js';
   import { getLocale, m } from '$lib/i18n/index.js';
@@ -68,7 +69,7 @@
   }
 
   async function removeUser(user: AdminUserDto): Promise<void> {
-    if (!confirm(m().admin.users.confirmDelete)) return;
+    if (!(await requestConfirm({ message: m().admin.users.confirmDelete }))) return;
     loadError = null;
     try {
       await api.admin.deleteUser(user.id);
@@ -97,7 +98,7 @@
   }
 
   async function revokeInvite(invite: AdminInviteDto): Promise<void> {
-    if (!confirm(m().admin.invites.confirmRevoke)) return;
+    if (!(await requestConfirm({ message: m().admin.invites.confirmRevoke }))) return;
     loadError = null;
     try {
       await api.admin.deleteInvite(invite.id);
