@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from '$lib/components/Icon.svelte';
   import { buildMonthGrid, shiftMonthKey } from '$lib/nutrition/month-grid.js';
   import { getLocale, m } from '$lib/i18n/index.js';
 
@@ -58,7 +59,7 @@
       onclick={() => onMonthChange(shiftMonthKey(month, -1))}
       aria-label={m().nutrition.previousMonth}
     >
-      ‹
+      <Icon name="chevron-left" />
     </button>
     <strong>{monthLabel}</strong>
     <button
@@ -67,7 +68,7 @@
       onclick={() => onMonthChange(shiftMonthKey(month, 1))}
       aria-label={m().nutrition.nextMonth}
     >
-      ›
+      <Icon name="chevron-right" />
     </button>
   </div>
 

@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import { fade } from 'svelte/transition';
+  import Icon from '$lib/components/Icon.svelte';
   import { m } from '$lib/i18n/index.js';
   import { DUR_EXIT, DUR_OVERLAY, EASE_OUT, sheet } from '$lib/motion.js';
 
@@ -53,7 +54,7 @@
     <div class="modal-header">
       <h2>{title}</h2>
       <button type="button" class="icon-btn" onclick={onClose} aria-label={m().common.close}>
-        ×
+        <Icon name="close" />
       </button>
     </div>
     <div class="modal-body">

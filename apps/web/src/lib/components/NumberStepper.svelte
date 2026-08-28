@@ -1,4 +1,6 @@
 <script lang="ts">
+  import Icon from './Icon.svelte';
+
   /** Numerisches Eingabefeld mit +/- Buttons für große Touch-Targets zwischen zwei Sätzen. */
   let {
     value = $bindable(),
@@ -29,7 +31,7 @@
 </script>
 
 <div class="stepper">
-  <button type="button" onclick={decrement} aria-label={`${label} -${step}`}>−</button>
+  <button type="button" onclick={decrement} aria-label={`${label} -${step}`}><Icon name="minus" /></button>
   <input
     {id}
     type="number"
@@ -42,5 +44,5 @@
       if (Number.isNaN(value) || value < min) value = min;
     }}
   />
-  <button type="button" onclick={increment} aria-label={`${label} +${step}`}>+</button>
+  <button type="button" onclick={increment} aria-label={`${label} +${step}`}><Icon name="plus" /></button>
 </div>

@@ -6,6 +6,7 @@
   import { requestConfirm } from '$lib/confirm.svelte.js';
   import { api } from '$lib/api.js';
   import ExercisePicker from '$lib/components/ExercisePicker.svelte';
+  import Icon from '$lib/components/Icon.svelte';
   import ExerciseAnimation from '$lib/components/ExerciseAnimation.svelte';
   import ExerciseThumb from '$lib/components/ExerciseThumb.svelte';
   import NumberStepper from '$lib/components/NumberStepper.svelte';
@@ -617,7 +618,7 @@
                   onclick={() => startEditSet(set)}
                   aria-label={m().common.edit}
                 >
-                  ✎
+                  <Icon name="edit" size={18} />
                 </button>
                 <button
                   type="button"
@@ -625,7 +626,7 @@
                   onclick={() => deleteSet(set)}
                   aria-label={m().common.delete}
                 >
-                  ✕
+                  <Icon name="close" size={18} />
                 </button>
               </div>
               {#if set.isWarmup}

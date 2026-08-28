@@ -5,6 +5,7 @@
   import { requestConfirm } from '$lib/confirm.svelte.js';
   import { api } from '$lib/api.js';
   import AddMealForm from '$lib/components/AddMealForm.svelte';
+  import Icon from '$lib/components/Icon.svelte';
   import Modal from '$lib/components/Modal.svelte';
   import MonthCalendar from '$lib/components/MonthCalendar.svelte';
   import NumberStepper from '$lib/components/NumberStepper.svelte';
@@ -262,7 +263,7 @@
 
 <div class="date-nav">
   <button type="button" class="icon-btn" onclick={goPrevDay} aria-label={m().nutrition.previousDay}>
-    ‹
+    <Icon name="chevron-left" />
   </button>
   <div class="date-nav-current">
     <button
@@ -285,7 +286,7 @@
     disabled={isToday(selectedDate)}
     aria-label={m().nutrition.nextDay}
   >
-    ›
+    <Icon name="chevron-right" />
   </button>
 </div>
 
@@ -445,7 +446,7 @@
           onclick={() => openAddMeal(type)}
           aria-label={m().nutrition.addMealButton}
         >
-          +
+          <Icon name="plus" />
         </button>
       </div>
 
@@ -473,7 +474,7 @@
                   onclick={() => startEditMeal(meal)}
                   aria-label={m().common.edit}
                 >
-                  ✎
+                  <Icon name="edit" size={18} />
                 </button>
                 <button
                   type="button"
@@ -481,7 +482,7 @@
                   onclick={() => deleteMeal(meal)}
                   aria-label={m().common.delete}
                 >
-                  🗑
+                  <Icon name="trash" size={18} />
                 </button>
               </div>
             </li>

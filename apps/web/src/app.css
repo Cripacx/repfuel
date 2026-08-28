@@ -273,7 +273,7 @@ a {
   display: inline-flex;
   gap: var(--space-1);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: 999px;
   padding: 2px;
   overflow: hidden;
 }
@@ -285,7 +285,7 @@ a {
   min-width: var(--touch-target);
   padding: 0 var(--space-3);
   border: none;
-  border-radius: calc(var(--radius-sm) - 2px);
+  border-radius: 999px;
   background: transparent;
   color: var(--text-muted);
   font-size: var(--text-sm);
@@ -447,8 +447,9 @@ a.danger,
   align-items: center;
   justify-content: center;
   min-height: var(--touch-target);
-  padding: 0 var(--space-4);
-  border-radius: var(--radius-sm);
+  padding: 0 var(--space-6);
+  /* Pill-Form: Aktionen sind rund, Eingaben eckig — die Form trennt die Rollen. */
+  border-radius: 999px;
   border: 1px solid transparent;
   font-size: var(--text-base);
   font-weight: var(--weight-medium);
@@ -598,7 +599,7 @@ button.danger:disabled {
   display: flex;
   gap: 2px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: 999px;
   padding: 3px;
   background: var(--surface-2);
   margin-bottom: var(--space-4);
@@ -609,7 +610,7 @@ button.danger:disabled {
   min-height: var(--touch-target);
   padding: 0 var(--space-3);
   border: none;
-  border-radius: calc(var(--radius-sm) - 3px);
+  border-radius: 999px;
   background: transparent;
   color: var(--text-muted);
   font-size: var(--text-sm);
@@ -657,14 +658,14 @@ button.danger:disabled {
   flex-wrap: wrap;
   background: var(--surface-2);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: 999px;
   padding: 3px;
 }
 
 .tabs button {
   min-height: var(--touch-target);
   padding: 0 var(--space-4);
-  border-radius: calc(var(--radius-sm) - 3px);
+  border-radius: 999px;
   border: none;
   background: transparent;
   color: var(--text-muted);
@@ -994,7 +995,14 @@ form label:has(input[type='radio']) {
 }
 
 .quick-action-icon {
-  font-size: var(--text-xl);
+  display: inline-flex;
+  color: var(--text-muted);
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.quick-action:hover .quick-action-icon,
+.quick-action:active .quick-action-icon {
+  color: var(--accent);
 }
 
 .plain-list {
@@ -1098,7 +1106,10 @@ a.list-card:hover {
 .stepper button {
   min-width: var(--stepper-size);
   min-height: var(--stepper-size);
-  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
   border: 1px solid var(--border);
   background: var(--surface-2);
   color: var(--text);
@@ -1288,7 +1299,10 @@ a.list-card:hover {
 .icon-btn {
   min-width: var(--touch-target);
   min-height: var(--touch-target);
-  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text);
@@ -1432,7 +1446,7 @@ a.list-card:hover {
   min-height: var(--touch-target);
   padding: 0 var(--space-3);
   border: 1px solid rgb(0 0 0 / 0.25);
-  border-radius: var(--radius-sm);
+  border-radius: 999px;
   background: transparent;
   color: var(--on-accent);
   font-size: var(--text-sm);
@@ -1498,7 +1512,7 @@ a.list-card:hover {
   min-height: var(--touch-target);
   min-width: var(--touch-target);
   padding: 0 var(--space-3);
-  border-radius: var(--radius-sm);
+  border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--on-accent) 30%, transparent);
   background: transparent;
   color: var(--on-accent);
@@ -1522,7 +1536,7 @@ a.list-card:hover {
 .rest-timer-skip {
   min-height: var(--touch-target);
   padding: 0 var(--space-3);
-  border-radius: var(--radius-sm);
+  border-radius: 999px;
   border: 1px solid var(--on-accent);
   background: transparent;
   color: var(--on-accent);
@@ -1813,7 +1827,7 @@ input[type='checkbox'] {
 .quick-amount-buttons button {
   min-height: var(--touch-target);
   padding: 0 var(--space-3);
-  border-radius: var(--radius-sm);
+  border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--surface-2);
   color: var(--text);

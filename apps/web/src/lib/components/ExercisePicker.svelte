@@ -3,6 +3,7 @@
   import { api } from '$lib/api.js';
   import { debounce } from '$lib/debounce.js';
   import ExerciseThumb from './ExerciseThumb.svelte';
+  import Icon from './Icon.svelte';
   import { describeError } from '$lib/errors.js';
   import { m } from '$lib/i18n/index.js';
 
@@ -158,7 +159,7 @@
               onclick={() => removeMuscleGroup(group)}
               aria-label={m().common.remove}
             >
-              ×
+              <Icon name="close" size={14} />
             </button>
           </span>
         {/each}

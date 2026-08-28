@@ -6,6 +6,7 @@
   import { describeError } from '$lib/errors.js';
   import { m } from '$lib/i18n/index.js';
   import { WEEKDAY_KEYS } from '$lib/workout/weekday.js';
+  import Icon from './Icon.svelte';
   import ExercisePicker from './ExercisePicker.svelte';
   import ExerciseThumb from './ExerciseThumb.svelte';
 
@@ -195,7 +196,7 @@
               disabled={index === 0}
               aria-label={m().routines.editor.moveUp}
             >
-              ↑
+              <Icon name="arrow-up" />
             </button>
             <button
               type="button"
@@ -204,7 +205,7 @@
               disabled={index === items.length - 1}
               aria-label={m().routines.editor.moveDown}
             >
-              ↓
+              <Icon name="arrow-down" />
             </button>
             <button
               type="button"
@@ -212,7 +213,7 @@
               onclick={() => removeItem(index)}
               aria-label={m().routines.editor.removeItem}
             >
-              ✕
+              <Icon name="close" />
             </button>
           </div>
         </div>

@@ -10,6 +10,7 @@
   import { resolve } from '$app/paths';
   import { api } from '$lib/api.js';
   import FastingCard from '$lib/components/FastingCard.svelte';
+  import Icon from '$lib/components/Icon.svelte';
   import KcalRing from '$lib/components/KcalRing.svelte';
   import MacroBars from '$lib/components/MacroBars.svelte';
   import WaterCard from '$lib/components/WaterCard.svelte';
@@ -175,27 +176,27 @@
     <h2>{m().home.quickActionsTitle}</h2>
     <div class="quick-actions">
       <a class="quick-action" href={resolve('/workouts')}>
-        <span class="quick-action-icon" aria-hidden="true">🏋️</span>
+        <span class="quick-action-icon"><Icon name="dumbbell" size={24} /></span>
         {m().home.startWorkout}
       </a>
       <a class="quick-action" href={resolve('/routines')}>
-        <span class="quick-action-icon" aria-hidden="true">📋</span>
+        <span class="quick-action-icon"><Icon name="clipboard" size={24} /></span>
         {m().home.viewRoutines}
       </a>
       <a class="quick-action" href={resolve('/exercises')}>
-        <span class="quick-action-icon" aria-hidden="true">📚</span>
+        <span class="quick-action-icon"><Icon name="book" size={24} /></span>
         {m().exercises.openLibrary}
       </a>
       <a class="quick-action" href={resolve('/weight')}>
-        <span class="quick-action-icon" aria-hidden="true">⚖️</span>
+        <span class="quick-action-icon"><Icon name="scale" size={24} /></span>
         {m().home.viewWeight}
       </a>
       <a class="quick-action" href={resolve('/goals')}>
-        <span class="quick-action-icon" aria-hidden="true">🎯</span>
+        <span class="quick-action-icon"><Icon name="target" size={24} /></span>
         {m().nav.goals}
       </a>
       <a class="quick-action" href={resolve('/nutrition')}>
-        <span class="quick-action-icon" aria-hidden="true">🍽️</span>
+        <span class="quick-action-icon"><Icon name="utensils" size={24} /></span>
         {m().home.viewNutrition}
       </a>
     </div>
