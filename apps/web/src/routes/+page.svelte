@@ -1,26 +1,41 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { BodyWeightDto, WorkoutDto } from '@repfuel/shared';
+  import type { BodyWeightDto, NutritionDayDto, NutritionTargets, WorkoutDto } from '@repfuel/shared';
   import { resolve } from '$app/paths';
   import { api } from '$lib/api.js';
   import { getUser } from '$lib/auth.svelte.js';
   import { getLocale, m } from '$lib/i18n/index.js';
+  import { currentTzOffsetMinutes, todayDateString } from '$lib/nutrition/day-range.js';
+  import { roundKcal } from '$lib/nutrition/format.js';
+  import { computeProgress } from '$lib/nutrition/progress.js';
   import { computeVolumeKg } from '$lib/workout/volume.js';
 
   const user = $derived(getUser());
 
   let recentWorkouts = $state<WorkoutDto[]>([]);
   let latestWeight = $state<BodyWeightDto | null>(null);
+  let todayNutrition = $state<NutritionDayDto | null>(null);
+  let nutritionTargets = $state<NutritionTargets | null>(null);
   let loading = $state(true);
 
+  const kcalProgress = $derived(
+    todayNutrition && nutritionTargets
+      ? computeProgress(todayNutrition.kcal, nutritionTargets.kcalTarget)
+      : null,
+  );
+
   onMount(async () => {
+    const today = todayDateString();
     try {
-      const [workoutsRes, weightRes] = await Promise.all([
+      const [workoutsRes, weightRes, nutritionRes] = await Promise.all([
         api.workouts.list({ limit: 3 }),
         api.weight.list({ limit: 1 }),
+        api.stats.nutrition({ from: today, to: today, tzOffsetMinutes: currentTzOffsetMinutes() }),
       ]);
       recentWorkouts = workoutsRes.workouts;
       latestWeight = weightRes.entries[0] ?? null;
+      todayNutrition = nutritionRes.days.find((d) => d.date === today) ?? null;
+      nutritionTargets = nutritionRes.targets;
     } catch {
       // Startseite bleibt auch ohne Daten benutzbar — kein Fehlerbanner nötig.
     } finally {
@@ -63,10 +78,42 @@
         <span class="quick-action-icon" aria-hidden="true">⚖️</span>
         {m().home.viewWeight}
       </a>
+      <a class="quick-action" href={resolve('/nutrition')}>
+        <span class="quick-action-icon" aria-hidden="true">🍽️</span>
+        {m().home.viewNutrition}
+      </a>
     </div>
   </section>
 
   {#if !loading}
+    <section class="card">
+      <h2>{m().home.todayNutritionTitle}</h2>
+      {#if todayNutrition && nutritionTargets?.kcalTarget != null}
+        <p class="latest-weight">
+          {roundKcal(todayNutrition.kcal)} / {nutritionTargets.kcalTarget}
+          {m().nutrition.kcalUnit}
+        </p>
+        {#if kcalProgress}
+          <div class="progress-bar">
+            <div
+              class="progress-bar-fill kcal"
+              class:over={kcalProgress.over}
+              style={`width:${kcalProgress.cappedPercent}%`}
+            ></div>
+          </div>
+        {/if}
+      {:else if todayNutrition}
+        <p class="latest-weight">{roundKcal(todayNutrition.kcal)} {m().nutrition.kcalUnit}</p>
+        <p class="muted">
+          {m().home.noTargetSet}
+          <a href={resolve('/goals')}>{m().home.setGoalsLink}</a>
+        </p>
+      {:else}
+        <p class="empty-state">{m().nutrition.emptyMealGroup}</p>
+      {/if}
+      <a class="link-more" href={resolve('/nutrition')}>{m().home.logMeal}</a>
+    </section>
+
     <section class="card">
       <h2>{m().home.recentWorkoutsTitle}</h2>
       {#if recentWorkouts.length === 0}

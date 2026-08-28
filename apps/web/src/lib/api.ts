@@ -5,24 +5,31 @@ import type {
   ApiErrorBody,
   BodyWeightDto,
   CreateExerciseRequest,
+  CreateFoodRequest,
   CreateInviteRequest,
   CreateRoutineRequest,
   ExerciseDto,
+  FoodDto,
   InstanceStatusDto,
   LastSetsResponse,
   ListExercisesQuery,
   ListWeightQuery,
   ListWorkoutsQuery,
   LoginOptionsRequest,
+  MealDto,
   MeResponse,
+  NutritionStatsResponse,
+  ProfileDto,
   RegisterOptionsRequest,
   RegistrationModeResponse,
   RoutineDto,
   SetDto,
   UpdateMeRequest,
+  UpdateProfileRequest,
   UpdateRoutineRequest,
   UpdateSettingsRequest,
   UpdateUserRequest,
+  UpsertMealRequest,
   UpsertSetRequest,
   UpsertWeightRequest,
   UpsertWorkoutRequest,
@@ -238,5 +245,43 @@ export const api = {
     upsert: (id: string, body: UpsertWeightRequest): Promise<{ entry: BodyWeightDto }> =>
       put(`/weight/${id}`, body),
     remove: (id: string): Promise<void> => del(`/weight/${id}`),
+  },
+
+  // --- Profil / Ziele ---
+  profile: {
+    get: (): Promise<{ profile: ProfileDto }> => get('/auth/profile'),
+    update: (body: UpdateProfileRequest): Promise<{ profile: ProfileDto }> =>
+      patch('/auth/profile', body),
+  },
+
+  // --- Lebensmittel ---
+  foods: {
+    search: (q: string, limit = 20): Promise<{ foods: FoodDto[] }> =>
+      get(`/foods/search${query({ q, limit })}`),
+    byBarcode: (code: string): Promise<{ food: FoodDto }> =>
+      get(`/foods/barcode/${encodeURIComponent(code)}`),
+    create: (body: CreateFoodRequest): Promise<{ food: FoodDto }> => post('/foods', body),
+  },
+
+  // --- Mahlzeiten ---
+  meals: {
+    list: (params: { from?: string; to?: string; limit?: number } = {}): Promise<{
+      meals: MealDto[];
+    }> => get(`/meals${query({ from: params.from, to: params.to, limit: params.limit })}`),
+    upsert: (id: string, body: UpsertMealRequest): Promise<{ meal: MealDto }> =>
+      put(`/meals/${id}`, body),
+    remove: (id: string): Promise<void> => del(`/meals/${id}`),
+  },
+
+  // --- Statistiken ---
+  stats: {
+    nutrition: (params: {
+      from: string;
+      to: string;
+      tzOffsetMinutes: number;
+    }): Promise<NutritionStatsResponse> =>
+      get(
+        `/stats/nutrition${query({ from: params.from, to: params.to, tzOffsetMinutes: params.tzOffsetMinutes })}`,
+      ),
   },
 };

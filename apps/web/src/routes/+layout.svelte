@@ -84,6 +84,9 @@
         >{m().nav.routines}</a
       >
       <a href={resolve('/weight')} class:active={isActiveNav('/weight')}>{m().nav.weight}</a>
+      <a href={resolve('/nutrition')} class:active={isActiveNav('/nutrition')}
+        >{m().nav.nutrition}</a
+      >
       {#if getUser()?.role === 'admin'}
         <a href={resolve('/admin')} class:active={isActiveNav('/admin')}>{m().nav.admin}</a>
       {/if}
