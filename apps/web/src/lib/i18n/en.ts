@@ -328,6 +328,7 @@ const en: Messages = {
     deleteMealConfirm: 'Really delete this entry?',
     loadError: 'Nutrition data could not be loaded.',
     addMeal: {
+      dayTotalLabel: 'Day total',
       title: 'Add meal',
       tabsLabel: 'Entry method',
       tabSearch: 'Search',

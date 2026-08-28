@@ -19,13 +19,18 @@
     mealType,
     eatenAt,
     onSaved,
+    dayKcal = 0,
+    kcalTarget = null,
   }: {
     mealType: MealType;
     eatenAt: string;
     onSaved: (meal: MealDto) => void;
+    /** Bereits geloggte Kalorien des Tages — für die Auswirkung dieser Auswahl. */
+    dayKcal?: number;
+    kcalTarget?: number | null;
   } = $props();
 
-  const QUICK_AMOUNTS = [50, 100, 150, 200];
+  const QUICK_AMOUNTS = [50, 100, 150, 200, 250];
 
   type Tab = 'search' | 'barcode' | 'quick';
   let tab = $state<Tab>('search');
@@ -240,6 +245,19 @@
       </div>
 
       {#if previewNutrition}
+        <!-- Was diese Auswahl mit dem Tag macht: ohne die Bezugsgröße ist eine
+             Kalorienzahl allein schwer einzuordnen. -->
+        <p class="day-impact">
+          {m().nutrition.addMeal.dayTotalLabel}
+          <strong>
+            {roundKcal(dayKcal + previewNutrition.kcal)}{kcalTarget != null
+              ? ` / ${kcalTarget}`
+              : ''}
+            {m().nutrition.kcalUnit}
+          </strong>
+          <span class="day-impact-delta">+{roundKcal(previewNutrition.kcal)}</span>
+        </p>
+
         <dl class="macro-preview">
           <div>
             <dt>{m().nutrition.kcal}</dt>
@@ -263,9 +281,13 @@
       {#if amountError}
         <p class="error" role="alert">{amountError}</p>
       {/if}
-      <button type="button" class="primary" onclick={saveWithFood} disabled={savingAmount}>
-        {savingAmount ? m().common.saving : m().nutrition.addMeal.logButton}
-      </button>
+      <!-- Bleibt beim Scrollen erreichbar: die Nährwerte darüber können den
+           Button sonst aus dem Blick schieben. -->
+      <div class="sticky-action">
+        <button type="button" class="primary" onclick={saveWithFood} disabled={savingAmount}>
+          {savingAmount ? m().common.saving : m().nutrition.addMeal.logButton}
+        </button>
+      </div>
     </div>
   {:else}
     <nav class="tabs" aria-label={m().nutrition.addMeal.tabsLabel}>

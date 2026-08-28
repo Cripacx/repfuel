@@ -331,6 +331,7 @@ const de = {
     deleteMealConfirm: 'Diesen Eintrag wirklich löschen?',
     loadError: 'Die Ernährungsdaten konnten nicht geladen werden.',
     addMeal: {
+      dayTotalLabel: 'Tagessumme',
       title: 'Mahlzeit hinzufügen',
       tabsLabel: 'Eingabeart',
       tabSearch: 'Suche',

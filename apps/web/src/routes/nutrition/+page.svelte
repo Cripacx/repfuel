@@ -476,6 +476,8 @@
       mealType={addMealType}
       eatenAt={defaultEatenAtIso(selectedDate)}
       onSaved={handleMealSaved}
+      dayKcal={statsDay?.kcal ?? 0}
+      kcalTarget={targets?.kcalTarget ?? null}
     />
   </Modal>
 {/if}
