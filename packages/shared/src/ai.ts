@@ -93,7 +93,7 @@ export interface CoachMemoryDto {
 
 export const addCoachMemoryRequestSchema = z.object({
   category: z.enum(MEMORY_CATEGORIES),
-  content: z.string().min(2).max(500),
+  content: z.string().min(2).max(1000),
 });
 export type AddCoachMemoryRequest = z.infer<typeof addCoachMemoryRequestSchema>;
 

@@ -107,6 +107,10 @@ export function aiRoutes(deps: AiRoutesDeps) {
         return reply.code(204).send();
       });
 
+      authed.delete('/ai/memories', async (req) => ({
+        deleted: await memoryService.removeAll(uid(req)),
+      }));
+
       authed.get('/ai/proposals', async (req) => ({
         proposals: await proposalService.listPending(uid(req)),
       }));

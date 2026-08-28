@@ -6,6 +6,7 @@
   import { getAiStatus, isAiEnabled, isAiStatusLoaded } from '$lib/ai/status.svelte.js';
   import { requestConfirm } from '$lib/confirm.svelte.js';
   import { api } from '$lib/api.js';
+  import CoachMemory from '$lib/components/CoachMemory.svelte';
   import { describeError } from '$lib/errors.js';
   import { getLocale, m } from '$lib/i18n/index.js';
   import { isOnline } from '$lib/offline/status.svelte.js';
@@ -110,7 +111,10 @@ AI_MODEL=…</code
   </div>
 {:else}
   <div class="page-header">
-    <h1>{m().chat.title}</h1>
+    <span class="page-header-title">
+      <h1>{m().chat.title}</h1>
+      <CoachMemory />
+    </span>
     <!-- Genau eine Primäraktion pro View: im Leerzustand trägt sie die Empty-Karte. -->
     {#if sessions.length > 0}
       <button
@@ -123,6 +127,8 @@ AI_MODEL=…</code
       </button>
     {/if}
   </div>
+
+  <h2 class="section-label">{m().chat.sessionsTitle}</h2>
 
   {#if !isOnline()}
     <p class="notice" role="status">{m().chat.sessions.offlineHint}</p>
@@ -180,4 +186,5 @@ AI_MODEL=…</code
       </div>
     {/each}
   {/if}
+
 {/if}

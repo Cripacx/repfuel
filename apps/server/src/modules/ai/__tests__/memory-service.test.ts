@@ -27,10 +27,20 @@ function fakeMemoryRepo(): MemoryRepo & { rows: CoachMemoryRow[] } {
       rows.push(row);
       return row;
     },
+    async update(userId, id, content) {
+      const row = visible(userId).find((r) => r.id === id) ?? null;
+      if (row) row.content = content;
+      return row;
+    },
     async softDelete(userId, id) {
       const row = visible(userId).find((r) => r.id === id) ?? null;
       if (row) row.deletedAt = new Date();
       return row;
+    },
+    async softDeleteAll(userId) {
+      const targets = visible(userId);
+      for (const row of targets) row.deletedAt = new Date();
+      return targets.length;
     },
   };
 }
@@ -65,6 +75,28 @@ describe('memory service', () => {
     await expect(service.add(USER, 'fact', 'einer zu viel')).rejects.toMatchObject({
       code: 'bad_request',
     });
+  });
+
+  it('updates an entry in place (topic bundling) and 404s on unknown ids', async () => {
+    const service = createMemoryService(fakeMemoryRepo());
+    const entry = await service.add(USER, 'preference', 'Mag nicht: Spiegelei');
+    const updated = await service.update(USER, entry.id, 'Mag nicht: Spiegelei, Rührei, Gurken');
+    expect(updated.id).toBe(entry.id);
+    const list = await service.list(USER);
+    expect(list).toHaveLength(1);
+    expect(list[0]?.content).toBe('Mag nicht: Spiegelei, Rührei, Gurken');
+    await expect(service.update(USER, randomUUID(), 'x y')).rejects.toMatchObject({
+      code: 'not_found',
+    });
+  });
+
+  it('clears the whole memory and reports the count', async () => {
+    const service = createMemoryService(fakeMemoryRepo());
+    await service.add(USER, 'preference', 'Mag kein Spiegelei');
+    await service.add(USER, 'preference', 'Mag kein Rührei');
+    expect(await service.removeAll(USER)).toBe(2);
+    expect(await service.list(USER)).toHaveLength(0);
+    expect(await service.removeAll(USER)).toBe(0);
   });
 
   it('removes memories and 404s on unknown ids', async () => {

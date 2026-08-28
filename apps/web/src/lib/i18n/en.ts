@@ -497,6 +497,24 @@ const en: Messages = {
   },
   chat: {
     title: 'Coach',
+    memory: {
+      title: 'Memory',
+      hint: 'Durable facts the coach considers for plans and suggestions — tell it in chat or add them here.',
+      empty: `Nothing remembered yet. Tell the coach e.g. "Remember: I don't like broccoli".`,
+      addPlaceholder: 'e.g. I only train Mon/Wed/Fri',
+      addButton: 'Remember',
+      deleteConfirm: 'Delete this memory entry?',
+      clearAllButton: 'Delete all',
+      clearAllConfirm: 'Really delete the entire coach memory? The coach forgets all remembered goals, preferences and constraints.',
+      loadError: 'The memory could not be loaded.',
+      categories: {
+        goal: 'Goals',
+        preference: 'Preferences',
+        constraint: 'Constraints',
+        fact: 'Facts',
+      },
+    },
+    sessionsTitle: 'Conversations',
     disabled: {
       title: 'No AI adapter configured',
       body: 'The coach is optional and switched off on this instance. Everything else works without it.',
@@ -615,21 +633,6 @@ const en: Messages = {
   },
   settings: {
     title: 'Profile',
-    memory: {
-      title: 'Coach memory',
-      hint: 'Durable facts the coach considers for plans and suggestions — tell it in chat or add them here.',
-      empty: `Nothing remembered yet. Tell the coach e.g. "Remember: I don't like broccoli".`,
-      addPlaceholder: 'e.g. I only train Mon/Wed/Fri',
-      addButton: 'Remember',
-      deleteConfirm: 'Delete this memory entry?',
-      loadError: 'The memory could not be loaded.',
-      categories: {
-        goal: 'Goal',
-        preference: 'Preference',
-        constraint: 'Constraint',
-        fact: 'Fact',
-      },
-    },
     passwordSectionTitle: 'Password',
     aiSectionTitle: 'AI coach',
     aiConnected: 'Connected',

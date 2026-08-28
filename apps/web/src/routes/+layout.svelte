@@ -126,17 +126,29 @@
           </span>
           {m().nav.nutrition}
         </a>
-        <a href={resolve('/stats')} class:active={isActiveNav('/stats')}>
-          <span class="bottom-nav-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M5 20V12M10 20V6M15 20v-5M20 20V9" />
-            </svg>
-          </span>
-          {m().nav.stats}
-        </a>
+        {#if isAiEnabled()}
+          <a href={resolve('/chat')} class:active={isActiveNav('/chat')}>
+            <span class="bottom-nav-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M20 12.5a7 7 0 0 1-7 7H8l-4 2.5.9-3.6A7 7 0 0 1 11 5.5h2a7 7 0 0 1 7 7Z" />
+                <path d="M9.5 12h5" />
+              </svg>
+            </span>
+            {m().nav.coach}
+          </a>
+        {:else}
+          <a href={resolve('/stats')} class:active={isActiveNav('/stats')}>
+            <span class="bottom-nav-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 20V12M10 20V6M15 20v-5M20 20V9" />
+              </svg>
+            </span>
+            {m().nav.stats}
+          </a>
+        {/if}
         <a
           href={resolve('/settings')}
-          class:active={isActiveNav('/settings') || isActiveNav('/admin') || isActiveNav('/chat')}
+          class:active={isActiveNav('/settings') || isActiveNav('/admin') || (isAiEnabled() && isActiveNav('/stats'))}
         >
           <span class="bottom-nav-icon">
             <svg viewBox="0 0 24 24" aria-hidden="true">

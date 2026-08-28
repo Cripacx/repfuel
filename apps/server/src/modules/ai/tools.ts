@@ -194,12 +194,23 @@ export function buildToolSet(deps: ToolDeps): ToolSet {
 
     remember: tool({
       description:
-        'Dauerhaft relevante Nutzer-Fakten ins Coach-Gedächtnis schreiben: Vorhaben/Ziele ("will im Mai einen Halbmarathon laufen"), Vorlieben & Abneigungen ("mag keinen Brokkoli"), Einschränkungen (Unverträglichkeiten, Verletzungen, Zeitbudget). KEINE Tagesdaten (Mahlzeiten/Sätze/Gewicht) — die stehen in den anderen Tools. Der Nutzer sieht und löscht Einträge im Profil.',
+        'NEUEN Eintrag im Coach-Gedächtnis anlegen: Vorhaben/Ziele, Vorlieben & Abneigungen, Einschränkungen (Unverträglichkeiten, Verletzungen, Zeitbudget). WICHTIG: EIN Eintrag pro THEMA — bündele Zusammengehöriges in einem Eintrag ("Mag nicht: Spiegelei, Rührei, Gurken, Tomaten"). Existiert zum Thema bereits ein Eintrag (siehe Gedächtnis im System-Prompt), nutze update_memory statt remember. KEINE Tagesdaten (Mahlzeiten/Sätze/Gewicht) — die stehen in den anderen Tools. Der Nutzer sieht und löscht Einträge im Coach-Tab.',
       inputSchema: z.object({
         category: z.enum(MEMORY_CATEGORIES),
-        content: z.string().min(2).max(500),
+        content: z.string().min(2).max(1000),
       }),
       execute: async ({ category, content }) => deps.memoryService.add(userId, category, content),
+    }),
+
+    update_memory: tool({
+      description:
+        'Bestehenden Gedächtnis-Eintrag fortschreiben (memory_id aus dem System-Prompt): den kompletten neuen Text des Eintrags übergeben — z.B. eine weitere Abneigung an die bestehende Liste anfügen. Ersetzt den alten Text vollständig.',
+      inputSchema: z.object({
+        memory_id: z.string().uuid(),
+        content: z.string().min(2).max(1000),
+      }),
+      execute: async ({ memory_id, content }) =>
+        deps.memoryService.update(userId, memory_id, content),
     }),
 
     forget_memory: tool({

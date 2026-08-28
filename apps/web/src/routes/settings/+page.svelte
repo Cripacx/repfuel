@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { isCliProvider, MEMORY_CATEGORIES, type ApiTokenDto, type CoachMemoryDto, type CreatedApiTokenDto, type MemoryCategory } from '@repfuel/shared';
-  import Icon from '$lib/components/Icon.svelte';
+  import { isCliProvider, type ApiTokenDto, type CreatedApiTokenDto } from '@repfuel/shared';
   import { resolve } from '$app/paths';
   import { requestConfirm } from '$lib/confirm.svelte.js';
   import { api } from '$lib/api.js';
@@ -22,66 +21,6 @@
   import type { Locale } from '@repfuel/shared';
 
   const aiStatus = $derived(getAiStatus());
-
-  // --- Coach-Gedächtnis: sichtbar & löschbar — das Gegenstück zum direkten
-  // remember-Tool der KI (Kontrolle statt Bestätigungs-Flow). ---
-  let memories = $state<CoachMemoryDto[]>([]);
-  let memoriesLoading = $state(true);
-  let memoriesError = $state<string | null>(null);
-  let newMemory = $state('');
-  let newMemoryCategory = $state<MemoryCategory>('preference');
-  let memorySaving = $state(false);
-
-  onMount(async () => {
-    if (!isAiEnabled()) {
-      memoriesLoading = false;
-      return;
-    }
-    try {
-      const { memories: loaded } = await api.ai.listMemories();
-      memories = loaded;
-    } catch (err) {
-      memoriesError = describeError(err);
-    } finally {
-      memoriesLoading = false;
-    }
-  });
-
-  async function addMemory(): Promise<void> {
-    const content = newMemory.trim();
-    if (content.length < 2) return;
-    memorySaving = true;
-    memoriesError = null;
-    try {
-      const { memory } = await api.ai.addMemory({ category: newMemoryCategory, content });
-      if (!memories.some((entry) => entry.id === memory.id)) {
-        memories = [...memories, memory];
-      }
-      newMemory = '';
-    } catch (err) {
-      memoriesError = describeError(err);
-    } finally {
-      memorySaving = false;
-    }
-  }
-
-  async function removeMemory(memory: CoachMemoryDto): Promise<void> {
-    if (
-      !(await requestConfirm({
-        message: m().settings.memory.deleteConfirm,
-        confirmLabel: m().common.delete,
-      }))
-    ) {
-      return;
-    }
-    memoriesError = null;
-    try {
-      await api.ai.removeMemory(memory.id);
-      memories = memories.filter((entry) => entry.id !== memory.id);
-    } catch (err) {
-      memoriesError = describeError(err);
-    }
-  }
 
   const user = $derived(getUser());
 
@@ -356,75 +295,6 @@
       {/if}
       {#if !aiStatus.status.ok && isCliProvider(aiStatus.status.provider)}
         <p class="muted">{m().settings.aiCliHint}</p>
-      {/if}
-    </section>
-  {/if}
-
-  {#if isAiEnabled()}
-    <section class="card">
-      <h2>{m().settings.memory.title}</h2>
-      <p class="hint">{m().settings.memory.hint}</p>
-
-      {#if memoriesLoading}
-        <div class="skeleton-list">
-          <div class="skeleton-row"></div>
-        </div>
-      {:else}
-        {#if memoriesError}
-          <p class="error" role="alert">{memoriesError}</p>
-        {/if}
-        {#if memories.length === 0}
-          <p class="empty-state">{m().settings.memory.empty}</p>
-        {:else}
-          <ul class="history-list">
-            {#each memories as memory (memory.id)}
-              <li class="history-row">
-                <div class="history-row-main">
-                  <span>{memory.content}</span>
-                  <span class="history-row-sets">
-                    {m().settings.memory.categories[memory.category]}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  class="icon-btn icon-btn-danger"
-                  onclick={() => removeMemory(memory)}
-                  aria-label={m().common.delete}
-                >
-                  <Icon name="trash" size={18} />
-                </button>
-              </li>
-            {/each}
-          </ul>
-        {/if}
-
-        <div class="memory-add">
-          <select
-            aria-label={m().settings.memory.title}
-            bind:value={newMemoryCategory}
-          >
-            {#each MEMORY_CATEGORIES as category (category)}
-              <option value={category}>{m().settings.memory.categories[category]}</option>
-            {/each}
-          </select>
-          <input
-            type="text"
-            placeholder={m().settings.memory.addPlaceholder}
-            aria-label={m().settings.memory.addPlaceholder}
-            bind:value={newMemory}
-            onkeydown={(event) => {
-              if (event.key === 'Enter') void addMemory();
-            }}
-          />
-          <button
-            type="button"
-            class="secondary"
-            onclick={addMemory}
-            disabled={memorySaving || newMemory.trim().length < 2}
-          >
-            {memorySaving ? m().common.saving : m().settings.memory.addButton}
-          </button>
-        </div>
       {/if}
     </section>
   {/if}

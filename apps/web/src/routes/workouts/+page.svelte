@@ -215,6 +215,11 @@
     {m().exercises.openLibrary}
     <span class="exercise-row-chevron"><Icon name="chevron-right" size={18} /></span>
   </a>
+  <a class="quick-start-row" href={resolve('/stats')}>
+    <Icon name="chart" />
+    {m().nav.stats}
+    <span class="exercise-row-chevron"><Icon name="chevron-right" size={18} /></span>
+  </a>
 
   <h2 class="section-label">
     {m().routines.title}

@@ -6,6 +6,7 @@
   import { page } from '$app/state';
   import { isAiEnabled } from '$lib/ai/status.svelte.js';
   import { api } from '$lib/api.js';
+  import CoachMemory from '$lib/components/CoachMemory.svelte';
   import { streamChatMessage } from '$lib/chat/stream.js';
   import ChatMessage from '$lib/components/chat/ChatMessage.svelte';
   import ProposalCard from '$lib/components/chat/ProposalCard.svelte';
@@ -228,6 +229,7 @@
       </span>
       {m().chat.conversation.back}
     </a>
+    <CoachMemory />
   </div>
 
   {#if !isOnline()}

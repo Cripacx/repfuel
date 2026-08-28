@@ -50,9 +50,26 @@ export function createMemoryService(memoryRepo: MemoryRepo) {
       return toDto(await memoryRepo.insert({ userId, category, content: trimmed }));
     },
 
+    /** Eintrag fortschreiben: die KI bündelt Zusammengehöriges in EINEM
+     * Eintrag pro Thema und ersetzt dessen Text, statt Zeilen anzuhäufen. */
+    async update(userId: string, id: string, content: string): Promise<CoachMemoryDto> {
+      const trimmed = content.trim();
+      if (trimmed.length < 2) {
+        throw new AppError('bad_request', 'Memory content too short');
+      }
+      const row = await memoryRepo.update(userId, id, trimmed);
+      if (!row) throw new AppError('not_found', 'Memory not found');
+      return toDto(row);
+    },
+
     async remove(userId: string, id: string): Promise<void> {
       const row = await memoryRepo.softDelete(userId, id);
       if (!row) throw new AppError('not_found', 'Memory not found');
+    },
+
+    /** "Alles vergessen" — der Nutzer behält die volle Kontrolle. */
+    async removeAll(userId: string): Promise<number> {
+      return memoryRepo.softDeleteAll(userId);
     },
   };
 }

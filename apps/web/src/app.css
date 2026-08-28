@@ -2252,6 +2252,7 @@ input[type='checkbox'] {
 .chat-topline {
   display: flex;
   align-items: center;
+  justify-content: space-between;
 }
 
 .chat-back {
@@ -3074,7 +3075,37 @@ input[type='checkbox'] {
   width: 100%;
 }
 
-/* --- Profil: Coach-Gedächtnis ------------------------------------------ */
+/* --- Coach: Gedächtnis -------------------------------------------------- */
+
+.page-header-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.page-header-title h1 {
+  margin: 0;
+}
+
+
+.memory-group-label {
+  margin: var(--space-3) 0 var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.memory-group-list {
+  margin-bottom: var(--space-2);
+}
+
+.memory-content {
+  overflow-wrap: anywhere;
+}
+
+/* --- Profil: Coach-Gedächtnis (Eingabezeile, auch im Coach-Tab genutzt) --- */
 
 .memory-add {
   display: flex;

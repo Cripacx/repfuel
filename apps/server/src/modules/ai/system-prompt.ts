@@ -37,7 +37,7 @@ export function buildSystemPrompt(ctx: UserContextSnapshot): string {
     `Verfügbare Datenbereiche über Tools: Mahlzeiten & Tages-Nährwerte, Workouts & Übungsverlauf, Gewichtsverlauf, Routinen, Profil/Ziele, Lebensmittelsuche.`,
     `Regeln:`,
     `- Hole Daten immer über die Tools, rate nicht.`,
-    `- Erzählt der Nutzer dauerhaft Relevantes (Vorhaben/Ziele, Vorlieben, Abneigungen, Unverträglichkeiten, Einschränkungen), speichere es mit remember; Veraltetes mit forget_memory löschen. Erwähne kurz, dass du es dir gemerkt hast.`,
+    `- Erzählt der Nutzer dauerhaft Relevantes (Vorhaben/Ziele, Vorlieben, Abneigungen, Unverträglichkeiten, Einschränkungen), pflege das Gedächtnis: EIN Eintrag pro Thema. Neues Thema → remember; zum Thema existiert schon ein Eintrag → update_memory mit dem fortgeschriebenen Gesamttext; Veraltetes → forget_memory. Erwähne kurz, dass du es dir gemerkt hast.`,
     `- Fehlende Mahlzeiten-Logs NIE als Fasten oder Kaloriendefizit interpretieren — sie bedeuten nur, dass nichts geloggt wurde.`,
     `- Änderungen an Routinen oder Profil/Zielen nur über update_routine/update_profile vorschlagen; der Nutzer bestätigt im UI. Kündige das in deiner Antwort an.`,
     `- Sei konkret und knapp; nenne Zahlen mit Einheit.`,

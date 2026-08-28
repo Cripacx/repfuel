@@ -500,6 +500,24 @@ const de = {
   },
   chat: {
     title: 'Coach',
+    memory: {
+      title: 'Gedächtnis',
+      hint: 'Dauerhafte Fakten, die der Coach bei Plänen und Vorschlägen berücksichtigt — erzähl sie ihm im Chat oder trage sie hier ein.',
+      empty: 'Noch nichts gemerkt. Sag dem Coach z. B. „Merk dir: ich mag keinen Brokkoli“.',
+      addPlaceholder: 'z. B. Ich trainiere nur Mo/Mi/Fr',
+      addButton: 'Merken',
+      deleteConfirm: 'Diesen Gedächtnis-Eintrag löschen?',
+      clearAllButton: 'Alles löschen',
+      clearAllConfirm: 'Wirklich das gesamte Coach-Gedächtnis löschen? Der Coach vergisst alle gemerkten Vorhaben, Vorlieben und Einschränkungen.',
+      loadError: 'Das Gedächtnis konnte nicht geladen werden.',
+      categories: {
+        goal: 'Vorhaben',
+        preference: 'Vorlieben',
+        constraint: 'Einschränkungen',
+        fact: 'Fakten',
+      },
+    },
+    sessionsTitle: 'Gespräche',
     disabled: {
       title: 'Kein KI-Adapter konfiguriert',
       body: 'Der Coach ist optional und auf dieser Instanz ausgeschaltet. Alles andere funktioniert ohne ihn.',
@@ -616,21 +634,6 @@ const de = {
   },
   settings: {
     title: 'Profil',
-    memory: {
-      title: 'Coach-Gedächtnis',
-      hint: 'Dauerhafte Fakten, die der Coach bei Plänen und Vorschlägen berücksichtigt — erzähl sie ihm im Chat oder trage sie hier ein.',
-      empty: 'Noch nichts gemerkt. Sag dem Coach z. B. „Merk dir: ich mag keinen Brokkoli“.',
-      addPlaceholder: 'z. B. Ich trainiere nur Mo/Mi/Fr',
-      addButton: 'Merken',
-      deleteConfirm: 'Diesen Gedächtnis-Eintrag löschen?',
-      loadError: 'Das Gedächtnis konnte nicht geladen werden.',
-      categories: {
-        goal: 'Vorhaben',
-        preference: 'Vorliebe',
-        constraint: 'Einschränkung',
-        fact: 'Fakt',
-      },
-    },
     passwordSectionTitle: 'Passwort',
     aiSectionTitle: 'KI-Coach',
     aiConnected: 'Verbunden',
