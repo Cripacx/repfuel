@@ -101,6 +101,7 @@ const en: Messages = {
     conflict: 'This entry already exists.',
   },
   home: {
+    kcalLeft: 'left',
     greeting: 'Signed in as',
     adminLinkHint: 'You have administrator privileges.',
     goToAdmin: 'Go to admin area',
@@ -305,6 +306,7 @@ const en: Messages = {
     nextDay: 'Next day',
     kcal: 'Calories',
     kcalUnit: 'kcal',
+    gramUnit: 'g',
     kcalPer100: 'kcal/100 g',
     overTargetLabel: 'over target',
     noTargetsHint: 'No targets are set for this day yet.',

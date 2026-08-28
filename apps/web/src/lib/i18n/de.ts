@@ -104,6 +104,7 @@ const de = {
     conflict: 'Dieser Eintrag existiert bereits.',
   },
   home: {
+    kcalLeft: 'übrig',
     greeting: 'Angemeldet als',
     adminLinkHint: 'Du hast Administratorrechte.',
     goToAdmin: 'Zum Admin-Bereich',
@@ -308,6 +309,7 @@ const de = {
     nextDay: 'Nächster Tag',
     kcal: 'Kalorien',
     kcalUnit: 'kcal',
+    gramUnit: 'g',
     kcalPer100: 'kcal/100 g',
     overTargetLabel: 'über Ziel',
     noTargetsHint: 'Für diesen Tag sind noch keine Ziele hinterlegt.',

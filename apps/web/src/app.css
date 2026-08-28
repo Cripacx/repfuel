@@ -183,12 +183,15 @@ a {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
-    /* Keine Verschiebung/Skalierung mehr … */
+    /* Bewegung wird nicht mehr animiert … */
     transition-property: opacity, background-color, background, border-color, color, fill,
       stroke !important;
-    /* … aber ein kurzer Cross-Fade bleibt. */
+    /* … aber ein kurzer Cross-Fade bleibt, damit Zustandswechsel sichtbar sind.
+       Statische Transforms bleiben bewusst erhalten: Fortschrittsbalken und
+       Ringe stellen ihren Wert über scale/rotate dar — ein pauschales
+       `transform: none` würde sie auf 100 % einfrieren, also Daten verfälschen
+       statt Bewegung zu reduzieren. */
     transition-duration: 120ms !important;
-    transform: none !important;
   }
 }
 
@@ -2740,4 +2743,13 @@ input[type='checkbox'] {
   font-weight: var(--weight-heading);
   font-variant-numeric: tabular-nums;
   letter-spacing: var(--tracking-xl);
+}
+
+/* Verbrauch als Beleg unter dem Ring — der Ring trägt die Aussage, diese Zeile
+   nur die genauen Zahlen. */
+.kcal-consumed {
+  margin: var(--space-3) 0 0;
+  text-align: center;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
 }

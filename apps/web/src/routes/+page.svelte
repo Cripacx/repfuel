@@ -3,6 +3,8 @@
   import type { BodyWeightDto, NutritionDayDto, NutritionTargets, WorkoutDto } from '@repfuel/shared';
   import { resolve } from '$app/paths';
   import { api } from '$lib/api.js';
+  import KcalRing from '$lib/components/KcalRing.svelte';
+  import MacroBars from '$lib/components/MacroBars.svelte';
   import { getUser } from '$lib/auth.svelte.js';
   import { latestMetricEntry, sumMetricValues } from '$lib/health/dashboard.js';
   import { getLocale, m } from '$lib/i18n/index.js';
@@ -13,7 +15,6 @@
     todayDateString,
   } from '$lib/nutrition/day-range.js';
   import { roundKcal } from '$lib/nutrition/format.js';
-  import { computeProgress } from '$lib/nutrition/progress.js';
   import { computeVolumeKg } from '$lib/workout/volume.js';
 
   const user = $derived(getUser());
@@ -27,12 +28,6 @@
   let todaySteps = $state<number | null>(null);
   let todayActiveKcal = $state<number | null>(null);
   let latestRestingHr = $state<number | null>(null);
-
-  const kcalProgress = $derived(
-    todayNutrition && nutritionTargets
-      ? computeProgress(todayNutrition.kcal, nutritionTargets.kcalTarget)
-      : null,
-  );
 
   function formatNumber(value: number): string {
     return value.toLocaleString(getLocale() === 'de' ? 'de-DE' : 'en-US');
@@ -175,25 +170,12 @@
     <section class="card">
       <h2>{m().home.todayNutritionTitle}</h2>
       {#if todayNutrition && nutritionTargets?.kcalTarget != null}
-        <p class="latest-weight">
+        <KcalRing kcal={todayNutrition.kcal} target={nutritionTargets.kcalTarget} />
+        <p class="kcal-consumed">
           {roundKcal(todayNutrition.kcal)} / {nutritionTargets.kcalTarget}
           {m().nutrition.kcalUnit}
         </p>
-        {#if kcalProgress}
-          <div class="progress-bar">
-            <div
-              class="progress-bar-fill kcal"
-              class:over={kcalProgress.over}
-              style={`width:${kcalProgress.cappedPercent}%`}
-            ></div>
-          </div>
-          {#if kcalProgress.over && nutritionTargets?.kcalTarget != null}
-            <p class="over-hint">
-              +{Math.round(todayNutrition ? todayNutrition.kcal - nutritionTargets.kcalTarget : 0)}
-              {m().nutrition.kcalUnit} {m().nutrition.overTargetLabel}
-            </p>
-          {/if}
-        {/if}
+        <MacroBars day={todayNutrition} targets={nutritionTargets} />
       {:else if todayNutrition}
         <p class="latest-weight">{roundKcal(todayNutrition.kcal)} {m().nutrition.kcalUnit}</p>
         <p class="muted">
