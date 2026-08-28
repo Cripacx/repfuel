@@ -6,6 +6,7 @@ import type {
   ChatMessageDto,
   ChatSessionDto,
   ProposalDto,
+  ProposalKind,
   SessionUser,
   ToolCallInfo,
   UserContextSnapshot,
@@ -35,10 +36,26 @@ export interface ChatServiceDeps {
   createProposal: (input: {
     userId: string;
     sessionId: string;
-    kind: 'update_routine' | 'update_profile';
+    kind: ProposalKind;
     summary: string;
     payload: unknown;
   }) => Promise<ProposalDto>;
+}
+
+const TITLE_MAX_LENGTH = 60;
+
+/** Modell-Antwort → Listentitel: erste Zeile, ohne Markdown-Reste/Anführung. */
+export function sanitizeSessionTitle(raw: string): string | null {
+  const line =
+    raw
+      .split('\n')
+      .map((part) => part.replace(/[*_#`>"„“”«»]/g, '').trim())
+      .find((part) => part.length > 0) ?? '';
+  const cleaned = line.replace(/\s+/g, ' ').replace(/[.!:]+$/, '').trim();
+  if (cleaned.length < 2) return null;
+  return cleaned.length > TITLE_MAX_LENGTH
+    ? `${cleaned.slice(0, TITLE_MAX_LENGTH - 1)}…`
+    : cleaned;
 }
 
 function toSessionDto(row: ChatSessionRow): ChatSessionDto {
@@ -114,6 +131,49 @@ export function createChatService(deps: ChatServiceDeps) {
     };
   }
 
+  /**
+   * Hintergrund-Feinschliff nach dem ersten Turn: der Adapter formuliert einen
+   * kurzen Titel; bis dahin (und bei Fehlern) bleibt die gekürzte erste
+   * Nachricht stehen. Läuft bewusst NACH dem Stream — blockiert nie die Antwort.
+   */
+  async function generateTitle(
+    sessionId: string,
+    firstMessage: string,
+    userContext: UserContextSnapshot,
+  ): Promise<void> {
+    if (!deps.adapter) return;
+    const prompt = [
+      'Gib dieser neuen Coach-Unterhaltung einen kurzen, prägnanten Titel (2–5 Wörter, in der Sprache der Nachricht).',
+      'Antworte NUR mit dem Titel — keine Anführungszeichen, kein Punkt, keine Tools benutzen.',
+      '',
+      `Erste Nachricht: ${firstMessage.slice(0, 500)}`,
+    ].join('\n');
+    try {
+      let text = '';
+      for await (const chunk of deps.adapter.chat({
+        sessionId,
+        messages: [
+          {
+            id: `title-${sessionId}`,
+            role: 'user',
+            content: prompt,
+            toolCalls: null,
+            createdAt: new Date().toISOString(),
+          },
+        ],
+        tools: {},
+        userContext,
+      })) {
+        if (chunk.type === 'text-delta') text += chunk.text;
+        else if (chunk.type === 'error') return;
+      }
+      const title = sanitizeSessionTitle(text);
+      if (title) await deps.chatRepo.setTitle(sessionId, title);
+    } catch {
+      // Fallback-Titel bleibt stehen; ein fehlgeschlagener Titel ist kein Fehlerfall.
+    }
+  }
+
   return {
     async status(): Promise<AiStatusResponse> {
       if (!enabled || !deps.adapter) return { enabled: false, status: null };
@@ -158,7 +218,8 @@ export function createChatService(deps: ChatServiceDeps) {
         content: input.content,
         toolCalls: null,
       });
-      if (!session.title) {
+      const isFirstTurn = !session.title;
+      if (isFirstTurn) {
         const title = input.content.length > 60 ? `${input.content.slice(0, 57)}…` : input.content;
         await deps.chatRepo.setTitle(session.id, title);
       }
@@ -205,6 +266,9 @@ export function createChatService(deps: ChatServiceDeps) {
           toolCalls: toolCalls.length > 0 ? toolCalls : null,
         });
         yield { type: 'done', messageId: saved.id };
+        if (isFirstTurn && !errored) {
+          void generateTitle(session.id, input.content, userContext);
+        }
       } else if (!errored) {
         yield { type: 'error', message: 'Empty response from adapter' };
       }

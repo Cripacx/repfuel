@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { SessionUser } from '@repfuel/shared';
-import { createChatService, type ChatServiceDeps } from '../services/chat-service.js';
+import {
+  createChatService,
+  sanitizeSessionTitle,
+  type ChatServiceDeps,
+} from '../services/chat-service.js';
 import { fakeChatRepo, scriptedAdapter } from './fakes.js';
 
 const user: SessionUser = {
@@ -25,6 +29,23 @@ function setup(adapter: ReturnType<typeof scriptedAdapter> | null) {
   } as unknown as ChatServiceDeps;
   return { chatRepo, service: createChatService(deps) };
 }
+
+describe('sanitizeSessionTitle', () => {
+  it('strips markdown, quotes and trailing punctuation', () => {
+    expect(sanitizeSessionTitle('**"Trainingsplan für den Cut."**\n')).toBe(
+      'Trainingsplan für den Cut',
+    );
+  });
+
+  it('uses the first non-empty line and truncates long titles', () => {
+    expect(sanitizeSessionTitle('\n\nGanzkörper-Split')).toBe('Ganzkörper-Split');
+    expect(sanitizeSessionTitle('t'.repeat(90))).toHaveLength(60);
+  });
+
+  it('rejects empty results', () => {
+    expect(sanitizeSessionTitle('  \n **_** ')).toBeNull();
+  });
+});
 
 describe('ai status', () => {
   it('reports disabled without adapter (AI_PROVIDER=none)', async () => {
@@ -74,12 +95,35 @@ describe('streamMessage', () => {
     expect(stored[1]!.toolCalls).toEqual([
       { toolName: 'get_profile', args: {}, result: { ok: true } },
     ]);
-    // Session-Titel aus erster Nachricht
-    expect(chatRepo.sessions[0]!.title).toBe('Wie läuft mein Training?');
     // Adapter bekam Verlauf + Kontext
     const call = adapter.calls[0] as { messages: unknown[]; userContext: { timezone: string } };
     expect(call.messages).toHaveLength(1);
     expect(call.userContext.timezone).toBe('UTC+02:00');
+    // Titel: erst die gekürzte erste Nachricht, dann generiert der Adapter im
+    // Hintergrund einen Kurztitel (hier aus denselben Skript-Chunks).
+    await vi.waitFor(() => expect(chatRepo.sessions[0]!.title).toBe('Hallo Alice'));
+    const titleCall = adapter.calls[1] as { messages: { content: string }[]; tools: unknown };
+    expect(titleCall.tools).toEqual({});
+    expect(titleCall.messages[0]!.content).toContain('Wie läuft mein Training?');
+  });
+
+  it('keeps the truncated first message as title when generation yields nothing', async () => {
+    const adapter = scriptedAdapter([
+      { type: 'tool-call', toolName: 'get_profile', args: {} },
+      { type: 'tool-result', toolName: 'get_profile', result: { ok: true } },
+    ]);
+    const { service, chatRepo } = setup(adapter);
+    const session = await service.createSession(user.id);
+    for await (const _ of service.streamMessage({
+      user,
+      sessionId: session.id,
+      content: 'x'.repeat(80),
+      tzOffsetMinutes: 0,
+    })) {
+      void _;
+    }
+    await vi.waitFor(() => expect(adapter.calls).toHaveLength(2));
+    expect(chatRepo.sessions[0]!.title).toBe(`${'x'.repeat(57)}…`);
   });
 
   it('propagates adapter errors and stores nothing for empty responses', async () => {

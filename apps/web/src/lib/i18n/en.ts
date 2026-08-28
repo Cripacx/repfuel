@@ -560,6 +560,7 @@ const en: Messages = {
       sending: 'Reply in progress…',
       roleUser: 'You',
       roleAssistant: 'Coach',
+      actionsLabel: 'Quick replies',
       offlineTitle: 'Offline',
       offlineBody:
         'The coach needs a connection. Sets, meals, and weight can still be logged offline.',
@@ -577,7 +578,9 @@ const en: Messages = {
       loadError: 'Open proposals could not be loaded.',
       retry: 'Reload',
       kindRoutine: 'Routine change',
+      kindCreateRoutine: 'New routine',
       kindProfile: 'Profile / goal change',
+      exercisesLabel: 'Suggested exercises',
       guardHint: 'Nothing is saved until you confirm.',
       showDetails: 'Show details',
       hideDetails: 'Hide details',

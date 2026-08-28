@@ -45,7 +45,7 @@ export interface ChatSessionDto {
   createdAt: string;
 }
 
-export const PROPOSAL_KINDS = ['update_routine', 'update_profile'] as const;
+export const PROPOSAL_KINDS = ['update_routine', 'update_profile', 'create_routine'] as const;
 export type ProposalKind = (typeof PROPOSAL_KINDS)[number];
 
 export type ProposalStatus = 'pending' | 'confirmed' | 'rejected';
@@ -60,6 +60,24 @@ export interface ProposalDto {
   status: ProposalStatus;
   createdAt: string;
 }
+
+// ---------- Antwort-Aktionen: von der KI vorgeschlagene Schnellantworten ----------
+
+/**
+ * Die KI hängt über das Tool `suggest_actions` bis zu drei Buttons an ihre
+ * Antwort; ein Klick schickt den hinterlegten Prompt als Nutzer-Nachricht.
+ * Dasselbe Schema validiert den Tool-Input (Server) und die persistierten
+ * Tool-Args beim Rendern (Web) — kaputte Args fallen still weg.
+ */
+export const chatActionSchema = z.object({
+  label: z.string().min(1).max(40),
+  prompt: z.string().min(1).max(500),
+});
+export type ChatAction = z.infer<typeof chatActionSchema>;
+
+export const suggestActionsInputSchema = z.object({
+  actions: z.array(chatActionSchema).min(1).max(3),
+});
 
 /** Streaming-Chunks des Chat-Endpoints (SSE) und der Adapter. */
 export type ChatChunk =

@@ -1,7 +1,13 @@
 <script lang="ts">
   import type { ProposalDto, ProposalStatus } from '@repfuel/shared';
   import { api } from '$lib/api.js';
-  import { formatProposalPayload, humanizeKey, type ProposalField } from '$lib/chat/proposal-format.js';
+  import {
+    extractRoutineItems,
+    formatProposalPayload,
+    humanizeKey,
+    stripDisplayHelpers,
+    type ProposalField,
+  } from '$lib/chat/proposal-format.js';
   import { describeError } from '$lib/errors.js';
   import { m } from '$lib/i18n/index.js';
 
@@ -25,13 +31,18 @@
   let resolvedStatus = $state<ProposalStatus | null>(null);
   let actionError = $state<string | null>(null);
 
-  const fields = $derived(formatProposalPayload(proposal.payload));
+  const fields = $derived(formatProposalPayload(stripDisplayHelpers(proposal.payload)));
+  const routineItems = $derived(
+    proposal.kind === 'update_profile' ? [] : extractRoutineItems(proposal.payload),
+  );
   const status = $derived(resolvedStatus ?? proposal.status);
   const done = $derived(status !== 'pending');
   const kindLabel = $derived(
     proposal.kind === 'update_routine'
       ? m().chat.proposals.kindRoutine
-      : m().chat.proposals.kindProfile,
+      : proposal.kind === 'create_routine'
+        ? m().chat.proposals.kindCreateRoutine
+        : m().chat.proposals.kindProfile,
   );
 
   function labelFor(field: ProposalField): string {
@@ -80,6 +91,23 @@
 
   {#if !done}
     <p class="proposal-guard">{m().chat.proposals.guardHint}</p>
+  {/if}
+
+  {#if routineItems.length > 0}
+    <ul class="proposal-exercises" aria-label={m().chat.proposals.exercisesLabel}>
+      {#each routineItems as item, index (index)}
+        <li>
+          <span class="proposal-exercise-name">{item.name}</span>
+          {#if item.targetSets !== null && item.targetReps !== null}
+            <span class="proposal-exercise-target">
+              {item.targetSets}×{item.targetReps}{item.targetWeightKg !== null
+                ? ` · ${item.targetWeightKg} kg`
+                : ''}
+            </span>
+          {/if}
+        </li>
+      {/each}
+    </ul>
   {/if}
 
   {#if fields.length > 0}

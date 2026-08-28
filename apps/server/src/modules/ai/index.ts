@@ -7,7 +7,7 @@ import type { KeyValueStore } from '../../core/redis.js';
 import type { AuthGuards, ProfileService } from '../auth/index.js';
 import type { IngestService, WeightService } from '../health/index.js';
 import type { FoodService, MealService } from '../nutrition/index.js';
-import type { RoutineService, WorkoutService } from '../workout/index.js';
+import type { ExerciseService, RoutineService, WorkoutService } from '../workout/index.js';
 import { createApiAdapter, type ApiAdapterConfig } from './adapters/api-adapter.js';
 import { createCliAdapter } from './adapters/cli-adapter.js';
 import { mcpRoutes } from './mcp/mcp-routes.js';
@@ -43,6 +43,7 @@ export interface AiModuleOptions {
   foodService: FoodService;
   workoutService: WorkoutService;
   routineService: RoutineService;
+  exerciseService: ExerciseService;
   /** Test-Injektion: ersetzt den aus der Config gebauten Adapter. */
   adapterOverride?: AIAdapter | null;
 }
@@ -102,6 +103,7 @@ export async function registerAiModule(
       foodService: opts.foodService,
       workoutService: opts.workoutService,
       routineService: opts.routineService,
+      exerciseService: opts.exerciseService,
       weightService: opts.weightService,
       ingestService: opts.ingestService,
       profileService: opts.profileService,
@@ -135,6 +137,7 @@ export async function registerAiModule(
           foodService: opts.foodService,
           workoutService: opts.workoutService,
           routineService: opts.routineService,
+          exerciseService: opts.exerciseService,
           weightService: opts.weightService,
           ingestService: opts.ingestService,
           profileService: opts.profileService,

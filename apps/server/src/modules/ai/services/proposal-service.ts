@@ -1,17 +1,35 @@
 import { z } from 'zod';
-import type { ProposalDto } from '@repfuel/shared';
-import { updateProfileRequestSchema, updateRoutineRequestSchema } from '@repfuel/shared';
+import type { ProposalDto, ProposalKind } from '@repfuel/shared';
+import {
+  createRoutineRequestSchema,
+  updateProfileRequestSchema,
+  updateRoutineRequestSchema,
+} from '@repfuel/shared';
 import { AppError } from '../../../core/errors.js';
 import type { ProfileService } from '../../auth/index.js';
 import type { RoutineService } from '../../workout/index.js';
 import type { ProposalRepo } from '../repositories/proposal-repo.js';
 import type { AiProposalRow } from '../schema.js';
 
+/** Anzeigehilfe im Payload: Übungs-ID → Name (nur fürs UI, nie fürs Anwenden). */
+const exerciseNamesSchema = z.record(z.string(), z.string()).optional();
+
 const routinePayloadSchema = z.object({
   routineId: z.string().uuid(),
   changes: updateRoutineRequestSchema,
+  exerciseNames: exerciseNamesSchema,
 });
 const profilePayloadSchema = z.object({ changes: updateProfileRequestSchema });
+const createRoutinePayloadSchema = z.object({
+  routine: createRoutineRequestSchema,
+  exerciseNames: exerciseNamesSchema,
+});
+
+const payloadSchemas = {
+  update_routine: routinePayloadSchema,
+  update_profile: profilePayloadSchema,
+  create_routine: createRoutinePayloadSchema,
+} as const;
 
 export function toProposalDto(row: AiProposalRow): ProposalDto {
   return {
@@ -51,14 +69,13 @@ export function createProposalService(deps: ProposalServiceDeps) {
     async create(input: {
       userId: string;
       sessionId: string | null;
-      kind: 'update_routine' | 'update_profile';
+      kind: ProposalKind;
       summary: string;
       payload: unknown;
     }): Promise<ProposalDto> {
       // Payload schon beim Anlegen validieren — ungültige Vorschläge sollen
       // gar nicht erst im UI landen.
-      if (input.kind === 'update_routine') routinePayloadSchema.parse(input.payload);
-      else profilePayloadSchema.parse(input.payload);
+      payloadSchemas[input.kind].parse(input.payload);
       const row = await deps.proposalRepo.create(input);
       return toProposalDto(row);
     },
@@ -72,6 +89,9 @@ export function createProposalService(deps: ProposalServiceDeps) {
       if (row.kind === 'update_routine') {
         const payload = routinePayloadSchema.parse(row.payload);
         await deps.routineService.update(userId, payload.routineId, payload.changes);
+      } else if (row.kind === 'create_routine') {
+        const payload = createRoutinePayloadSchema.parse(row.payload);
+        await deps.routineService.create(userId, payload.routine);
       } else {
         const payload = profilePayloadSchema.parse(row.payload);
         await deps.profileService.update(userId, payload.changes);

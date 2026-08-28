@@ -7,6 +7,8 @@
   import { requestConfirm } from '$lib/confirm.svelte.js';
   import { api } from '$lib/api.js';
   import CoachMemory from '$lib/components/CoachMemory.svelte';
+  import Icon from '$lib/components/Icon.svelte';
+  import SwipeRow from '$lib/components/SwipeRow.svelte';
   import { describeError } from '$lib/errors.js';
   import { getLocale, m } from '$lib/i18n/index.js';
   import { isOnline } from '$lib/offline/status.svelte.js';
@@ -165,25 +167,26 @@ AI_MODEL=…</code
       </button>
     </div>
   {:else}
+    <!-- Löschen per Swipe nach links (Touch) bzw. Hover-Icon (Maus). -->
     {#each sessions as session (session.id)}
-      <div class="list-card">
-        <a class="list-card-main" href={resolve('/chat/[id]', { id: session.id })}>
-          <span class="list-card-title">{session.title ?? m().chat.sessions.untitled}</span>
-          <span class="list-card-meta">
-            <span>{formatDate(session.createdAt)}</span>
-          </span>
-        </a>
-        <div class="list-card-actions">
+      <SwipeRow deleteLabel={m().common.delete} onDelete={() => removeSession(session)}>
+        <div class="list-card session-card">
+          <a class="list-card-main" href={resolve('/chat/[id]', { id: session.id })}>
+            <span class="list-card-title">{session.title ?? m().chat.sessions.untitled}</span>
+            <span class="list-card-meta">
+              <span>{formatDate(session.createdAt)}</span>
+            </span>
+          </a>
           <button
             type="button"
-            class="danger"
+            class="icon-btn icon-btn-danger session-delete-hover"
             aria-label={m().chat.sessions.deleteLabel}
             onclick={() => removeSession(session)}
           >
-            {m().common.delete}
+            <Icon name="trash" size={18} />
           </button>
         </div>
-      </div>
+      </SwipeRow>
     {/each}
   {/if}
 

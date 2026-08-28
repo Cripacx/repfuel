@@ -1120,6 +1120,10 @@ a.list-card:active {
   flex-direction: column;
   gap: var(--space-1);
   min-width: 0;
+  flex: 1;
+  /* Als Anker gerendert: Karteninhalt bleibt Text, kein Link-Look. */
+  text-decoration: none;
+  color: inherit;
 }
 
 .list-card-title {
@@ -3515,4 +3519,212 @@ input[type='checkbox'] {
   margin: 0;
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
+}
+
+/* --- Coach: Markdown in Antworten --- */
+
+/* Kompakte Typo in der Bubble: kleinere Abstände als im Seitenlayout. */
+.chat-markdown p {
+  margin: 0 0 var(--space-2);
+}
+
+.chat-markdown h3,
+.chat-markdown h4,
+.chat-markdown h5 {
+  margin: var(--space-3) 0 var(--space-1);
+  font-size: var(--text-base);
+  font-weight: var(--weight-heading);
+}
+
+.chat-markdown > :first-child {
+  margin-top: 0;
+}
+
+.chat-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.chat-markdown ul,
+.chat-markdown ol {
+  margin: 0 0 var(--space-2);
+  padding-left: 1.25em;
+}
+
+.chat-markdown li {
+  margin-bottom: var(--space-1);
+}
+
+.chat-markdown li:last-child {
+  margin-bottom: 0;
+}
+
+.chat-markdown code {
+  background: var(--surface-2);
+  border-radius: 6px;
+  padding: 1px 5px;
+  font-size: 0.9em;
+}
+
+.chat-markdown pre {
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  margin: 0 0 var(--space-2);
+  overflow-x: auto;
+}
+
+.chat-markdown pre code {
+  background: none;
+  padding: 0;
+}
+
+.chat-markdown hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: var(--space-3) 0;
+}
+
+.chat-markdown a {
+  color: var(--accent);
+}
+
+/* --- Coach: Schnellantwort-Buttons unter der letzten Antwort --- */
+
+.chat-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.chat-msg.assistant .chat-actions {
+  /* bündig zur Bubble, nicht zur Rollenzeile */
+  align-self: flex-start;
+}
+
+.chat-action {
+  min-height: var(--touch-target);
+  padding: 0 var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition:
+    transform var(--dur-press) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.chat-action:hover {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.chat-action:active {
+  transform: scale(0.97);
+}
+
+/* --- Vorschlagskarte: Übungsliste eines Routinen-Vorschlags --- */
+
+.proposal-exercises {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.proposal-exercises li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--text-sm);
+}
+
+.proposal-exercises li:last-child {
+  border-bottom: none;
+}
+
+.proposal-exercise-name {
+  font-weight: var(--weight-medium);
+  overflow-wrap: anywhere;
+}
+
+.proposal-exercise-target {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* --- Swipe-to-delete (Gesprächsliste) --- */
+
+.swipe-row {
+  position: relative;
+  margin-bottom: var(--space-3);
+}
+
+.swipe-row .list-card {
+  margin-bottom: 0;
+}
+
+.swipe-row-action {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: flex-end;
+  border-radius: var(--radius-md);
+  background: var(--danger);
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.swipe-row-action.revealed {
+  opacity: 1;
+}
+
+.swipe-row-delete {
+  width: 88px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  /* Dunkle Schrift auf --danger: ≥ 4.5:1, analog zu Text auf --accent. */
+  color: var(--on-accent);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+
+.swipe-row-content {
+  position: relative;
+  /* Horizontale Geste gehört der Zeile, vertikal scrollt die Liste weiter. */
+  touch-action: pan-y;
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.swipe-row-content.dragging {
+  transition: none;
+}
+
+/* Maus-Geräte: Löschen zusätzlich als Hover-Icon, ohne Geste erreichbar. */
+.session-delete-hover {
+  display: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .session-delete-hover {
+    display: inline-flex;
+    opacity: 0;
+    transition: opacity var(--dur-fast) var(--ease-out);
+  }
+
+  .session-card:hover .session-delete-hover,
+  .session-delete-hover:focus-visible {
+    opacity: 1;
+  }
 }

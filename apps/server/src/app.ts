@@ -134,6 +134,7 @@ export async function buildApp(config: AppConfig, deps: AppDeps): Promise<Fastif
     foodService: nutritionApi.foodService,
     workoutService: workoutApi.workoutService,
     routineService: workoutApi.routineService,
+    exerciseService: workoutApi.exerciseService,
   });
 
   await registerStatsModule(app, {

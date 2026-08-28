@@ -46,6 +46,14 @@ export function createExerciseService(exerciseRepo: ExerciseRepo) {
       return toExerciseDto(row);
     },
 
+    /** Sichtbare Übungen zu IDs (unbekannte fallen still weg). */
+    async byIds(userId: string, exerciseIds: string[]): Promise<ExerciseDto[]> {
+      const unique = [...new Set(exerciseIds)];
+      if (unique.length === 0) return [];
+      const rows = await exerciseRepo.findVisibleByIds(userId, unique);
+      return rows.map(toExerciseDto);
+    },
+
     /** Wirft not_found, wenn eine der Übungen für den Nutzer nicht sichtbar ist. */
     async assertVisible(userId: string, exerciseIds: string[]): Promise<void> {
       const unique = [...new Set(exerciseIds)];

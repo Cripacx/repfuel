@@ -1,5 +1,50 @@
 import { describe, expect, it } from 'vitest';
-import { formatProposalPayload, humanizeKey } from './proposal-format.js';
+import {
+  extractRoutineItems,
+  formatProposalPayload,
+  humanizeKey,
+  stripDisplayHelpers,
+} from './proposal-format.js';
+
+describe('extractRoutineItems', () => {
+  const ID = '00000000-0000-4000-8000-00000000bbbb';
+
+  it('liest Übungen aus create_routine-Payloads und löst Namen auf', () => {
+    const items = extractRoutineItems({
+      routine: {
+        name: 'Ganzkörper A',
+        items: [{ exerciseId: ID, position: 0, targetSets: 3, targetReps: 8, targetWeightKg: 60 }],
+      },
+      exerciseNames: { [ID]: 'Kniebeugen' },
+    });
+    expect(items).toEqual([
+      { name: 'Kniebeugen', targetSets: 3, targetReps: 8, targetWeightKg: 60 },
+    ]);
+  });
+
+  it('fällt ohne Namens-Map auf die ID zurück und liest auch changes.items', () => {
+    const items = extractRoutineItems({
+      routineId: ID,
+      changes: { items: [{ exerciseId: ID, targetSets: 4, targetReps: 10 }] },
+    });
+    expect(items).toEqual([{ name: ID, targetSets: 4, targetReps: 10, targetWeightKg: null }]);
+  });
+
+  it('liefert für Profil-Payloads und Unsinn eine leere Liste', () => {
+    expect(extractRoutineItems({ changes: { kcalTarget: 2200 } })).toEqual([]);
+    expect(extractRoutineItems(null)).toEqual([]);
+    expect(extractRoutineItems('x')).toEqual([]);
+  });
+});
+
+describe('stripDisplayHelpers', () => {
+  it('entfernt exerciseNames, lässt den Rest unverändert', () => {
+    expect(stripDisplayHelpers({ routine: { name: 'A' }, exerciseNames: { a: 'b' } })).toEqual({
+      routine: { name: 'A' },
+    });
+    expect(stripDisplayHelpers(42)).toBe(42);
+  });
+});
 
 describe('formatProposalPayload', () => {
   it('flacht einen Profil-Vorschlag zu Feld/Wert-Paaren ab', () => {

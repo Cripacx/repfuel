@@ -1,12 +1,18 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import type { ProposalDto, ToolDefinition, ToolSet } from '@repfuel/shared';
-import { MEMORY_CATEGORIES, updateProfileRequestSchema, updateRoutineRequestSchema } from '@repfuel/shared';
+import type { ProposalDto, ProposalKind, ToolDefinition, ToolSet } from '@repfuel/shared';
+import {
+  MEMORY_CATEGORIES,
+  createRoutineRequestSchema,
+  suggestActionsInputSchema,
+  updateProfileRequestSchema,
+  updateRoutineRequestSchema,
+} from '@repfuel/shared';
 import type { MemoryService } from './services/memory-service.js';
 import type { ProfileService } from '../auth/index.js';
 import type { IngestService, WeightService } from '../health/index.js';
 import type { FoodService, MealService } from '../nutrition/index.js';
-import type { RoutineService, WorkoutService } from '../workout/index.js';
+import type { ExerciseService, RoutineService, WorkoutService } from '../workout/index.js';
 
 /**
  * KI-Tools = dünne Wrapper um dieselben Service-Funktionen wie die REST-API.
@@ -21,12 +27,13 @@ export interface ToolDeps {
   foodService: FoodService;
   workoutService: WorkoutService;
   routineService: RoutineService;
+  exerciseService: ExerciseService;
   weightService: WeightService;
   ingestService: IngestService;
   profileService: ProfileService;
   memoryService: MemoryService;
   createProposal: (input: {
-    kind: 'update_routine' | 'update_profile';
+    kind: ProposalKind;
     summary: string;
     payload: unknown;
   }) => Promise<ProposalDto>;
@@ -43,6 +50,13 @@ function tool<T>(def: ToolDefinition<T>): ToolDefinition<T> {
 
 export function buildToolSet(deps: ToolDeps): ToolSet {
   const { userId } = deps;
+
+  /** id → Anzeigename; wandert mit in Vorschlags-Payloads, damit die
+   *  Bestätigungskarte Übungsnamen statt UUIDs zeigen kann. */
+  const exerciseNameMap = async (ids: string[]): Promise<Record<string, string>> => {
+    const exercises = await deps.exerciseService.byIds(userId, ids);
+    return Object.fromEntries(exercises.map((e) => [e.id, e.nameDe ?? e.name]));
+  };
 
   const dayBounds = (from: string, to: string) => ({
     from: new Date(Date.parse(`${from}T00:00:00Z`) - deps.tzOffsetMinutes * 60_000).toISOString(),
@@ -131,6 +145,32 @@ export function buildToolSet(deps: ToolDeps): ToolSet {
       description: 'Alle Trainingsroutinen des Nutzers (mit Übungen und Zielvorgaben).',
       inputSchema: z.object({}),
       execute: async () => deps.routineService.list(userId),
+    }),
+
+    search_exercises: tool({
+      description:
+        'Übungskatalog durchsuchen (Name und/oder Muskelgruppe). Liefert exercise_ids für create_routine/update_routine und get_exercise_history. Ohne query: Liste nach Muskelgruppe. Muskelgruppen z.B. chest, back, shoulders, biceps, triceps, quads, hamstrings, glutes, calves, abs.',
+      inputSchema: z.object({
+        query: z.string().min(2).max(100).optional(),
+        muscle: z.string().min(2).max(50).optional(),
+        limit: z.number().int().min(1).max(50).optional(),
+      }),
+      execute: async ({ query, muscle, limit }) => {
+        const rows = await deps.exerciseService.list(userId, {
+          q: query,
+          muscle,
+          limit: limit ?? 15,
+          offset: 0,
+        });
+        // Kompakte Projektion: die KI braucht IDs + Namen, keine Medien-URLs.
+        return rows.map((exercise) => ({
+          id: exercise.id,
+          name: exercise.name,
+          nameDe: exercise.nameDe,
+          muscleGroups: exercise.muscleGroups,
+          equipment: exercise.equipment,
+        }));
+      },
     }),
 
     search_food: tool({
@@ -223,6 +263,40 @@ export function buildToolSet(deps: ToolDeps): ToolSet {
       },
     }),
 
+    create_routine: tool({
+      description:
+        'NEUE Trainingsroutine VORSCHLAGEN (Name, optional Wochentag, Übungen mit Sätzen/Wiederholungen). exercise_ids vorher über search_exercises ermitteln. Wird NICHT direkt angelegt — der Nutzer bestätigt den Vorschlag im UI. summary: 1–2 Sätze, was und warum. Pro Trainingstag eine eigene Routine anlegen (z.B. "Ganzkörper A" und "Ganzkörper B").',
+      inputSchema: z.object({
+        summary: z.string().min(5).max(500),
+        routine: createRoutineRequestSchema,
+      }),
+      execute: async ({ summary, routine }) => {
+        const exerciseIds = (routine.items ?? []).map((item) => item.exerciseId);
+        // Übungen jetzt prüfen, damit kein Vorschlag mit erfundenen IDs entsteht.
+        await deps.exerciseService.assertVisible(userId, exerciseIds);
+        const proposal = await deps.createProposal({
+          kind: 'create_routine',
+          summary,
+          payload: {
+            routine,
+            exerciseNames: await exerciseNameMap(exerciseIds),
+          },
+        });
+        return {
+          status: 'proposal_created',
+          proposalId: proposal.id,
+          note: 'Der Nutzer muss den Vorschlag im UI bestätigen, bevor die Routine angelegt wird.',
+        };
+      },
+    }),
+
+    suggest_actions: tool({
+      description:
+        'Bis zu 3 Schnellantwort-Buttons an die AKTUELLE Antwort hängen (label: kurzer Button-Text; prompt: die Nachricht, die ein Klick sendet — in der Sprache des Nutzers). Als LETZTEN Tool-Aufruf des Turns verwenden, wenn es naheliegende nächste Schritte gibt (z.B. "Leg den Plan an", "Zeig Alternativen").',
+      inputSchema: suggestActionsInputSchema,
+      execute: async ({ actions }) => ({ status: 'ok', count: actions.length }),
+    }),
+
     update_routine: tool({
       description:
         'Änderung einer Routine VORSCHLAGEN (Name/Übungen/Sätze). Wird NICHT direkt ausgeführt — der Nutzer bestätigt den Vorschlag im UI. summary: 1–2 Sätze, was und warum.',
@@ -237,7 +311,13 @@ export function buildToolSet(deps: ToolDeps): ToolSet {
         const proposal = await deps.createProposal({
           kind: 'update_routine',
           summary,
-          payload: { routineId: routine_id, changes },
+          payload: {
+            routineId: routine_id,
+            changes,
+            ...(changes.items
+              ? { exerciseNames: await exerciseNameMap(changes.items.map((i) => i.exerciseId)) }
+              : {}),
+          },
         });
         return {
           status: 'proposal_created',

@@ -270,11 +270,13 @@
     {/if}
 
     <div class="chat-log">
-      {#each messages as message (message.id)}
+      {#each messages as message, index (message.id)}
         <ChatMessage
           role={message.role}
           content={message.content}
           toolCalls={message.toolCalls}
+          actionsEnabled={index === messages.length - 1 && !streaming && isOnline()}
+          onAction={(prompt) => void send(prompt)}
         />
       {/each}
 

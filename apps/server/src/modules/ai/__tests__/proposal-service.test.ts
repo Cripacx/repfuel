@@ -7,7 +7,7 @@ const ROUTINE = '00000000-0000-4000-8000-00000000aaaa';
 
 function setup() {
   const proposalRepo = fakeProposalRepo();
-  const routineService = { update: vi.fn(async () => ({})) };
+  const routineService = { update: vi.fn(async () => ({})), create: vi.fn(async () => ({})) };
   const profileService = { update: vi.fn(async () => ({})) };
   const service = createProposalService({
     proposalRepo,
@@ -67,6 +67,46 @@ describe('proposal flow (Bestätigungs-Guard)', () => {
     });
     await service.confirm(USER, p2.id);
     expect(profileService.update).toHaveBeenCalledWith(USER, { proteinTargetG: 170 });
+  });
+
+  it('create_routine: confirm legt die Routine über den Routine-Service an', async () => {
+    const { service, routineService } = setup();
+    const routine = {
+      name: 'Ganzkörper A',
+      weekday: 1,
+      items: [
+        {
+          exerciseId: '00000000-0000-4000-8000-00000000bbbb',
+          position: 0,
+          targetSets: 3,
+          targetReps: 8,
+        },
+      ],
+    };
+    const p = await service.create({
+      userId: USER,
+      sessionId: null,
+      kind: 'create_routine',
+      summary: '2x/Woche Ganzkörper für den Cut',
+      payload: { routine },
+    });
+    expect(routineService.create).not.toHaveBeenCalled();
+    const confirmed = await service.confirm(USER, p.id);
+    expect(confirmed.status).toBe('confirmed');
+    expect(routineService.create).toHaveBeenCalledWith(
+      USER,
+      expect.objectContaining({ name: 'Ganzkörper A' }),
+    );
+
+    await expect(
+      service.create({
+        userId: USER,
+        sessionId: null,
+        kind: 'create_routine',
+        summary: 'kaputt',
+        payload: { routine: { items: [] } },
+      }),
+    ).rejects.toThrow();
   });
 
   it('cannot confirm twice, reject leaves services untouched', async () => {

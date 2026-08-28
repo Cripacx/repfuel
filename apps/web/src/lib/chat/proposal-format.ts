@@ -123,3 +123,51 @@ export function formatProposalPayload(payload: unknown): ProposalField[] {
   walk(payload, [], '', 0, null, fields);
   return fields;
 }
+
+// ---------- Routinen-Vorschläge: Übungsliste statt UUID-Wand ----------
+
+export interface RoutineItemPreview {
+  /** Anzeigename aus payload.exerciseNames; Fallback: die ID. */
+  name: string;
+  targetSets: number | null;
+  targetReps: number | null;
+  targetWeightKg: number | null;
+}
+
+function numberOrNull(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+/**
+ * Zieht aus einem `create_routine`-/`update_routine`-Payload die Übungsliste
+ * (Name + Sätze×Wiederholungen) für die kompakte Anzeige in der Karte.
+ * Der Server legt dafür `exerciseNames` (id → Name) in den Payload.
+ */
+export function extractRoutineItems(payload: unknown): RoutineItemPreview[] {
+  if (!isPlainObject(payload)) return [];
+  const names = isPlainObject(payload.exerciseNames) ? payload.exerciseNames : {};
+  const container = isPlainObject(payload.routine)
+    ? payload.routine
+    : isPlainObject(payload.changes)
+      ? payload.changes
+      : null;
+  if (!container || !Array.isArray(container.items)) return [];
+  return container.items.filter(isPlainObject).map((item) => {
+    const id = typeof item.exerciseId === 'string' ? item.exerciseId : '';
+    const mapped = names[id];
+    return {
+      name: typeof mapped === 'string' && mapped.length > 0 ? mapped : id,
+      targetSets: numberOrNull(item.targetSets),
+      targetReps: numberOrNull(item.targetReps),
+      targetWeightKg: numberOrNull(item.targetWeightKg),
+    };
+  });
+}
+
+/** Entfernt reine Anzeigehilfen (exerciseNames) aus der Detail-Feldliste. */
+export function stripDisplayHelpers(payload: unknown): unknown {
+  if (!isPlainObject(payload)) return payload;
+  const rest = { ...payload };
+  delete rest.exerciseNames;
+  return rest;
+}

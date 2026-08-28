@@ -563,6 +563,7 @@ const de = {
       sending: 'Antwort läuft…',
       roleUser: 'Du',
       roleAssistant: 'Coach',
+      actionsLabel: 'Schnellantworten',
       offlineTitle: 'Offline',
       offlineBody:
         'Der Coach braucht eine Verbindung. Sätze, Mahlzeiten und Gewicht kannst du weiter offline eintragen.',
@@ -580,7 +581,9 @@ const de = {
       loadError: 'Offene Vorschläge konnten nicht geladen werden.',
       retry: 'Erneut laden',
       kindRoutine: 'Routinen-Änderung',
+      kindCreateRoutine: 'Neue Routine',
       kindProfile: 'Profil-/Ziel-Änderung',
+      exercisesLabel: 'Vorgeschlagene Übungen',
       guardHint: 'Wird erst gespeichert, wenn du bestätigst.',
       showDetails: 'Details anzeigen',
       hideDetails: 'Details ausblenden',
