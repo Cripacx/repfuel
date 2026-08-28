@@ -44,6 +44,16 @@ beiden Projekt-Skills in `.claude/skills/` zu verwenden:
    63 Pattern-Referenzen (Timings, Kontraste, Spacing-Skalen, State-Modelle).
    Als Nachschlagewerk für konkrete Werte und für die Checkliste vor dem
    Abschluss jedes Screens (Build checklist).
+3. **`apple-design`** (`.claude/skills/apple-design/SKILL.md`) — verbindliche
+   Grundlage für Interaktion, Motion und Materialität. Vendored Kopie von
+   https://raw.githubusercontent.com/emilkowalski/skills/refs/heads/main/skills/apple-design/SKILL.md
+   (unverändert; bei Updates neu ziehen). **Gilt immer**, auch für kleine
+   Änderungen: Feedback auf pointer-down statt erst auf click, 1:1-Tracking bei
+   Gesten, unterbrechbare Animationen aus dem Präsentationswert heraus, Springs
+   statt fester Durations für alles Anfassbare (Default kritisch gedämpft,
+   Bounce nur nach echtem Momentum), symmetrische Ein-/Ausgangspfade,
+   größenabhängiges Tracking/Leading, und `prefers-reduced-motion` /
+   `prefers-reduced-transparency` / `prefers-contrast` als echte Varianten.
 
 Regeln daraus, die immer gelten: Design-Tokens statt harter Werte (Spacing-Skala,
 Radius-Skala, Farbtokens aus DESIGN.md), alle sechs Screen-States (loading, empty,
