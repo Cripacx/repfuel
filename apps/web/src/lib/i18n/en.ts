@@ -402,6 +402,13 @@ const en: Messages = {
     saved: 'Saved.',
   },
   stats: {
+    activityTitle: 'Activity — last 12 months',
+    activityLess: 'less',
+    activityMore: 'more',
+    kpiWorkouts: 'Workouts',
+    kpiThisMonth: 'This month',
+    kpiWeekStreak: 'Week streak',
+    kpiThisWeek: 'This week',
     title: 'Stats',
     pickPrompt: 'Pick an exercise to see its stats.',
     changeExercise: 'Choose another exercise',

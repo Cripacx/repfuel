@@ -404,6 +404,13 @@ const de = {
     saved: 'Gespeichert.',
   },
   stats: {
+    activityTitle: 'Aktivität — letzte 12 Monate',
+    activityLess: 'weniger',
+    activityMore: 'mehr',
+    kpiWorkouts: 'Workouts',
+    kpiThisMonth: 'Diesen Monat',
+    kpiWeekStreak: 'Wochen-Serie',
+    kpiThisWeek: 'Diese Woche',
     title: 'Statistiken',
     pickPrompt: 'Wähle eine Übung, um ihre Statistiken zu sehen.',
     changeExercise: 'Andere Übung wählen',

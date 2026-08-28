@@ -14,6 +14,7 @@ import type {
   CreateInviteRequest,
   CreateRoutineRequest,
   CreatedApiTokenDto,
+  ActivityStatsResponse,
   ExerciseDto,
   ExerciseFacetsDto,
   FoodDto,
@@ -321,6 +322,7 @@ export const api = {
 
   // --- Statistiken ---
   stats: {
+    activity: (): Promise<{ activity: ActivityStatsResponse }> => get('/stats/activity'),
     nutrition: (params: {
       from: string;
       to: string;

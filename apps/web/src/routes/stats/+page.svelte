@@ -2,7 +2,9 @@
   import { onDestroy } from 'svelte';
   import type { Chart as ChartInstance } from 'chart.js';
   import type { ExerciseDto, StrengthStatsResponse } from '@repfuel/shared';
+  import type { ActivityStatsResponse } from '@repfuel/shared';
   import { api } from '$lib/api.js';
+  import ActivityHeatmap from '$lib/components/ActivityHeatmap.svelte';
   import ExercisePicker from '$lib/components/ExercisePicker.svelte';
   import { describeError } from '$lib/errors.js';
   import { getLocale, m } from '$lib/i18n/index.js';
@@ -130,9 +132,50 @@
     }
     void updateChart(canvas, trend);
   });
+
+  // Aktivität hängt nicht an der Übungsauswahl — sie beschreibt das ganze
+  // Training und wird deshalb einmal beim Betreten geladen.
+  let activity = $state<ActivityStatsResponse | null>(null);
+
+  $effect(() => {
+    void (async () => {
+      try {
+        const { activity: loaded } = await api.stats.activity();
+        activity = loaded;
+      } catch {
+        // Die Übungsstatistik unten funktioniert auch ohne die Kacheln.
+      }
+    })();
+  });
 </script>
 
 <h1>{m().stats.title}</h1>
+
+{#if activity}
+  <div class="kpi-grid">
+    <div class="kpi">
+      <span class="kpi-label">{m().stats.kpiWorkouts}</span>
+      <strong class="kpi-value">{activity.totalWorkouts}</strong>
+    </div>
+    <div class="kpi">
+      <span class="kpi-label">{m().stats.kpiThisMonth}</span>
+      <strong class="kpi-value">{activity.workoutsThisMonth}</strong>
+    </div>
+    <div class="kpi">
+      <span class="kpi-label">{m().stats.kpiWeekStreak}</span>
+      <strong class="kpi-value">{activity.weekStreak}</strong>
+    </div>
+    <div class="kpi">
+      <span class="kpi-label">{m().stats.kpiThisWeek}</span>
+      <strong class="kpi-value">{activity.workoutsThisWeek}</strong>
+    </div>
+  </div>
+
+  <section class="card">
+    <h2>{m().stats.activityTitle}</h2>
+    <ActivityHeatmap days={activity.days} />
+  </section>
+{/if}
 
 {#if !selected}
   <section class="card">

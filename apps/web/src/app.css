@@ -2703,3 +2703,41 @@ input[type='checkbox'] {
   color: var(--text-muted);
   font-size: var(--text-sm);
 }
+
+/* --- Kennzahl-Kacheln (Statistiken) ----------------------------------- */
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+@media (min-width: 768px) {
+  .kpi-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.kpi-label {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+/* Die Zahl ist der Star: eine Stufe größer als ihr Kontext, tabellarisch. */
+.kpi-value {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-heading);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-xl);
+}

@@ -7,6 +7,7 @@ import type { AuthGuards, ProfileService } from '../auth/index.js';
 import type { IngestService, WeightService } from '../health/index.js';
 import type { MealService } from '../nutrition/index.js';
 import type { RoutineService, WorkoutService } from '../workout/index.js';
+import { computeActivityStats } from './services/activity.js';
 
 export interface StatsModuleOptions {
   guards: AuthGuards;
@@ -26,6 +27,20 @@ export async function registerStatsModule(
   await app.register(
     async (instance) => {
       instance.addHook('preHandler', opts.guards.requireAuth);
+
+      /** Trainingsaktivität: Tagesreihe für die Heatmap plus Serien-Kennzahlen. */
+      instance.get('/stats/activity', async (req) => {
+        const workouts = await opts.workoutService.list(req.sessionUser!.id, { limit: 10000 });
+        return {
+          activity: computeActivityStats(
+            workouts.map((w) => ({
+              startedAt: new Date(w.startedAt),
+              finishedAt: w.finishedAt ? new Date(w.finishedAt) : null,
+            })),
+            new Date(),
+          ),
+        };
+      });
 
       /** Vollständiger Datenexport des eingeloggten Nutzers als JSON. */
       instance.get('/export', async (req, reply) => {

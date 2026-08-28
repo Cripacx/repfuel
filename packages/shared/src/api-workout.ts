@@ -26,6 +26,17 @@ export interface ExerciseFacetsDto {
   equipment: string[];
 }
 
+/** Trainingsaktivität für Heatmap und Serien-Kacheln. */
+export interface ActivityStatsResponse {
+  /** Lückenlose Tagesreihe (aufsteigend) mit trainierten Minuten je Tag. */
+  days: { date: string; minutes: number }[];
+  totalWorkouts: number;
+  workoutsThisMonth: number;
+  workoutsThisWeek: number;
+  /** Aufeinanderfolgende Wochen mit mindestens einem Workout. */
+  weekStreak: number;
+}
+
 export interface RoutineItemDto {
   id: string;
   exerciseId: string;
