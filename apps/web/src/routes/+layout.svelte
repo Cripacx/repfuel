@@ -6,6 +6,7 @@
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import type { Locale } from '@repfuel/shared';
+  import { isAiEnabled } from '$lib/ai/status.svelte.js';
   import { api } from '$lib/api.js';
   import { getUser, setUser } from '$lib/auth.svelte.js';
   import { getLocale, m, setLocale } from '$lib/i18n/index.js';
@@ -134,6 +135,9 @@
       <a href={resolve('/nutrition')} class:active={isActiveNav('/nutrition')}
         >{m().nav.nutrition}</a
       >
+      {#if isAiEnabled()}
+        <a href={resolve('/chat')} class:active={isActiveNav('/chat')}>{m().nav.coach}</a>
+      {/if}
       {#if getUser()?.role === 'admin'}
         <a href={resolve('/admin')} class:active={isActiveNav('/admin')}>{m().nav.admin}</a>
       {/if}
@@ -174,6 +178,17 @@
           </span>
           {m().nav.weight}
         </a>
+        {#if isAiEnabled()}
+          <a href={resolve('/chat')} class:active={isActiveNav('/chat')}>
+            <span class="bottom-nav-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M20 12.5a7 7 0 0 1-7 7H8l-4 2.5.9-3.6A7 7 0 0 1 11 5.5h2a7 7 0 0 1 7 7Z" />
+                <path d="M9.5 12h5" />
+              </svg>
+            </span>
+            {m().nav.coach}
+          </a>
+        {/if}
         <a href={resolve('/settings')} class:active={isActiveNav('/settings')}>
           <span class="bottom-nav-icon">
             <svg viewBox="0 0 24 24" aria-hidden="true">

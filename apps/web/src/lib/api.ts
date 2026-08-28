@@ -2,8 +2,11 @@ import type {
   AdminInviteDto,
   AdminSettingsDto,
   AdminUserDto,
+  AiStatusResponse,
   ApiErrorBody,
   BodyWeightDto,
+  ChatMessageDto,
+  ChatSessionDto,
   CreateExerciseRequest,
   CreateFoodRequest,
   CreateInviteRequest,
@@ -22,6 +25,7 @@ import type {
   PasswordLoginRequest,
   PasswordRegisterRequest,
   ProfileDto,
+  ProposalDto,
   RegisterOptionsRequest,
   RegistrationModeResponse,
   RoutineDto,
@@ -286,6 +290,25 @@ export const api = {
   // --- Offline-Sync ---
   sync: {
     batch: (body: SyncBatchRequest): Promise<SyncBatchResponse> => post('/sync/batch', body),
+  },
+
+  // --- KI (optional; `enabled: false` ⇒ alle KI-UI-Elemente ausblenden) ---
+  ai: {
+    status: (): Promise<AiStatusResponse> => get('/ai/status'),
+    listProposals: (): Promise<{ proposals: ProposalDto[] }> => get('/ai/proposals'),
+    confirmProposal: (id: string): Promise<{ proposal: ProposalDto }> =>
+      post(`/ai/proposals/${id}/confirm`),
+    rejectProposal: (id: string): Promise<{ proposal: ProposalDto }> =>
+      post(`/ai/proposals/${id}/reject`),
+  },
+
+  // --- Chat (Streaming-Antwort läuft über `$lib/chat/stream.ts`, nicht über `request`) ---
+  chat: {
+    listSessions: (): Promise<{ sessions: ChatSessionDto[] }> => get('/chat/sessions'),
+    createSession: (): Promise<{ session: ChatSessionDto }> => post('/chat/sessions', {}),
+    deleteSession: (id: string): Promise<void> => del(`/chat/sessions/${id}`),
+    listMessages: (id: string): Promise<{ messages: ChatMessageDto[] }> =>
+      get(`/chat/sessions/${id}/messages`),
   },
 
   // --- Statistiken ---

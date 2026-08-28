@@ -1,5 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import type { LayoutLoad } from './$types.js';
+import { loadAiStatus } from '$lib/ai/status.svelte.js';
 import { api, ApiError } from '$lib/api.js';
 import { getUser, isAuthInitialized, setUser } from '$lib/auth.svelte.js';
 import { setLocale } from '$lib/i18n/index.js';
@@ -46,6 +47,9 @@ export const load: LayoutLoad = async ({ url }) => {
     if (url.pathname === '/admin' && user.role !== 'admin') {
       redirect(302, '/');
     }
+    // Feature-Flag der KI-Schicht: genau einmal pro App-Start, danach gecacht.
+    // Ohne konfigurierten Adapter bleiben Coach-Tab und /chat-UI aus.
+    await loadAiStatus();
   }
 
   return {};
