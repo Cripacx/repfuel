@@ -5,7 +5,8 @@
   import { requestConfirm } from '$lib/confirm.svelte.js';
   import { api } from '$lib/api.js';
   import AddMealForm from '$lib/components/AddMealForm.svelte';
-  import Icon from '$lib/components/Icon.svelte';
+  import DaySummaryCard from '$lib/components/DaySummaryCard.svelte';
+  import Icon, { type IconName } from '$lib/components/Icon.svelte';
   import Modal from '$lib/components/Modal.svelte';
   import MonthCalendar from '$lib/components/MonthCalendar.svelte';
   import NumberStepper from '$lib/components/NumberStepper.svelte';
@@ -23,7 +24,7 @@
   } from '$lib/nutrition/day-range.js';
   import { round1, roundKcal } from '$lib/nutrition/format.js';
   import { groupMealsByType, suggestMealType } from '$lib/nutrition/meal-grouping.js';
-  import { computeProgress } from '$lib/nutrition/progress.js';
+  import { mealKcalBudget } from '$lib/nutrition/progress.js';
   import { hydrateMeals, listMealsLocal, removeMeal, upsertMeal } from '$lib/offline/repo.js';
 
   const tzOffsetMinutes = currentTzOffsetMinutes();
@@ -48,19 +49,18 @@
   let editError = $state<string | null>(null);
 
   const grouped = $derived(groupMealsByType(meals));
-  const kcalProgress = $derived(
-    statsDay && targets ? computeProgress(statsDay.kcal, targets.kcalTarget) : null,
-  );
-  const proteinProgress = $derived(
-    statsDay && targets ? computeProgress(statsDay.proteinG, targets.proteinTargetG) : null,
-  );
-  const carbsProgress = $derived(
-    statsDay && targets ? computeProgress(statsDay.carbsG, targets.carbsTargetG) : null,
-  );
-  const fatProgress = $derived(
-    statsDay && targets ? computeProgress(statsDay.fatG, targets.fatTargetG) : null,
-  );
-  const noTargetsSet = $derived(targets !== null && targets.kcalTarget == null);
+
+  /** Diary-Ikonografie je Mahlzeit (YAZIO-Muster). */
+  const MEAL_ICONS: Record<MealType, IconName> = {
+    breakfast: 'sunrise',
+    lunch: 'sun',
+    dinner: 'moon',
+    snack: 'apple',
+  };
+
+  function groupKcal(type: MealType): number {
+    return grouped[type].reduce((sum, meal) => sum + meal.kcal, 0);
+  }
 
   function emptyDay(date: string): NutritionDayDto {
     return { date, kcal: 0, proteinG: 0, carbsG: 0, fatG: 0, mealCount: 0 };
@@ -221,11 +221,6 @@
     }
   }
 
-  function overAmount(actual: number, target: number | null | undefined): number {
-    if (target == null) return 0;
-    return Math.max(0, Math.round(actual - target));
-  }
-
   function mealLabel(meal: MealDto): string {
     if (meal.food) {
       return meal.food.brand ? `${meal.food.name} · ${meal.food.brand}` : meal.food.name;
@@ -323,143 +318,34 @@
     <p class="error" role="alert">{loadError}</p>
   {/if}
 
-  <section class="card">
-    <div class="progress-block">
-      <div class="progress-label" class:warning={kcalProgress?.over}>
-        <span>{m().nutrition.kcal}</span>
-        <span>
-          {roundKcal(statsDay?.kcal ?? 0)}{targets?.kcalTarget != null
-            ? ` / ${targets.kcalTarget}`
-            : ''}
-          {m().nutrition.kcalUnit}
-        </span>
-      </div>
-      {#if kcalProgress}
-        <div
-          class="progress-bar"
-          role="progressbar"
-          aria-valuenow={Math.round(kcalProgress.cappedPercent)}
-          aria-valuemin="0"
-          aria-valuemax="100"
-        >
-          <div
-            class="progress-bar-fill kcal"
-            class:over={kcalProgress.over}
-            style={`width:${kcalProgress.cappedPercent}%`}
-          ></div>
-        </div>
-        {#if kcalProgress.over}
-          <p class="over-hint">
-            +{overAmount(statsDay?.kcal ?? 0, targets?.kcalTarget)}
-            {m().nutrition.kcalUnit} {m().nutrition.overTargetLabel}
-          </p>
-        {/if}
-      {/if}
-    </div>
+  <h2 class="section-label">{m().home.overviewTitle}</h2>
+  <DaySummaryCard day={statsDay} targets={targets} />
 
-    <div class="macro-bars">
-      <div class="progress-block">
-        <div class="progress-label" class:warning={proteinProgress?.over}>
-          <span>{m().nutrition.macros.protein}</span>
-          <span>
-            {round1(statsDay?.proteinG ?? 0)}{targets?.proteinTargetG != null
-              ? ` / ${targets.proteinTargetG}`
-              : ''} g
-          </span>
-        </div>
-        {#if proteinProgress}
-          <div class="progress-bar">
-            <div
-              class="progress-bar-fill protein"
-              class:over={proteinProgress.over}
-              style={`width:${proteinProgress.cappedPercent}%`}
-            ></div>
-          </div>
-          {#if proteinProgress.over}
-            <p class="over-hint">
-              +{overAmount(statsDay?.proteinG ?? 0, targets?.proteinTargetG)} g
-              {m().nutrition.overTargetLabel}
-            </p>
-          {/if}
-        {/if}
-      </div>
-      <div class="progress-block">
-        <div class="progress-label" class:warning={carbsProgress?.over}>
-          <span>{m().nutrition.macros.carbs}</span>
-          <span>
-            {round1(statsDay?.carbsG ?? 0)}{targets?.carbsTargetG != null
-              ? ` / ${targets.carbsTargetG}`
-              : ''} g
-          </span>
-        </div>
-        {#if carbsProgress}
-          <div class="progress-bar">
-            <div
-              class="progress-bar-fill carbs"
-              class:over={carbsProgress.over}
-              style={`width:${carbsProgress.cappedPercent}%`}
-            ></div>
-          </div>
-          {#if carbsProgress.over}
-            <p class="over-hint">
-              +{overAmount(statsDay?.carbsG ?? 0, targets?.carbsTargetG)} g
-              {m().nutrition.overTargetLabel}
-            </p>
-          {/if}
-        {/if}
-      </div>
-      <div class="progress-block">
-        <div class="progress-label" class:warning={fatProgress?.over}>
-          <span>{m().nutrition.macros.fat}</span>
-          <span>
-            {round1(statsDay?.fatG ?? 0)}{targets?.fatTargetG != null
-              ? ` / ${targets.fatTargetG}`
-              : ''} g
-          </span>
-        </div>
-        {#if fatProgress}
-          <div class="progress-bar">
-            <div
-              class="progress-bar-fill fat"
-              class:over={fatProgress.over}
-              style={`width:${fatProgress.cappedPercent}%`}
-            ></div>
-          </div>
-          {#if fatProgress.over}
-            <p class="over-hint">
-              +{overAmount(statsDay?.fatG ?? 0, targets?.fatTargetG)} g
-              {m().nutrition.overTargetLabel}
-            </p>
-          {/if}
-        {/if}
-      </div>
-    </div>
-
-    {#if noTargetsSet}
-      <p class="notice">
-        {m().nutrition.noTargetsHint}
-        <a href={resolve('/goals')}>{m().nutrition.goToGoals}</a>
-      </p>
-    {/if}
-  </section>
-
+  <h2 class="section-label">{m().nutrition.mealsTitle}</h2>
   {#each MEAL_TYPES as type (type)}
-    <section class="card meal-group">
-      <div class="meal-group-header">
-        <h2>{m().nutrition.mealTypes[type]}</h2>
+    <section class="card meal-card">
+      <div class="meal-card-head">
+        <span class="meal-card-icon" aria-hidden="true"><Icon name={MEAL_ICONS[type]} /></span>
+        <div class="meal-card-title">
+          <h3>{m().nutrition.mealTypes[type]}</h3>
+          <span class="meal-card-kcal">
+            {roundKcal(groupKcal(type))}{mealKcalBudget(type, targets?.kcalTarget) !== null
+              ? ` / ${mealKcalBudget(type, targets?.kcalTarget)}`
+              : ''}
+            {m().nutrition.kcalUnit}
+          </span>
+        </div>
         <button
           type="button"
           class="icon-btn"
           onclick={() => openAddMeal(type)}
-          aria-label={m().nutrition.addMealButton}
+          aria-label={`${m().nutrition.mealTypes[type]} — ${m().nutrition.addMealButton}`}
         >
           <Icon name="plus" />
         </button>
       </div>
 
-      {#if grouped[type].length === 0}
-        <p class="empty-state">{m().nutrition.emptyMealGroup}</p>
-      {:else}
+      {#if grouped[type].length > 0}
         <ul class="meal-list">
           {#each grouped[type] as meal (meal.id)}
             <li class="meal-row">

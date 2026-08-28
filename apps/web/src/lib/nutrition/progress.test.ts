@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeProgress } from './progress.js';
+import { computeProgress, mealKcalBudget } from './progress.js';
 
 describe('computeProgress', () => {
   it('returns null when there is no target', () => {
@@ -36,5 +36,19 @@ describe('computeProgress', () => {
     expect(result?.percent).toBe(-20);
     expect(result?.cappedPercent).toBe(0);
     expect(result?.over).toBe(false);
+  });
+});
+
+describe('mealKcalBudget', () => {
+  it('splits the day target into the diary shares', () => {
+    expect(mealKcalBudget('breakfast', 2000)).toBe(500);
+    expect(mealKcalBudget('lunch', 2000)).toBe(700);
+    expect(mealKcalBudget('dinner', 2000)).toBe(600);
+    expect(mealKcalBudget('snack', 2000)).toBe(200);
+  });
+
+  it('returns null without a target', () => {
+    expect(mealKcalBudget('lunch', null)).toBeNull();
+    expect(mealKcalBudget('lunch', 0)).toBeNull();
   });
 });

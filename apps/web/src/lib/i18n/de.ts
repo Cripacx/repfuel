@@ -352,6 +352,7 @@ const de = {
       dinner: 'Abend',
       snack: 'Snack',
     },
+    mealsTitle: 'Mahlzeiten',
     addMealButton: 'Mahlzeit hinzufügen',
     emptyMealGroup: 'Noch nichts protokolliert.',
     quickEntryLabel: 'Schnelleintrag',

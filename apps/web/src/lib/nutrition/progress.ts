@@ -25,3 +25,23 @@ export function computeProgress(
     over: percent > 100,
   };
 }
+
+/** Anteil des Tagesziels je Mahlzeit (Diary-Konvention wie YAZIO/MyFitnessPal). */
+const MEAL_SHARE: Record<import('@repfuel/shared').MealType, number> = {
+  breakfast: 0.25,
+  lunch: 0.35,
+  dinner: 0.3,
+  snack: 0.1,
+};
+
+/**
+ * kcal-Richtwert einer Mahlzeit aus dem Tagesziel — gibt jeder Gruppe eine
+ * Bezugsgröße ("318 / 488 kcal"), ohne die der Einzelwert schwer einzuordnen ist.
+ */
+export function mealKcalBudget(
+  type: import('@repfuel/shared').MealType,
+  kcalTarget: number | null | undefined,
+): number | null {
+  if (kcalTarget == null || kcalTarget <= 0) return null;
+  return Math.round(kcalTarget * MEAL_SHARE[type]);
+}

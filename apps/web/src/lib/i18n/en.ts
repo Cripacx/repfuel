@@ -349,6 +349,7 @@ const en: Messages = {
       dinner: 'Dinner',
       snack: 'Snack',
     },
+    mealsTitle: 'Meals',
     addMealButton: 'Add meal',
     emptyMealGroup: 'Nothing logged yet.',
     quickEntryLabel: 'Quick entry',
