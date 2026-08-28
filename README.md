@@ -124,7 +124,7 @@ Nutzt dein bestehendes Claude-Abo statt einer API-Abrechnung:
 ```dotenv
 AI_PROVIDER=claude-local     # "cli" funktioniert weiter als Alias
 AI_MODEL=opus                # optional: opus | sonnet | volle Modell-ID; leer = CLI-Default
-CLAUDE_CODE_OAUTH_TOKEN=…    # auf einem Rechner mit Claude-Login: `claude setup-token`
+AI_API_KEY=sk-ant-oat…       # auf einem Rechner mit Claude-Login: `claude setup-token`
 ```
 
 ```bash
@@ -139,7 +139,7 @@ Gleicher Sidecar, andere CLI — nutzt dein ChatGPT-Abo (gemountetes
 ```dotenv
 AI_PROVIDER=codex-local
 AI_MODEL=gpt-5.2-codex       # optional; leer = CLI-Default
-CODEX_API_KEY=sk-…           # ODER ~/.codex als Volume mounten (ChatGPT-Abo)
+AI_API_KEY=sk-…              # OpenAI-Key — ODER ~/.codex als Volume mounten (ChatGPT-Abo)
 ```
 
 ```bash
@@ -160,12 +160,11 @@ diesen Variablen.
 | Variable | Bedeutung | Default |
 |---|---|---|
 | `AI_PROVIDER` | `none` · `anthropic` · `openai` · `openrouter` · `ollama` · `claude-local` · `codex-local` (`cli` = Alias für `claude-local`) | `none` |
-| `AI_API_KEY` | API-Key des Providers (nur Variante 1) | – |
+| `AI_API_KEY` | Auth-Secret des Providers: API-Key bzw. bei `claude-local` der `claude setup-token`, bei `codex-local` der OpenAI-Key | – |
 | `AI_MODEL` | Modell — Provider-Modell-ID bzw. bei den CLI-Varianten das CLI-Modell (leer = CLI-Default) | – |
 | `AI_MODEL_LIGHT` | reserviert für künftige Hilfsaufgaben (derzeit ungenutzt) | – |
 | `AI_BASE_URL` | Basis-URL für Ollama/OpenAI-kompatible Endpunkte | – |
-| `CLAUDE_CODE_OAUTH_TOKEN` | Auth-Token für `claude-local` (`claude setup-token`) | – |
-| `CODEX_API_KEY` | API-Key für `codex-local` (alternativ `~/.codex`-Volume) | – |
+| `CLAUDE_CODE_OAUTH_TOKEN` / `CODEX_API_KEY` | optionale spezifische Overrides statt `AI_API_KEY` | – |
 
 ## Apple-Health-Import
 

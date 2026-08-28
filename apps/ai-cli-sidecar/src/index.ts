@@ -1,5 +1,6 @@
 import http from 'node:http';
 import { query } from '@anthropic-ai/claude-agent-sdk';
+import { resolveCliAuthEnv } from './auth-env.js';
 import { codexHealthProbe, runCodexTurn } from './codex.js';
 import { createSessionStore } from './session-store.js';
 
@@ -20,6 +21,10 @@ const PORT = Number(process.env.PORT ?? 8090);
 const MCP_SERVER_NAME = 'repfuel';
 const RUNTIME: 'claude' | 'codex' = process.env.AI_PROVIDER === 'codex-local' ? 'codex' : 'claude';
 const MODEL = process.env.AI_MODEL?.trim() || null;
+
+// Eine .env-Variable reicht: AI_API_KEY wird auf die CLI-eigene Auth-Variable
+// abgebildet (spezifische Variablen gewinnen).
+Object.assign(process.env, resolveCliAuthEnv(RUNTIME, process.env));
 
 const sessions = createSessionStore();
 

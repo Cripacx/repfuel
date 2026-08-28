@@ -24,6 +24,7 @@ Credentials oder fremde Daten, und es gibt keine zweite Tool-Implementierung.
 # .env:
 AI_PROVIDER=claude-local     # oder: codex-local
 AI_MODEL=                    # optional, siehe „Modellwahl"
+AI_API_KEY=                  # setup-token bzw. OpenAI-Key, siehe „Auth"
 
 docker compose --profile cli-adapter up -d
 ```
@@ -56,8 +57,13 @@ claude setup-token
 Den ausgegebenen Token in die `.env` des Servers eintragen:
 
 ```
-CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat...
+AI_API_KEY=sk-ant-oat...
 ```
+
+Der Sidecar erkennt am `sk-ant-oat`-Präfix, dass es ein Abo-Token ist; ein
+normaler Anthropic-API-Key funktioniert an derselben Stelle (API-Abrechnung).
+Wer getrennte Variablen bevorzugt, kann stattdessen
+`CLAUDE_CODE_OAUTH_TOKEN` setzen — spezifische Variablen gewinnen.
 
 Danach `docker compose --profile cli-adapter up -d` (neu) starten.
 
@@ -86,11 +92,12 @@ Weg 1 oder 2 verwenden.
 ### 1. API-Key in der `.env` (einfachster Weg)
 
 ```
-CODEX_API_KEY=sk-…
+AI_API_KEY=sk-…
 ```
 
 Der Sidecar reicht den Key als `OPENAI_API_KEY` an die Codex CLI durch
-(Abrechnung über die OpenAI-API).
+(Abrechnung über die OpenAI-API). Alternativ als spezifische Variable:
+`CODEX_API_KEY` (gewinnt gegenüber `AI_API_KEY`).
 
 ### 2. ChatGPT-Abo: Host-Login mounten
 

@@ -98,6 +98,9 @@ services:
       # Runtime-Wahl (codex-local → Codex CLI, sonst Claude Code) + Modell.
       AI_PROVIDER: ${AI_PROVIDER:-none}
       AI_MODEL: ${AI_MODEL:-}
+      # Auth: AI_API_KEY genügt (setup-token bzw. OpenAI-Key); die
+      # spezifischen Variablen sind optionale Overrides.
+      AI_API_KEY: ${AI_API_KEY:-}
       CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
       CODEX_API_KEY: ${CODEX_API_KEY:-}
     # Alternativ zu Token/Key: lokalen CLI-Login mounten.
