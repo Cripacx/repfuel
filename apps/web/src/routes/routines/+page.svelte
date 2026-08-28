@@ -2,8 +2,8 @@
   import { onMount } from 'svelte';
   import type { RoutineDto } from '@repfuel/shared';
   import { resolve } from '$app/paths';
-  import { requestConfirm } from '$lib/confirm.svelte.js';
   import { api } from '$lib/api.js';
+  import Icon from '$lib/components/Icon.svelte';
   import { describeError } from '$lib/errors.js';
   import { m } from '$lib/i18n/index.js';
   import { weekdayKey } from '$lib/workout/weekday.js';
@@ -28,16 +28,6 @@
     return key ? m().weekdays[key] : null;
   }
 
-  async function removeRoutine(routine: RoutineDto): Promise<void> {
-    if (!(await requestConfirm({ message: m().routines.confirmDelete, confirmLabel: m().common.delete }))) return;
-    loadError = null;
-    try {
-      await api.routines.remove(routine.id);
-      routines = routines.filter((r) => r.id !== routine.id);
-    } catch (err) {
-      loadError = describeError(err);
-    }
-  }
 </script>
 
 <div class="page-header">
@@ -46,18 +36,24 @@
 </div>
 
 {#if loading}
-  <p class="muted">{m().common.loading}</p>
+  <div class="skeleton-list">
+    <div class="skeleton-row"></div>
+    <div class="skeleton-row"></div>
+  </div>
 {:else}
   {#if loadError}
     <p class="error" role="alert">{loadError}</p>
   {/if}
 
   {#if routines.length === 0}
-    <p class="empty-state">{m().routines.empty}</p>
+    <div class="card">
+      <p class="empty-state">{m().routines.empty}</p>
+      <a class="secondary" href={resolve('/routines/new')}>{m().routines.createButton}</a>
+    </div>
   {:else}
     {#each routines as routine (routine.id)}
-      <div class="list-card">
-        <a class="list-card-main" href={resolve('/routines/[id]', { id: routine.id })}>
+      <a class="list-card" href={resolve('/routines/[id]', { id: routine.id })}>
+        <div class="list-card-main">
           <span class="list-card-title">{routine.name}</span>
           <span class="list-card-meta">
             {#if weekdayLabel(routine.weekday)}
@@ -68,13 +64,9 @@
               {routine.items.length === 1 ? m().routines.itemsOne : m().routines.itemsOther}
             </span>
           </span>
-        </a>
-        <div class="list-card-actions">
-          <button type="button" class="danger" onclick={() => removeRoutine(routine)}>
-            {m().common.delete}
-          </button>
         </div>
-      </div>
+        <span class="exercise-row-chevron"><Icon name="chevron-right" size={18} /></span>
+      </a>
     {/each}
   {/if}
 {/if}

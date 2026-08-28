@@ -230,6 +230,7 @@ const en: Messages = {
     confirmDelete: 'Really delete this routine?',
     editor: {
       newTitle: 'New routine',
+      detailsTitle: 'Details',
       editTitle: 'Edit routine',
       nameLabel: 'Name',
       namePlaceholder: 'e.g. Push Day',
@@ -297,6 +298,8 @@ const en: Messages = {
   },
   weight: {
     title: 'Weight',
+    entryTitle: 'Log entry',
+    entriesTitle: 'Entries',
     entryDateLabel: 'Date',
     entryWeightLabel: 'Weight (kg)',
     addButton: 'Log entry',
@@ -398,6 +401,7 @@ const en: Messages = {
     },
   },
   goals: {
+    aboutTitle: 'About you',
     habitsTitle: 'Habits',
     habitsHint: 'Optional. Leave empty to hide the matching card on the start page.',
     waterTargetLabel: 'Daily water target (ml)',

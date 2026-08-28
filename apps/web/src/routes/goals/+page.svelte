@@ -154,19 +154,23 @@
 <h1>{m().goals.title}</h1>
 
 {#if loading}
-  <p class="muted">{m().common.loading}</p>
+  <div class="skeleton-list">
+    <div class="skeleton-row"></div>
+    <div class="skeleton-row"></div>
+  </div>
 {:else}
   {#if loadError}
     <p class="error" role="alert">{loadError}</p>
   {/if}
 
-  <section class="card">
-    <form
-      onsubmit={(event) => {
-        event.preventDefault();
-        void save();
-      }}
-    >
+  <form
+    onsubmit={(event) => {
+      event.preventDefault();
+      void save();
+    }}
+  >
+    <h2 class="section-label">{m().goals.aboutTitle}</h2>
+    <section class="card">
       <div class="field-row">
         <div>
           <label for="goals-height">{m().goals.heightLabel}</label>
@@ -185,16 +189,14 @@
         </div>
       </div>
 
-      <span id="goals-sex-label">{m().goals.sexLabel}</span>
-      <div role="radiogroup" aria-labelledby="goals-sex-label">
-        <label>
-          <input type="radio" name="goals-sex" checked={sex === 'male'} onchange={() => (sex = 'male')} />
+      <span class="field-label" id="goals-sex-label">{m().goals.sexLabel}</span>
+      <div class="method-switch" role="group" aria-labelledby="goals-sex-label">
+        <button type="button" class:active={sex === 'male'} onclick={() => (sex = 'male')}>
           {m().goals.sexMale}
-        </label>
-        <label>
-          <input type="radio" name="goals-sex" checked={sex === 'female'} onchange={() => (sex = 'female')} />
+        </button>
+        <button type="button" class:active={sex === 'female'} onclick={() => (sex = 'female')}>
           {m().goals.sexFemale}
-        </label>
+        </button>
       </div>
 
       <label for="goals-activity">{m().goals.activityLabel}</label>
@@ -204,18 +206,18 @@
           <option value={level}>{m().goals.activity[level]}</option>
         {/each}
       </select>
+    </section>
 
-      <span id="goals-goal-label">{m().goals.goalLabel}</span>
-      <div role="radiogroup" aria-labelledby="goals-goal-label">
+    <h2 class="section-label">{m().goals.goalLabel}</h2>
+    <section class="card">
+      <div class="method-switch" role="group" aria-label={m().goals.goalLabel}>
         {#each GOALS as g (g)}
-          <label>
-            <input type="radio" name="goals-goal" checked={goal === g} onchange={() => (goal = g)} />
+          <button type="button" class:active={goal === g} onclick={() => (goal = g)}>
             {g === 'cut' ? m().goals.goalCut : g === 'bulk' ? m().goals.goalBulk : m().goals.goalMaintain}
-          </label>
+          </button>
         {/each}
       </div>
 
-      <h2>{m().goals.weightTitle}</h2>
       {#if hasWeightEntry}
         <p>
           <strong>{weightKg} {m().common.kg}</strong>
@@ -235,8 +237,10 @@
           bind:value={weightKg}
         />
       {/if}
+    </section>
 
-      <h2>{m().goals.previewTitle}</h2>
+    <h2 class="section-label">{m().goals.previewTitle}</h2>
+    <section class="card">
       {#if preview}
         <dl class="summary-grid">
           <div>
@@ -276,8 +280,10 @@
       {:else}
         <p class="empty-state">{m().goals.previewIncomplete}</p>
       {/if}
+    </section>
 
-      <h2>{m().goals.manualOverrideTitle}</h2>
+    <h2 class="section-label">{m().goals.manualOverrideTitle}</h2>
+    <section class="card">
       <p class="hint">{m().goals.manualOverrideHint}</p>
       <div class="field-row">
         <div>
@@ -331,10 +337,12 @@
           />
         </div>
       </div>
+    </section>
 
-      <h3>{m().goals.habitsTitle}</h3>
+    <h2 class="section-label">{m().goals.habitsTitle}</h2>
+    <section class="card">
       <p class="hint">{m().goals.habitsHint}</p>
-      <div class="target-grid">
+      <div class="field-row">
         <div>
           <label for="goals-water-target">{m().goals.waterTargetLabel}</label>
           <input
@@ -359,16 +367,18 @@
           />
         </div>
       </div>
+    </section>
 
-      {#if saveError}
-        <p class="error" role="alert">{saveError}</p>
-      {/if}
-      {#if saved}
-        <p class="notice">{m().goals.saved}</p>
-      {/if}
+    {#if saveError}
+      <p class="error" role="alert">{saveError}</p>
+    {/if}
+    {#if saved}
+      <p class="notice">{m().goals.saved}</p>
+    {/if}
+    <div class="sticky-action">
       <button type="submit" class="primary" disabled={saving}>
         {saving ? m().common.saving : m().goals.applyButton}
       </button>
-    </form>
-  </section>
+    </div>
+  </form>
 {/if}

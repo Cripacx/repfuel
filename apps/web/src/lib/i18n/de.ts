@@ -233,6 +233,7 @@ const de = {
     confirmDelete: 'Diese Routine wirklich löschen?',
     editor: {
       newTitle: 'Neue Routine',
+      detailsTitle: 'Details',
       editTitle: 'Routine bearbeiten',
       nameLabel: 'Name',
       namePlaceholder: 'z. B. Push Day',
@@ -300,6 +301,8 @@ const de = {
   },
   weight: {
     title: 'Gewicht',
+    entryTitle: 'Eintragen',
+    entriesTitle: 'Einträge',
     entryDateLabel: 'Datum',
     entryWeightLabel: 'Gewicht (kg)',
     addButton: 'Eintragen',
@@ -401,6 +404,7 @@ const de = {
     },
   },
   goals: {
+    aboutTitle: 'Über dich',
     habitsTitle: 'Gewohnheiten',
     habitsHint: 'Optional. Leer lassen blendet die jeweilige Karte auf der Startseite aus.',
     waterTargetLabel: 'Wasser-Tagesziel (ml)',

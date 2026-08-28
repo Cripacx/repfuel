@@ -3,6 +3,7 @@
   import type { BodyWeightDto } from '@repfuel/shared';
   import type { Chart as ChartInstance } from 'chart.js';
   import { requestConfirm } from '$lib/confirm.svelte.js';
+  import Icon from '$lib/components/Icon.svelte';
   import { api } from '$lib/api.js';
   import { describeError } from '$lib/errors.js';
   import { getLocale, m } from '$lib/i18n/index.js';
@@ -174,6 +175,7 @@
 
 <h1>{m().weight.title}</h1>
 
+<h2 class="section-label">{m().weight.entryTitle}</h2>
 <section class="card">
   <form
     onsubmit={(event) => {
@@ -215,10 +217,9 @@
     <p class="error" role="alert">{loadError}</p>
   {/if}
 
+  <h2 class="section-label">{m().weight.chartTitle}</h2>
   <section class="card">
-    <div class="page-header">
-      <h2>{m().weight.chartTitle}</h2>
-      <nav class="tabs" aria-label={m().weight.rangeLabel}>
+    <nav class="tabs" aria-label={m().weight.rangeLabel}>
         <button type="button" class:active={range === 30} onclick={() => (range = 30)}>
           {m().weight.range30}
         </button>
@@ -231,8 +232,7 @@
         <button type="button" class:active={range === 'all'} onclick={() => (range = 'all')}>
           {m().weight.rangeAll}
         </button>
-      </nav>
-    </div>
+    </nav>
     {#if chartFiltered.length < 2}
       <p class="empty-state">{m().weight.chartUnavailable}</p>
     {:else}
@@ -242,34 +242,32 @@
     {/if}
   </section>
 
+  <h2 class="section-label">{m().weight.entriesTitle}</h2>
   <section class="card">
     {#if sortedDesc.length === 0}
       <p class="empty-state">{m().weight.empty}</p>
     {:else}
-      <div class="table-scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>{m().weight.columnDate}</th>
-              <th>{m().weight.columnWeight}</th>
-              <th>{m().common.actions}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {#each sortedDesc as entry (entry.id)}
-              <tr>
-                <td>{formatDate(entry.measuredAt)}</td>
-                <td>{entry.weightKg} {m().common.kg}</td>
-                <td>
-                  <button type="button" class="danger" onclick={() => removeEntry(entry)}>
-                    {m().common.delete}
-                  </button>
-                </td>
-              </tr>
-            {/each}
-          </tbody>
-        </table>
-      </div>
+      <ul class="history-list">
+        {#each sortedDesc as entry (entry.id)}
+          <li class="history-row">
+            <span class="history-row-date">{formatDate(entry.measuredAt)}</span>
+            <span class="history-row-side">
+              <span class="history-row-top">
+                {entry.weightKg}
+                <span class="history-row-unit">{m().common.kg}</span>
+              </span>
+              <button
+                type="button"
+                class="icon-btn icon-btn-danger"
+                onclick={() => removeEntry(entry)}
+                aria-label={m().common.delete}
+              >
+                <Icon name="trash" size={18} />
+              </button>
+            </span>
+          </li>
+        {/each}
+      </ul>
     {/if}
   </section>
 {/if}

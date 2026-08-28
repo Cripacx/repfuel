@@ -394,7 +394,9 @@ form {
   gap: var(--space-2);
 }
 
-label {
+label,
+.field-label {
+  display: block;
   font-size: var(--text-sm);
   color: var(--text-muted);
   margin-top: var(--space-2);
@@ -3156,6 +3158,21 @@ input[type='checkbox'] {
   color: var(--text-muted);
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
+}
+
+.history-row-side {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+/* Destruktive Icon-Aktion: erst beim Hover/Fokus rot, sonst ruhig. */
+.icon-btn-danger:hover:not(:disabled),
+.icon-btn-danger:focus-visible {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 50%, transparent);
+  background: var(--danger-subtle);
 }
 
 /* --- Kennzahl-Kacheln (Statistiken) ----------------------------------- */

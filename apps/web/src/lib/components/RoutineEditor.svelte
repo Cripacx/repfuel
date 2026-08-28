@@ -150,6 +150,8 @@
     void handleSave();
   }}
 >
+  <h2 class="section-label">{m().routines.editor.detailsTitle}</h2>
+  <section class="card">
   <label for="routine-name">{m().routines.editor.nameLabel}</label>
   <input
     id="routine-name"
@@ -173,7 +175,9 @@
     {/each}
   </select>
 
-  <h2>{m().routines.editor.itemsTitle}</h2>
+  </section>
+
+  <h2 class="section-label">{m().routines.editor.itemsTitle}</h2>
 
   {#if items.length === 0}
     <p class="empty-state">{m().routines.editor.noItems}</p>
@@ -289,9 +293,11 @@
     <p class="error" role="alert">{formError}</p>
   {/if}
 
-  <button type="submit" class="primary" disabled={saving}>
-    {saving ? m().common.saving : m().routines.editor.saveButton}
-  </button>
+  <div class="sticky-action">
+    <button type="submit" class="primary" disabled={saving}>
+      {saving ? m().common.saving : m().routines.editor.saveButton}
+    </button>
+  </div>
 
   {#if routine}
     <button type="button" class="danger" onclick={handleDelete} disabled={deleting}>
