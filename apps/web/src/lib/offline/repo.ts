@@ -158,7 +158,10 @@ function computeMealDto(
       foodId: resolvedFood.id,
       amountG: input.amountG,
       quickKcal: null,
-      food: resolvedFood,
+      /* Flache Kopie statt Referenz: Aufrufer reichen hier Svelte-`$state`-
+         Proxies durch, und IndexedDB kann Proxies nicht klonen
+         (DataCloneError beim `put`). */
+      food: { ...resolvedFood },
       kcal: resolvedFood.kcalPer100 * factor,
       proteinG: resolvedFood.proteinPer100 * factor,
       carbsG: resolvedFood.carbsPer100 * factor,
