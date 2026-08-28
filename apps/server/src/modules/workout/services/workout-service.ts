@@ -1,11 +1,13 @@
 import type {
   LastSetsResponse,
+  StrengthStatsResponse,
   ListWorkoutsQuery,
   SetDto,
   UpsertSetRequest,
   UpsertWorkoutRequest,
   WorkoutDto,
 } from '@repfuel/shared';
+import { computeStrengthStats } from './strength-stats.js';
 import { AppError } from '../../../core/errors.js';
 import type { EventBus } from '../../../core/event-bus.js';
 import type { RoutineRepo } from '../repositories/routine-repo.js';
@@ -133,6 +135,19 @@ export function createWorkoutService(deps: {
         throw new AppError('not_found', 'Set not found');
       }
       await workoutRepo.softDeleteSet(setId);
+    },
+
+    async strengthStats(userId: string, exerciseId: string): Promise<StrengthStatsResponse> {
+      const rows = await workoutRepo.setsWithDatesForExercise(userId, exerciseId);
+      return computeStrengthStats(
+        exerciseId,
+        rows.map(({ set, startedAt }) => ({
+          reps: set.reps,
+          weightKg: set.weightKg,
+          isWarmup: set.isWarmup,
+          date: startedAt,
+        })),
+      );
     },
 
     async lastSets(userId: string, exerciseIds: string[]): Promise<LastSetsResponse> {

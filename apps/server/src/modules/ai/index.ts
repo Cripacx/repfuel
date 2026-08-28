@@ -4,7 +4,7 @@ import type { AIAdapter, AiProvider } from '@repfuel/shared';
 import type { Database } from '../../core/db.js';
 import type { KeyValueStore } from '../../core/redis.js';
 import type { AuthGuards, ProfileService } from '../auth/index.js';
-import type { WeightService } from '../health/index.js';
+import type { IngestService, WeightService } from '../health/index.js';
 import type { FoodService, MealService } from '../nutrition/index.js';
 import type { RoutineService, WorkoutService } from '../workout/index.js';
 import { createApiAdapter, type ApiAdapterConfig } from './adapters/api-adapter.js';
@@ -34,6 +34,7 @@ export interface AiModuleOptions {
   mcpUrl: string;
   profileService: ProfileService;
   weightService: WeightService;
+  ingestService: IngestService;
   mealService: MealService;
   foodService: FoodService;
   workoutService: WorkoutService;
@@ -95,6 +96,7 @@ export async function registerAiModule(
       workoutService: opts.workoutService,
       routineService: opts.routineService,
       weightService: opts.weightService,
+      ingestService: opts.ingestService,
       profileService: opts.profileService,
     }),
     createProposal: (input) =>
@@ -126,6 +128,7 @@ export async function registerAiModule(
           workoutService: opts.workoutService,
           routineService: opts.routineService,
           weightService: opts.weightService,
+          ingestService: opts.ingestService,
           profileService: opts.profileService,
           createProposal: (input) =>
             proposalService.create({

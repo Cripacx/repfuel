@@ -34,6 +34,11 @@ export interface WorkoutRepo {
   softDeleteSet(id: string): Promise<void>;
   /** Sätze des jüngsten Workouts des Nutzers, das die Übung enthält. */
   lastSetsForExercise(userId: string, exerciseId: string): Promise<SetRow[]>;
+  /** Alle Sätze einer Übung inkl. Workout-Datum (für PRs/Wochentrends). */
+  setsWithDatesForExercise(
+    userId: string,
+    exerciseId: string,
+  ): Promise<{ set: SetRow; startedAt: Date }[]>;
 }
 
 const ownedBy = (userId: string) => and(eq(workouts.userId, userId), isNull(workouts.deletedAt));
@@ -149,6 +154,15 @@ export function createWorkoutRepo(db: Database): WorkoutRepo {
           ),
         )
         .orderBy(asc(sets.position));
+    },
+    async setsWithDatesForExercise(userId, exerciseId) {
+      const rows = await db
+        .select({ set: sets, startedAt: workouts.startedAt })
+        .from(sets)
+        .innerJoin(workouts, eq(sets.workoutId, workouts.id))
+        .where(and(eq(sets.exerciseId, exerciseId), isNull(sets.deletedAt), ownedBy(userId)))
+        .orderBy(asc(workouts.startedAt));
+      return rows;
     },
   };
 }

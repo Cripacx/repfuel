@@ -61,3 +61,48 @@ export interface BodyWeightDto {
   weightKg: number;
   measuredAt: string;
 }
+
+// ---------- M7: Health-Metriken, API-Tokens, Statistiken, Export ----------
+
+export interface HealthMetricDto {
+  id: string;
+  metric: string;
+  value: number;
+  measuredAt: string;
+  source: string;
+}
+
+export interface HealthStatsResponse {
+  metric: string;
+  entries: { measuredAt: string; value: number; source: string }[];
+}
+
+export interface HealthIngestResponse {
+  accepted: number;
+  ignoredMetrics: string[];
+  mirroredWeights: number;
+}
+
+export interface ApiTokenDto {
+  id: string;
+  name: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+}
+
+export interface CreatedApiTokenDto extends ApiTokenDto {
+  /** Nur einmal bei der Erzeugung sichtbar. */
+  token: string;
+}
+
+export interface StrengthStatsResponse {
+  exerciseId: string;
+  prs: {
+    maxWeightKg: number | null;
+    maxReps: number | null;
+    bestEst1RmKg: number | null;
+    bestSet: { reps: number; weightKg: number; date: string } | null;
+  };
+  /** ISO-Woche (YYYY-Www) → Gesamtvolumen (kg·Wdh) und Satzanzahl. */
+  weeklyTrend: { week: string; volumeKg: number; sets: number }[];
+}

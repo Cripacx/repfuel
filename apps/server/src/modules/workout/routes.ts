@@ -79,6 +79,11 @@ export function workoutRoutes(deps: WorkoutRoutesDeps) {
       const { exerciseIds } = lastSetsQuerySchema.parse(req.query);
       return { lastSets: await workoutService.lastSets(uid(req), exerciseIds) };
     });
+    app.get('/stats/strength', async (req) => {
+      const query = z.object({ exerciseId: uuidSchema }).parse(req.query);
+      return { stats: await workoutService.strengthStats(uid(req), query.exerciseId) };
+    });
+
 
     app.get('/workouts/:id', async (req) => {
       const { id } = idParams.parse(req.params);

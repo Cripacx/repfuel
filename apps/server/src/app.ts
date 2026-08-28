@@ -14,6 +14,7 @@ import { registerAuthModule } from './modules/auth/index.js';
 import { registerHealthModule } from './modules/health/index.js';
 import { registerNutritionModule } from './modules/nutrition/index.js';
 import { registerAiModule } from './modules/ai/index.js';
+import { registerStatsModule } from './modules/stats/index.js';
 import { registerSyncModule } from './modules/sync/index.js';
 import { registerWorkoutModule } from './modules/workout/index.js';
 
@@ -128,10 +129,22 @@ export async function buildApp(config: AppConfig, deps: AppDeps): Promise<Fastif
     mcpUrl: config.AI_MCP_URL,
     profileService: authApi.profileService,
     weightService: healthApi.weightService,
+    ingestService: healthApi.ingestService,
     mealService: nutritionApi.mealService,
     foodService: nutritionApi.foodService,
     workoutService: workoutApi.workoutService,
     routineService: workoutApi.routineService,
+  });
+
+  await registerStatsModule(app, {
+    guards: authApi.guards,
+    profileService: authApi.profileService,
+    routineService: workoutApi.routineService,
+    workoutService: workoutApi.workoutService,
+    mealService: nutritionApi.mealService,
+    weightService: healthApi.weightService,
+    ingestService: healthApi.ingestService,
+    appVersion: config.version,
   });
 
   const seeded = await workoutApi.seedExercises();

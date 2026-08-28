@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { ProposalDto, ToolDefinition, ToolSet } from '@repfuel/shared';
 import { updateProfileRequestSchema, updateRoutineRequestSchema } from '@repfuel/shared';
 import type { ProfileService } from '../auth/index.js';
-import type { WeightService } from '../health/index.js';
+import type { IngestService, WeightService } from '../health/index.js';
 import type { FoodService, MealService } from '../nutrition/index.js';
 import type { RoutineService, WorkoutService } from '../workout/index.js';
 
@@ -21,6 +21,7 @@ export interface ToolDeps {
   workoutService: WorkoutService;
   routineService: RoutineService;
   weightService: WeightService;
+  ingestService: IngestService;
   profileService: ProfileService;
   createProposal: (input: {
     kind: 'update_routine' | 'update_profile';
@@ -92,6 +93,29 @@ export function buildToolSet(deps: ToolDeps): ToolSet {
       execute: async ({ from, to }) => {
         const bounds = dayBounds(from, to);
         return deps.weightService.list(userId, { from: bounds.from, to: bounds.to, limit: 500 });
+      },
+    }),
+
+    get_health_metrics: tool({
+      description:
+        'Health-Metriken aus dem Import abrufen (z.B. steps, resting_hr, active_kcal, sleep_minutes).',
+      inputSchema: z.object({
+        metric: z
+          .string()
+          .min(1)
+          .max(64)
+          .regex(/^[a-z][a-z0-9_]*$/),
+        from: isoDate,
+        to: isoDate,
+      }),
+      execute: async ({ metric, from, to }) => {
+        const bounds = dayBounds(from, to);
+        return deps.ingestService.stats(userId, {
+          metric,
+          from: bounds.from,
+          to: bounds.to,
+          limit: 2000,
+        });
       },
     }),
 
