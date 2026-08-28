@@ -2772,6 +2772,14 @@ input[type='checkbox'] {
   font-size: var(--text-lg);
 }
 
+.detail-pr-line {
+  margin: 0 0 var(--space-2);
+}
+
+.detail-pr-line strong {
+  font-variant-numeric: tabular-nums;
+}
+
 .tag-row {
   display: flex;
   flex-wrap: wrap;
@@ -2849,6 +2857,58 @@ input[type='checkbox'] {
 .exercise-library-meta {
   color: var(--text-muted);
   font-size: var(--text-sm);
+}
+
+/* --- Übungs-Verlauf (Statistiken, Detail-Sheet) ------------------------ */
+
+.history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.history-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.history-row:last-child {
+  border-bottom: none;
+}
+
+.history-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.history-row-date {
+  font-weight: var(--weight-medium);
+}
+
+.history-row-sets {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.history-row-top {
+  flex-shrink: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-heading);
+  font-variant-numeric: tabular-nums;
+}
+
+.history-row-unit {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
 }
 
 /* --- Kennzahl-Kacheln (Statistiken) ----------------------------------- */

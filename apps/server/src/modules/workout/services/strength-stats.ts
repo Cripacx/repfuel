@@ -1,11 +1,16 @@
 import type { StrengthStatsResponse } from '@repfuel/shared';
 
-/** Reine Statistik-Berechnung: PRs + Wochentrends (Unit-getestet). */
+/** Reine Statistik-Berechnung: PRs + Wochentrends + Verlauf (Unit-getestet). */
 export interface StrengthSetInput {
   reps: number;
   weightKg: number;
   isWarmup: boolean;
   date: Date;
+  /** Gruppiert den Verlauf: alle Sätze desselben Workouts bilden einen Eintrag. */
+  workoutId: string;
+  /** Reihenfolge innerhalb des Workouts. */
+  position: number;
+  rpe: number | null;
 }
 
 export function isoWeek(date: Date): string {
@@ -28,6 +33,7 @@ export function computeStrengthStats(
   exerciseId: string,
   sets: StrengthSetInput[],
   weeksLimit = 12,
+  historyLimit = 20,
 ): StrengthStatsResponse {
   const working = sets.filter((s) => !s.isWarmup && s.reps > 0);
 
@@ -59,9 +65,38 @@ export function computeStrengthStats(
     .slice(-weeksLimit)
     .map(([week, v]) => ({ week, volumeKg: Math.round(v.volumeKg), sets: v.sets }));
 
+  // Verlauf: ein Eintrag pro Workout (jüngstes zuerst) mit allen Arbeitssätzen —
+  // das ist die "Wie lief es die letzten Male?"-Ansicht neben dem reinen Trend.
+  const byWorkout = new Map<string, { date: Date; sets: StrengthSetInput[] }>();
+  for (const s of working) {
+    const entry = byWorkout.get(s.workoutId) ?? { date: s.date, sets: [] };
+    entry.sets.push(s);
+    byWorkout.set(s.workoutId, entry);
+  }
+  const history = [...byWorkout.values()]
+    .sort((a, b) => b.date.getTime() - a.date.getTime())
+    .slice(0, historyLimit)
+    .map((w) => {
+      const ordered = [...w.sets].sort((a, b) => a.position - b.position);
+      let topWeightKg = 0;
+      let bestWorkout1Rm = 0;
+      for (const s of ordered) {
+        if (s.weightKg > topWeightKg) topWeightKg = s.weightKg;
+        const est = estimate1Rm(s.weightKg, s.reps);
+        if (est > bestWorkout1Rm) bestWorkout1Rm = est;
+      }
+      return {
+        date: w.date.toISOString(),
+        topWeightKg,
+        bestEst1RmKg: bestWorkout1Rm,
+        sets: ordered.map((s) => ({ reps: s.reps, weightKg: s.weightKg, rpe: s.rpe })),
+      };
+    });
+
   return {
     exerciseId,
     prs: { maxWeightKg, maxReps, bestEst1RmKg, bestSet },
     weeklyTrend,
+    history,
   };
 }

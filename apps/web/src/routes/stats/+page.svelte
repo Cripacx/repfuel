@@ -18,6 +18,14 @@
 
   let chartCanvas = $state<HTMLCanvasElement | undefined>(undefined);
   let chartInstance: ChartInstance | null = null;
+  /** Typ der aktuellen Chart-Instanz — Chart.js' config-Union macht den
+   * Zugriff auf `config.type` unnötig sperrig, also selbst mitführen. */
+  let chartInstanceType: 'line' | 'bar' | null = null;
+
+  /** Welche Kennzahl das Diagramm zeigt: Top-Satz-Gewicht, geschätztes 1RM
+   * (beides je Workout) oder Wochenvolumen. */
+  type ChartMode = 'topset' | 'e1rm' | 'volume';
+  let chartMode = $state<ChartMode>('topset');
 
   function exerciseLabel(exercise: ExerciseDto): string {
     return exercise.nameDe ?? exercise.name;
@@ -25,6 +33,17 @@
 
   function formatDate(iso: string): string {
     return new Date(iso).toLocaleDateString(getLocale() === 'de' ? 'de-DE' : 'en-US');
+  }
+
+  function formatShortDate(iso: string): string {
+    return new Date(iso).toLocaleDateString(getLocale() === 'de' ? 'de-DE' : 'en-US', {
+      day: '2-digit',
+      month: '2-digit',
+    });
+  }
+
+  function formatSetLine(sets: StrengthStatsResponse['history'][number]['sets']): string {
+    return sets.map((s) => `${s.weightKg}×${s.reps}`).join(' · ');
   }
 
   async function loadStats(exercise: ExerciseDto): Promise<void> {
@@ -71,19 +90,46 @@
     return `rgba(${parseInt(r ?? '0', 16)}, ${parseInt(g ?? '0', 16)}, ${parseInt(b ?? '0', 16)}, ${alpha})`;
   }
 
-  async function updateChart(
-    canvas: HTMLCanvasElement,
-    trend: StrengthStatsResponse['weeklyTrend'],
-  ): Promise<void> {
+  /** Datenreihe je Modus: Verlauf ist je Workout (aufsteigend), Volumen je Woche. */
+  function chartSeries(
+    mode: ChartMode,
+    data: StrengthStatsResponse,
+  ): { labels: string[]; values: number[]; type: 'line' | 'bar'; label: string } {
+    if (mode === 'volume') {
+      const locale = getLocale();
+      return {
+        labels: data.weeklyTrend.map((w) => formatIsoWeekLabel(w.week, locale)),
+        values: data.weeklyTrend.map((w) => w.volumeKg),
+        type: 'bar',
+        label: m().stats.volumeLabel,
+      };
+    }
+    const ascending = [...data.history].reverse();
+    return {
+      labels: ascending.map((h) => formatShortDate(h.date)),
+      values: ascending.map((h) => (mode === 'topset' ? h.topWeightKg : h.bestEst1RmKg)),
+      type: 'line',
+      label: mode === 'topset' ? m().stats.chartModeTopSet : m().stats.chartModeE1rm,
+    };
+  }
+
+  async function updateChart(canvas: HTMLCanvasElement, data: StrengthStatsResponse): Promise<void> {
     const { Chart } = await import('chart.js/auto');
-    const locale = getLocale();
-    const labels = trend.map((w) => formatIsoWeekLabel(w.week, locale));
-    const data = trend.map((w) => w.volumeKg);
+    const series = chartSeries(chartMode, data);
+
+    // Typwechsel (line ↔ bar) braucht eine neue Instanz.
+    if (chartInstance && chartInstanceType !== series.type) {
+      chartInstance.destroy();
+      chartInstance = null;
+    }
 
     if (chartInstance) {
-      chartInstance.data.labels = labels;
+      chartInstance.data.labels = series.labels;
       const dataset = chartInstance.data.datasets[0];
-      if (dataset) dataset.data = data;
+      if (dataset) {
+        dataset.data = series.values;
+        dataset.label = series.label;
+      }
       chartInstance.update();
       return;
     }
@@ -92,18 +138,30 @@
     const textMuted = readToken('--text-muted', '#a6aeab');
     const border = readToken('--border', '#2a2e33');
 
+    chartInstanceType = series.type;
     chartInstance = new Chart(canvas, {
-      type: 'bar',
+      type: series.type,
       data: {
-        labels,
+        labels: series.labels,
         datasets: [
-          {
-            label: m().stats.volumeLabel,
-            data,
-            backgroundColor: hexToRgba(accent, 0.75),
-            borderRadius: 4,
-            maxBarThickness: 36,
-          },
+          series.type === 'bar'
+            ? {
+                label: series.label,
+                data: series.values,
+                backgroundColor: hexToRgba(accent, 0.75),
+                borderRadius: 4,
+                maxBarThickness: 36,
+              }
+            : {
+                label: series.label,
+                data: series.values,
+                borderColor: accent,
+                backgroundColor: hexToRgba(accent, 0.18),
+                pointBackgroundColor: accent,
+                pointRadius: 3,
+                tension: 0.3,
+                fill: true,
+              },
         ],
       },
       options: {
@@ -111,7 +169,11 @@
         maintainAspectRatio: false,
         scales: {
           x: { ticks: { color: textMuted }, grid: { display: false } },
-          y: { ticks: { color: textMuted }, grid: { color: border }, beginAtZero: true },
+          y: {
+            ticks: { color: textMuted },
+            grid: { color: border },
+            beginAtZero: chartMode === 'volume',
+          },
         },
         plugins: {
           legend: { display: false },
@@ -120,17 +182,23 @@
     });
   }
 
+  const chartHasData = $derived(
+    stats !== null &&
+      (chartMode === 'volume' ? stats.weeklyTrend.length > 0 : stats.history.length > 1),
+  );
+
   $effect(() => {
     const canvas = chartCanvas;
-    const trend = stats?.weeklyTrend ?? [];
-    if (!canvas || trend.length === 0) {
+    const data = stats;
+    void chartMode;
+    if (!canvas || !data || !chartHasData) {
       if (chartInstance) {
         chartInstance.destroy();
         chartInstance = null;
       }
       return;
     }
-    void updateChart(canvas, trend);
+    void updateChart(canvas, data);
   });
 
   // Aktivität hängt nicht an der Übungsauswahl — sie beschreibt das ganze
@@ -241,8 +309,31 @@
       </section>
 
       <section class="card">
-        <h2>{m().stats.chartTitle}</h2>
-        {#if stats.weeklyTrend.length === 0}
+        <h2>{m().stats.progressTitle}</h2>
+        <div class="method-switch" role="group" aria-label={m().stats.chartModeLabel}>
+          <button
+            type="button"
+            class:active={chartMode === 'topset'}
+            onclick={() => (chartMode = 'topset')}
+          >
+            {m().stats.chartModeTopSet}
+          </button>
+          <button
+            type="button"
+            class:active={chartMode === 'e1rm'}
+            onclick={() => (chartMode = 'e1rm')}
+          >
+            {m().stats.chartModeE1rm}
+          </button>
+          <button
+            type="button"
+            class:active={chartMode === 'volume'}
+            onclick={() => (chartMode = 'volume')}
+          >
+            {m().stats.chartModeVolume}
+          </button>
+        </div>
+        {#if !chartHasData}
           <p class="empty-state">{m().stats.chartUnavailable}</p>
         {:else}
           <div class="chart-container">
@@ -250,6 +341,26 @@
           </div>
         {/if}
       </section>
+
+      {#if stats.history.length > 0}
+        <section class="card">
+          <h2>{m().stats.historyTitle}</h2>
+          <ul class="history-list">
+            {#each stats.history as entry (entry.date)}
+              <li class="history-row">
+                <div class="history-row-main">
+                  <span class="history-row-date">{formatDate(entry.date)}</span>
+                  <span class="history-row-sets">{formatSetLine(entry.sets)}</span>
+                </div>
+                <span class="history-row-top">
+                  {entry.topWeightKg}
+                  <span class="history-row-unit">{m().common.kg}</span>
+                </span>
+              </li>
+            {/each}
+          </ul>
+        </section>
+      {/if}
     {/if}
   {/if}
 {/if}

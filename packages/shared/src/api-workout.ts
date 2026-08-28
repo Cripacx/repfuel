@@ -136,4 +136,12 @@ export interface StrengthStatsResponse {
   };
   /** ISO-Woche (YYYY-Www) → Gesamtvolumen (kg·Wdh) und Satzanzahl. */
   weeklyTrend: { week: string; volumeKg: number; sets: number }[];
+  /** Verlauf je Workout (jüngstes zuerst), nur Arbeitssätze. */
+  history: {
+    /** Startzeit des Workouts (ISO-8601). */
+    date: string;
+    topWeightKg: number;
+    bestEst1RmKg: number;
+    sets: { reps: number; weightKg: number; rpe: number | null }[];
+  }[];
 }

@@ -146,6 +146,9 @@ export function createWorkoutService(deps: {
           weightKg: set.weightKg,
           isWarmup: set.isWarmup,
           date: startedAt,
+          workoutId: set.workoutId,
+          position: set.position,
+          rpe: set.rpe,
         })),
       );
     },

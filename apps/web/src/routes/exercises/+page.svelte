@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ExerciseDto } from '@repfuel/shared';
+  import type { ExerciseDto, StrengthStatsResponse } from '@repfuel/shared';
   import { api } from '$lib/api.js';
   import ExerciseAnimation from '$lib/components/ExerciseAnimation.svelte';
   import ExerciseThumb from '$lib/components/ExerciseThumb.svelte';
@@ -7,7 +7,8 @@
   import Modal from '$lib/components/Modal.svelte';
   import { debounce } from '$lib/debounce.js';
   import { describeError } from '$lib/errors.js';
-  import { m } from '$lib/i18n/index.js';
+  import { getLocale, m } from '$lib/i18n/index.js';
+  import { isOnline } from '$lib/offline/status.svelte.js';
   import { EXERCISE_MEDIA_ATTRIBUTION_URL } from '@repfuel/shared';
 
   /**
@@ -110,9 +111,53 @@
   }
 
   // --- Detail-Sheet -------------------------------------------------------
-  // Alle Daten stecken bereits in der Listen-DTO — das Sheet öffnet ohne
-  // weiteren Request und damit ohne Ladezustand.
+  // Beschreibung/Tags stecken bereits in der Listen-DTO — nur der eigene
+  // Verlauf kommt nachgeladen (und braucht deshalb eigene Zustände).
   let detail = $state<ExerciseDto | null>(null);
+  let detailStats = $state<StrengthStatsResponse | null>(null);
+  let detailStatsLoading = $state(false);
+  let detailStatsError = $state<string | null>(null);
+
+  const HISTORY_PREVIEW = 5;
+
+  async function loadDetailStats(exercise: ExerciseDto): Promise<void> {
+    detailStats = null;
+    detailStatsError = null;
+    if (!isOnline()) return;
+    detailStatsLoading = true;
+    try {
+      const { stats } = await api.stats.strength(exercise.id);
+      // Antwort einer inzwischen geschlossenen/gewechselten Übung verwerfen.
+      if (detail?.id === exercise.id) detailStats = stats;
+    } catch (err) {
+      if (detail?.id === exercise.id) detailStatsError = describeError(err);
+    } finally {
+      detailStatsLoading = false;
+    }
+  }
+
+  function openDetail(exercise: ExerciseDto): void {
+    detail = exercise;
+    void loadDetailStats(exercise);
+  }
+
+  function closeDetail(): void {
+    detail = null;
+    detailStats = null;
+    detailStatsError = null;
+  }
+
+  function formatHistoryDate(iso: string): string {
+    return new Date(iso).toLocaleDateString(getLocale() === 'de' ? 'de-DE' : 'en-US', {
+      weekday: 'short',
+      day: '2-digit',
+      month: '2-digit',
+    });
+  }
+
+  function formatSetLine(sets: StrengthStatsResponse['history'][number]['sets']): string {
+    return sets.map((s) => `${s.weightKg}×${s.reps}`).join(' · ');
+  }
 </script>
 
 <svelte:head><title>{m().exercises.libraryTitle}</title></svelte:head>
@@ -192,7 +237,7 @@
   <ul class="exercise-library">
     {#each exercises as exercise (exercise.id)}
       <li>
-        <button type="button" class="exercise-row-btn" onclick={() => (detail = exercise)}>
+        <button type="button" class="exercise-row-btn" onclick={() => openDetail(exercise)}>
           <ExerciseThumb mediaUrl={exercise.mediaUrl} name={exerciseLabel(exercise)} />
           <span class="exercise-library-text">
             <span class="exercise-library-name">{exerciseLabel(exercise)}</span>
@@ -222,7 +267,7 @@
 {/if}
 
 {#if detail}
-  <Modal title={exerciseLabel(detail)} onClose={() => (detail = null)}>
+  <Modal title={exerciseLabel(detail)} onClose={closeDetail}>
     <div class="exercise-detail">
       <ExerciseAnimation mediaUrl={detail.mediaUrl} gifUrl={detail.gifUrl} />
 
@@ -248,6 +293,42 @@
           </ol>
         {:else}
           <p class="empty-state">{m().exercises.noInstructions}</p>
+        {/if}
+      </section>
+
+      <section class="exercise-detail-section">
+        <h3>{m().stats.historyTitle}</h3>
+        {#if !isOnline()}
+          <p class="empty-state">{m().stats.offlineBody}</p>
+        {:else if detailStatsLoading}
+          <div class="skeleton-list">
+            <div class="skeleton-row"></div>
+          </div>
+        {:else if detailStatsError}
+          <p class="error" role="alert">{detailStatsError}</p>
+        {:else if detailStats && detailStats.history.length > 0}
+          {#if detailStats.prs.bestEst1RmKg !== null}
+            <p class="detail-pr-line">
+              <span class="muted">{m().stats.best1RmLabel}:</span>
+              <strong>{detailStats.prs.bestEst1RmKg} {m().common.kg}</strong>
+            </p>
+          {/if}
+          <ul class="history-list">
+            {#each detailStats.history.slice(0, HISTORY_PREVIEW) as entry (entry.date)}
+              <li class="history-row">
+                <div class="history-row-main">
+                  <span class="history-row-date">{formatHistoryDate(entry.date)}</span>
+                  <span class="history-row-sets">{formatSetLine(entry.sets)}</span>
+                </div>
+                <span class="history-row-top">
+                  {entry.topWeightKg}
+                  <span class="history-row-unit">{m().common.kg}</span>
+                </span>
+              </li>
+            {/each}
+          </ul>
+        {:else if detailStats}
+          <p class="empty-state">{m().stats.noDataYet}</p>
         {/if}
       </section>
     </div>
