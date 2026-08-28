@@ -1,0 +1,20 @@
+# Host-Abhängigkeiten nie ins Image kopieren: pnpm legt Symlinks mit
+# absoluten Host-Pfaden an, die den Container-Install überschreiben würden.
+node_modules
+**/node_modules
+
+# Build-Artefakte werden im Image neu erzeugt
+dist
+**/dist
+apps/web/build
+apps/web/.svelte-kit
+
+# Nicht build-relevant
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+docs
+*.md
+!README.md
