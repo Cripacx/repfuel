@@ -2,13 +2,14 @@ import {
   bigint,
   customType,
   index,
+  integer,
   jsonb,
   pgTable,
   text,
   timestamp,
   uuid,
 } from 'drizzle-orm/pg-core';
-import type { Locale, UserRole } from '@repfuel/shared';
+import type { ActivityLevel, Goal, Locale, Sex, UserRole } from '@repfuel/shared';
 
 const bytea = customType<{ data: Uint8Array<ArrayBuffer> }>({
   dataType() {
@@ -61,6 +62,23 @@ export const invites = pgTable(
   (t) => [index('invites_created_by_idx').on(t.createdBy)],
 );
 
+/** Nutzerprofil: Körperdaten, Ziel und kcal-/Makro-Targets. */
+export const profiles = pgTable('profiles', {
+  userId: uuid('user_id')
+    .primaryKey()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  heightCm: integer('height_cm'),
+  birthYear: integer('birth_year'),
+  sex: text('sex').$type<Sex>(),
+  activityLevel: text('activity_level').$type<ActivityLevel>(),
+  goal: text('goal').$type<Goal>(),
+  kcalTarget: integer('kcal_target'),
+  proteinTargetG: integer('protein_target_g'),
+  carbsTargetG: integer('carbs_target_g'),
+  fatTargetG: integer('fat_target_g'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 /** Instanzweite Einstellungen (z.B. DB-Override des Registrierungsmodus). */
 export const appSettings = pgTable('app_settings', {
   key: text('key').primaryKey(),
@@ -68,5 +86,6 @@ export const appSettings = pgTable('app_settings', {
 });
 
 export type UserRow = typeof users.$inferSelect;
+export type ProfileRow = typeof profiles.$inferSelect;
 export type CredentialRow = typeof credentials.$inferSelect;
 export type InviteRow = typeof invites.$inferSelect;

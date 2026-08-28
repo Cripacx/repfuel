@@ -9,16 +9,19 @@ import type { EventBus } from '../../core/event-bus.js';
 import type { KeyValueStore } from '../../core/redis.js';
 import { createCredentialRepo } from './repositories/credential-repo.js';
 import { createInviteRepo } from './repositories/invite-repo.js';
+import { createProfileRepo } from './repositories/profile-repo.js';
 import { createSettingsRepo } from './repositories/settings-repo.js';
 import { createUserRepo } from './repositories/user-repo.js';
 import { createAuthGuards, type AuthGuards } from './plugin.js';
 import { authRoutes } from './routes.js';
 import { createAuthService } from './services/auth-service.js';
+import { createProfileService, type ProfileService } from './services/profile-service.js';
 import { createSessionService } from './services/session-service.js';
 import { createUserService, type UserService } from './services/user-service.js';
 
 export type { AuthGuards } from './plugin.js';
 export type { UserService } from './services/user-service.js';
+export type { ProfileService } from './services/profile-service.js';
 
 export interface AuthModuleOptions {
   db: Database;
@@ -34,6 +37,7 @@ export interface AuthModuleOptions {
 
 export interface AuthModuleApi {
   userService: UserService;
+  profileService: ProfileService;
   guards: AuthGuards;
 }
 
@@ -45,6 +49,7 @@ export async function registerAuthModule(
   const credentialRepo = createCredentialRepo(opts.db);
   const inviteRepo = createInviteRepo(opts.db);
   const settingsRepo = createSettingsRepo(opts.db);
+  const profileRepo = createProfileRepo(opts.db);
 
   const userService = createUserService({
     userRepo,
@@ -53,6 +58,7 @@ export async function registerAuthModule(
     configuredMode: opts.configuredMode,
     appVersion: opts.appVersion,
   });
+  const profileService = createProfileService(profileRepo);
   const sessionService = createSessionService(opts.kv, opts.sessionTtlDays);
   const authService = createAuthService({
     userService,
@@ -72,6 +78,7 @@ export async function registerAuthModule(
     authRoutes({
       authService,
       userService,
+      profileService,
       guards,
       cookieSecure: opts.origin.startsWith('https://'),
       sessionTtlDays: opts.sessionTtlDays,
@@ -79,5 +86,5 @@ export async function registerAuthModule(
     { prefix: '/api/v1/auth' },
   );
 
-  return { userService, guards };
+  return { userService, profileService, guards };
 }

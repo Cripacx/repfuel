@@ -1,30 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import type { Locale, UserRole } from '@repfuel/shared';
-import type { KeyValueStore } from '../../../core/redis.js';
 import type { CredentialRepo } from '../repositories/credential-repo.js';
 import type { InviteRepo } from '../repositories/invite-repo.js';
 import type { SettingsRepo } from '../repositories/settings-repo.js';
 import type { UserRepo } from '../repositories/user-repo.js';
 import type { CredentialRow, InviteRow, UserRow } from '../schema.js';
 
-export function fakeKv(): KeyValueStore & { data: Map<string, string> } {
-  const data = new Map<string, string>();
-  return {
-    data,
-    async get(key) {
-      return data.get(key) ?? null;
-    },
-    async setWithTtl(key, value) {
-      data.set(key, value);
-    },
-    async del(key) {
-      data.delete(key);
-    },
-    async expire() {
-      /* noop */
-    },
-  };
-}
+export { fakeKv } from '../../../core/testing/fake-kv.js';
 
 export function fakeUserRepo(): UserRepo & { rows: UserRow[] } {
   const rows: UserRow[] = [];

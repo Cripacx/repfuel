@@ -15,6 +15,13 @@
       "when": 1787873372172,
       "tag": "0001_cold_ulik",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787875345391,
+      "tag": "0002_military_madripoor",
+      "breakpoints": true
     }
   ]
 }

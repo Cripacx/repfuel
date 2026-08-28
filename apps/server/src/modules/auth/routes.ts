@@ -6,22 +6,25 @@ import {
   registerOptionsRequestSchema,
   registerVerifyRequestSchema,
   updateMeRequestSchema,
+  updateProfileRequestSchema,
 } from '@repfuel/shared';
 import type { RegistrationResponseJSON, AuthenticationResponseJSON } from '@simplewebauthn/server';
 import { SESSION_COOKIE, type AuthGuards } from './plugin.js';
 import type { AuthService } from './services/auth-service.js';
+import type { ProfileService } from './services/profile-service.js';
 import type { UserService } from './services/user-service.js';
 
 export interface AuthRoutesDeps {
   authService: AuthService;
   userService: UserService;
+  profileService: ProfileService;
   guards: AuthGuards;
   cookieSecure: boolean;
   sessionTtlDays: number;
 }
 
 export function authRoutes(deps: AuthRoutesDeps) {
-  const { authService, userService, guards } = deps;
+  const { authService, userService, profileService, guards } = deps;
 
   const cookieOptions = {
     path: '/',
@@ -80,6 +83,15 @@ export function authRoutes(deps: AuthRoutesDeps) {
       const body = updateMeRequestSchema.parse(req.body);
       const user = await userService.updateLocale(req.sessionUser!.id, body.locale);
       return { user };
+    });
+
+    app.get('/profile', { preHandler: guards.requireAuth }, async (req) => {
+      return { profile: await profileService.get(req.sessionUser!.id) };
+    });
+
+    app.patch('/profile', { preHandler: guards.requireAuth }, async (req) => {
+      const body = updateProfileRequestSchema.parse(req.body);
+      return { profile: await profileService.update(req.sessionUser!.id, body) };
     });
   };
 }

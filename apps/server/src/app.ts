@@ -12,6 +12,7 @@ import { redisKeyValueStore, type RedisClient } from './core/redis.js';
 import { registerAdminModule } from './modules/admin/index.js';
 import { registerAuthModule } from './modules/auth/index.js';
 import { registerHealthModule } from './modules/health/index.js';
+import { registerNutritionModule } from './modules/nutrition/index.js';
 import { registerWorkoutModule } from './modules/workout/index.js';
 
 export interface AppDeps {
@@ -98,6 +99,13 @@ export async function buildApp(config: AppConfig, deps: AppDeps): Promise<Fastif
     guards: authApi.guards,
   });
   await registerHealthModule(app, { db: deps.db, guards: authApi.guards });
+  await registerNutritionModule(app, {
+    db: deps.db,
+    kv,
+    guards: authApi.guards,
+    getTargets: (userId) => authApi.profileService.getTargets(userId),
+    onExternalError: (err, context) => app.log.warn({ err, context }, 'open food facts error'),
+  });
 
   const seeded = await workoutApi.seedExercises();
   app.log.info({ seeded }, 'exercise library seeded (idempotent)');
