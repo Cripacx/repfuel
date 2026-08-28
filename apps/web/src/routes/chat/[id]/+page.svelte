@@ -56,9 +56,14 @@
     proposalsError = null;
     try {
       const { proposals: pending } = await api.ai.listProposals();
-      // Vom Stream ergänzte Karten nicht überschreiben.
-      const known = new Set(proposals.map((p) => p.id));
-      proposals = [...proposals, ...pending.filter((p) => !known.has(p.id))];
+      // Server ist Quelle für Offenes — auch überarbeitete Inhalte
+      // (revises_proposal_id) landen so in der Karte. Lokal aufgelöste
+      // Karten bleiben für die laufende Sitzung im Sheet sichtbar.
+      const pendingIds = new Set(pending.map((p) => p.id));
+      proposals = [
+        ...pending,
+        ...proposals.filter((p) => p.status !== 'pending' && !pendingIds.has(p.id)),
+      ];
     } catch (err) {
       proposalsError = describeError(err);
     }
@@ -208,6 +213,9 @@
       finalizeStream(`partial-${Date.now()}`);
     } finally {
       streaming = false;
+      // Vorschläge nachladen: der Turn kann welche angelegt ODER überarbeitet
+      // haben (gleiche ID, neuer Inhalt) — der Stream trägt das nicht immer.
+      if (isOnline()) void loadProposals();
       await scrollToEnd();
     }
   }

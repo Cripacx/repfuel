@@ -87,6 +87,13 @@ export function fakeProposalRepo(): ProposalRepo & { rows: AiProposalRow[] } {
         row.resolvedAt = new Date();
       }
     },
+    async updateContent(id, input) {
+      const row = rows.find((r) => r.id === id);
+      if (row) {
+        row.summary = input.summary;
+        row.payload = input.payload;
+      }
+    },
   };
 }
 

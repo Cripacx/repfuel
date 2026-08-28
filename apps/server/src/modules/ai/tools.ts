@@ -37,6 +37,13 @@ export interface ToolDeps {
     summary: string;
     payload: unknown;
   }) => Promise<ProposalDto>;
+  /** Offenen Vorschlag ersetzen (revises_proposal_id) statt neu anzulegen. */
+  reviseProposal: (input: {
+    proposalId: string;
+    kind: ProposalKind;
+    summary: string;
+    payload: unknown;
+  }) => Promise<ProposalDto>;
 }
 
 const isoDate = z
@@ -316,25 +323,30 @@ export function buildToolSet(deps: ToolDeps): ToolSet {
 
     create_routine: tool({
       description:
-        'NEUE Trainingsroutine VORSCHLAGEN (Name, optional Wochentag, Übungen mit Sätzen/Wiederholungen). exercise_ids vorher über search_exercises ermitteln. Wird NICHT direkt angelegt — der Nutzer bestätigt den Vorschlag im UI. summary: 1–2 Sätze, was und warum. Pro Trainingstag eine eigene Routine anlegen (z.B. "Ganzkörper A" und "Ganzkörper B").',
+        'NEUE Trainingsroutine VORSCHLAGEN (Name, optional Wochentag, Übungen mit Sätzen/Wiederholungen). exercise_ids vorher über search_exercises ermitteln. Wird NICHT direkt angelegt — der Nutzer bestätigt den Vorschlag im UI. summary: 1–2 Sätze, was und warum. Pro Trainingstag eine eigene Routine anlegen (z.B. "Ganzkörper A" und "Ganzkörper B"). WICHTIG: Passt du einen noch offenen Routinen-Vorschlag an (siehe "Offene Vorschläge" im System-Prompt), übergib revises_proposal_id mit der KOMPLETTEN neuen Routine — der Vorschlag wird ersetzt statt ein weiterer angelegt.',
       inputSchema: z.object({
         summary: z.string().min(5).max(500),
         routine: createRoutineRequestSchema,
+        revises_proposal_id: z.string().uuid().optional(),
       }),
-      execute: async ({ summary, routine }) => {
+      execute: async ({ summary, routine, revises_proposal_id }) => {
         const exerciseIds = (routine.items ?? []).map((item) => item.exerciseId);
         // Übungen jetzt prüfen, damit kein Vorschlag mit erfundenen IDs entsteht.
         await deps.exerciseService.assertVisible(userId, exerciseIds);
-        const proposal = await deps.createProposal({
-          kind: 'create_routine',
-          summary,
-          payload: {
-            routine,
-            exerciseNames: await exerciseNameMap(exerciseIds),
-          },
-        });
+        const payload = {
+          routine,
+          exerciseNames: await exerciseNameMap(exerciseIds),
+        };
+        const proposal = revises_proposal_id
+          ? await deps.reviseProposal({
+              proposalId: revises_proposal_id,
+              kind: 'create_routine',
+              summary,
+              payload,
+            })
+          : await deps.createProposal({ kind: 'create_routine', summary, payload });
         return {
-          status: 'proposal_created',
+          status: revises_proposal_id ? 'proposal_updated' : 'proposal_created',
           proposalId: proposal.id,
           note: 'Der Nutzer muss den Vorschlag im UI bestätigen, bevor die Routine angelegt wird.',
         };
@@ -350,28 +362,33 @@ export function buildToolSet(deps: ToolDeps): ToolSet {
 
     update_routine: tool({
       description:
-        'Änderung einer Routine VORSCHLAGEN (Name/Übungen/Sätze). Wird NICHT direkt ausgeführt — der Nutzer bestätigt den Vorschlag im UI. summary: 1–2 Sätze, was und warum.',
+        'Änderung einer BESTEHENDEN Routine VORSCHLAGEN (Name/Übungen/Sätze). Wird NICHT direkt ausgeführt — der Nutzer bestätigt den Vorschlag im UI. summary: 1–2 Sätze, was und warum. Passt du einen noch offenen update_routine-Vorschlag an, übergib revises_proposal_id — der Vorschlag wird ersetzt statt ein weiterer angelegt.',
       inputSchema: z.object({
         routine_id: z.string().uuid(),
         summary: z.string().min(5).max(500),
         changes: updateRoutineRequestSchema,
+        revises_proposal_id: z.string().uuid().optional(),
       }),
-      execute: async ({ routine_id, summary, changes }) => {
+      execute: async ({ routine_id, summary, changes, revises_proposal_id }) => {
         // Existenz/Ownership prüfen, damit keine Vorschläge für fremde Routinen entstehen.
         await deps.routineService.get(userId, routine_id);
-        const proposal = await deps.createProposal({
-          kind: 'update_routine',
-          summary,
-          payload: {
-            routineId: routine_id,
-            changes,
-            ...(changes.items
-              ? { exerciseNames: await exerciseNameMap(changes.items.map((i) => i.exerciseId)) }
-              : {}),
-          },
-        });
+        const payload = {
+          routineId: routine_id,
+          changes,
+          ...(changes.items
+            ? { exerciseNames: await exerciseNameMap(changes.items.map((i) => i.exerciseId)) }
+            : {}),
+        };
+        const proposal = revises_proposal_id
+          ? await deps.reviseProposal({
+              proposalId: revises_proposal_id,
+              kind: 'update_routine',
+              summary,
+              payload,
+            })
+          : await deps.createProposal({ kind: 'update_routine', summary, payload });
         return {
-          status: 'proposal_created',
+          status: revises_proposal_id ? 'proposal_updated' : 'proposal_created',
           proposalId: proposal.id,
           note: 'Der Nutzer muss den Vorschlag im UI bestätigen, bevor er angewendet wird.',
         };
@@ -380,19 +397,23 @@ export function buildToolSet(deps: ToolDeps): ToolSet {
 
     update_profile: tool({
       description:
-        'Änderung des Profils/der Ziele VORSCHLAGEN (kcal-/Makro-Targets, Ziel, Aktivitätslevel …). Wird NICHT direkt ausgeführt — der Nutzer bestätigt im UI. summary: 1–2 Sätze, was und warum.',
+        'Änderung des Profils/der Ziele VORSCHLAGEN (kcal-/Makro-Targets, Ziel, Aktivitätslevel …). Wird NICHT direkt ausgeführt — der Nutzer bestätigt im UI. summary: 1–2 Sätze, was und warum. Passt du einen noch offenen update_profile-Vorschlag an, übergib revises_proposal_id — der Vorschlag wird ersetzt statt ein weiterer angelegt.',
       inputSchema: z.object({
         summary: z.string().min(5).max(500),
         changes: updateProfileRequestSchema,
+        revises_proposal_id: z.string().uuid().optional(),
       }),
-      execute: async ({ summary, changes }) => {
-        const proposal = await deps.createProposal({
-          kind: 'update_profile',
-          summary,
-          payload: { changes },
-        });
+      execute: async ({ summary, changes, revises_proposal_id }) => {
+        const proposal = revises_proposal_id
+          ? await deps.reviseProposal({
+              proposalId: revises_proposal_id,
+              kind: 'update_profile',
+              summary,
+              payload: { changes },
+            })
+          : await deps.createProposal({ kind: 'update_profile', summary, payload: { changes } });
         return {
-          status: 'proposal_created',
+          status: revises_proposal_id ? 'proposal_updated' : 'proposal_created',
           proposalId: proposal.id,
           note: 'Der Nutzer muss den Vorschlag im UI bestätigen, bevor er angewendet wird.',
         };

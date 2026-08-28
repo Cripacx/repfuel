@@ -21,6 +21,16 @@ export function buildSystemPrompt(ctx: UserContextSnapshot): string {
         .join(', ')
     : 'noch kein Profil hinterlegt';
 
+  const proposalBlock =
+    ctx.pendingProposals.length > 0
+      ? [
+          `Offene Vorschläge (vom Nutzer noch NICHT bestätigt — bei Anpassungswünschen mit revises_proposal_id ERSETZEN, keinen neuen anlegen):`,
+          ...ctx.pendingProposals.map(
+            (proposal) => `- [${proposal.id}] ${proposal.kind}: ${proposal.summary}`,
+          ),
+        ]
+      : [];
+
   const memoryBlock =
     ctx.memories.length > 0
       ? [
@@ -34,6 +44,7 @@ export function buildSystemPrompt(ctx: UserContextSnapshot): string {
     `Heute ist ${ctx.currentDate} (Zeitzone ${ctx.timezone}). Antworte in der Sprache des Nutzers (${ctx.locale === 'de' ? 'Deutsch' : 'Englisch'}).`,
     `Nutzer: ${ctx.username}. Profil: ${profileLine}.${ctx.latestWeightKg != null ? ` Letztes Gewicht: ${ctx.latestWeightKg} kg.` : ''}`,
     ...memoryBlock,
+    ...proposalBlock,
     `Verfügbare Datenbereiche über Tools: Mahlzeiten & Tages-Nährwerte, Workouts & Übungsverlauf, Gewichtsverlauf, Routinen, Übungskatalog (search_exercises), Profil/Ziele, Lebensmittelsuche.`,
     `Regeln:`,
     `- Hole Daten immer über die Tools, rate nicht.`,
@@ -42,7 +53,8 @@ export function buildSystemPrompt(ctx: UserContextSnapshot): string {
     `- Gibt es naheliegende nächste Schritte, hänge sie mit suggest_actions als 1–3 Buttons an (label kurz, prompt = die Nachricht, die der Klick sendet).`,
     `- Erzählt der Nutzer dauerhaft Relevantes (Vorhaben/Ziele, Vorlieben, Abneigungen, Unverträglichkeiten, Einschränkungen), pflege das Gedächtnis: EIN Eintrag pro Thema. Neues Thema → remember; zum Thema existiert schon ein Eintrag → update_memory mit dem fortgeschriebenen Gesamttext; Veraltetes → forget_memory. Erwähne kurz, dass du es dir gemerkt hast.`,
     `- Fehlende Mahlzeiten-Logs NIE als Fasten oder Kaloriendefizit interpretieren — sie bedeuten nur, dass nichts geloggt wurde.`,
-    `- Änderungen an Routinen oder Profil/Zielen nur über update_routine/update_profile vorschlagen; der Nutzer bestätigt im UI. Kündige das in deiner Antwort an.`,
+    `- Änderungen an Routinen oder Profil/Zielen nur über create_routine/update_routine/update_profile vorschlagen; der Nutzer bestätigt im UI. Kündige das in deiner Antwort an.`,
+    `- Wünscht der Nutzer Anpassungen an einem noch offenen Vorschlag, rufe dasselbe Tool mit revises_proposal_id und dem vollständigen neuen Stand auf — NIE einen zweiten Vorschlag zum selben Thema anlegen.`,
     `- Sei konkret und knapp; nenne Zahlen mit Einheit.`,
   ].join('\n');
 }

@@ -27,6 +27,8 @@ export interface ChatServiceDeps {
   profileService: ProfileService;
   weightService: WeightService;
   memoryService: MemoryService;
+  /** Offene Vorschläge für den System-Prompt (Überarbeitung statt Duplikat). */
+  listPendingProposals: (userId: string) => Promise<ProposalDto[]>;
   /** Baut die Tool-Dependencies für einen Chat-Turn (userId/session-gebunden). */
   toolDeps: (input: {
     userId: string;
@@ -99,6 +101,7 @@ export function createChatService(deps: ChatServiceDeps) {
     const profile = await deps.profileService.get(user.id);
     const weights = await deps.weightService.list(user.id, { limit: 1 });
     const memories = await deps.memoryService.list(user.id);
+    const pendingProposals = await deps.listPendingProposals(user.id);
     const tzSign = tzOffsetMinutes <= 0 ? '+' : '-';
     const abs = Math.abs(tzOffsetMinutes);
     const localNow = new Date(Date.now() - tzOffsetMinutes * 60_000);
@@ -127,6 +130,11 @@ export function createChatService(deps: ChatServiceDeps) {
         id: memory.id,
         category: memory.category,
         content: memory.content,
+      })),
+      pendingProposals: pendingProposals.map((proposal) => ({
+        id: proposal.id,
+        kind: proposal.kind,
+        summary: proposal.summary,
       })),
     };
   }

@@ -14,6 +14,7 @@ const userContext: UserContextSnapshot = {
   profile: null,
   latestWeightKg: null,
   memories: [],
+  pendingProposals: [],
 };
 
 const messages: ChatMessageDto[] = [

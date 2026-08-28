@@ -80,6 +80,33 @@ export function createProposalService(deps: ProposalServiceDeps) {
       return toProposalDto(row);
     },
 
+    /**
+     * Offenen Vorschlag überarbeiten statt einen neuen anzulegen — sonst
+     * stapeln sich bei jedem "mach lieber 4 Sätze" neue Vorschläge.
+     * Gleiche Validierung wie beim Anlegen; nur pending und nur derselbe kind.
+     */
+    async revise(input: {
+      userId: string;
+      proposalId: string;
+      kind: ProposalKind;
+      summary: string;
+      payload: unknown;
+    }): Promise<ProposalDto> {
+      const row = await requirePending(input.userId, input.proposalId);
+      if (row.kind !== input.kind) {
+        throw new AppError(
+          'bad_request',
+          `Proposal ${input.proposalId} is ${row.kind}, not ${input.kind}`,
+        );
+      }
+      payloadSchemas[input.kind].parse(input.payload);
+      await deps.proposalRepo.updateContent(row.id, {
+        summary: input.summary,
+        payload: input.payload,
+      });
+      return { ...toProposalDto(row), summary: input.summary, payload: input.payload };
+    },
+
     async listPending(userId: string): Promise<ProposalDto[]> {
       return (await deps.proposalRepo.listByStatus(userId, 'pending')).map(toProposalDto);
     },

@@ -109,6 +109,95 @@ describe('proposal flow (Bestätigungs-Guard)', () => {
     ).rejects.toThrow();
   });
 
+  it('revise ersetzt Inhalt eines offenen Vorschlags statt einen neuen anzulegen', async () => {
+    const { service, proposalRepo, routineService } = setup();
+    const item = (reps: number) => ({
+      exerciseId: '00000000-0000-4000-8000-00000000bbbb',
+      position: 0,
+      targetSets: 3,
+      targetReps: reps,
+    });
+    const p = await service.create({
+      userId: USER,
+      sessionId: null,
+      kind: 'create_routine',
+      summary: 'Erster Entwurf',
+      payload: { routine: { name: 'GK A', items: [item(8)] } },
+    });
+
+    const revised = await service.revise({
+      userId: USER,
+      proposalId: p.id,
+      kind: 'create_routine',
+      summary: 'Jetzt mit 12 Wiederholungen',
+      payload: { routine: { name: 'GK A', items: [item(12)] } },
+    });
+    expect(revised.id).toBe(p.id);
+    expect(revised.status).toBe('pending');
+    // Kein zweiter Vorschlag entstanden
+    expect(proposalRepo.rows).toHaveLength(1);
+    expect(await service.listPending(USER)).toHaveLength(1);
+
+    // Bestätigen wendet den ÜBERARBEITETEN Stand an
+    await service.confirm(USER, p.id);
+    expect(routineService.create).toHaveBeenCalledWith(
+      USER,
+      expect.objectContaining({ items: [expect.objectContaining({ targetReps: 12 })] }),
+    );
+  });
+
+  it('revise prüft kind, Status und Ownership und validiert den Payload', async () => {
+    const { service } = setup();
+    const p = await service.create({
+      userId: USER,
+      sessionId: null,
+      kind: 'update_profile',
+      summary: 'kcal runter',
+      payload: { changes: { kcalTarget: 2200 } },
+    });
+
+    await expect(
+      service.revise({
+        userId: USER,
+        proposalId: p.id,
+        kind: 'create_routine',
+        summary: 'falscher kind',
+        payload: { routine: { name: 'x', items: [] } },
+      }),
+    ).rejects.toMatchObject({ code: 'bad_request' });
+
+    await expect(
+      service.revise({
+        userId: USER,
+        proposalId: p.id,
+        kind: 'update_profile',
+        summary: 'kaputt',
+        payload: { nonsense: true },
+      }),
+    ).rejects.toThrow();
+
+    await expect(
+      service.revise({
+        userId: '00000000-0000-4000-8000-000000000002',
+        proposalId: p.id,
+        kind: 'update_profile',
+        summary: 'fremd',
+        payload: { changes: { kcalTarget: 2000 } },
+      }),
+    ).rejects.toMatchObject({ code: 'not_found' });
+
+    await service.confirm(USER, p.id);
+    await expect(
+      service.revise({
+        userId: USER,
+        proposalId: p.id,
+        kind: 'update_profile',
+        summary: 'zu spät',
+        payload: { changes: { kcalTarget: 2100 } },
+      }),
+    ).rejects.toMatchObject({ code: 'conflict' });
+  });
+
   it('cannot confirm twice, reject leaves services untouched', async () => {
     const { service, profileService } = setup();
     const p = await service.create({

@@ -14,6 +14,8 @@ export interface ProposalRepo {
   findById(userId: string, id: string): Promise<AiProposalRow | null>;
   listByStatus(userId: string, status: ProposalStatus): Promise<AiProposalRow[]>;
   setStatus(id: string, status: ProposalStatus): Promise<void>;
+  /** Inhalt eines Vorschlags ersetzen (Überarbeitung im Gespräch). */
+  updateContent(id: string, input: { summary: string; payload: unknown }): Promise<void>;
 }
 
 export function createProposalRepo(db: Database): ProposalRepo {
@@ -42,6 +44,12 @@ export function createProposalRepo(db: Database): ProposalRepo {
       await db
         .update(aiProposals)
         .set({ status, resolvedAt: new Date() })
+        .where(eq(aiProposals.id, id));
+    },
+    async updateContent(id, input) {
+      await db
+        .update(aiProposals)
+        .set({ summary: input.summary, payload: input.payload })
         .where(eq(aiProposals.id, id));
     },
   };

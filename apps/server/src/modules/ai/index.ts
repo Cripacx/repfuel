@@ -95,6 +95,7 @@ export async function registerAiModule(
     profileService: opts.profileService,
     weightService: opts.weightService,
     memoryService,
+    listPendingProposals: (userId) => proposalService.listPending(userId),
     toolDeps: ({ userId, sessionId, tzOffsetMinutes }) => ({
       userId,
       sessionId,
@@ -108,6 +109,7 @@ export async function registerAiModule(
       ingestService: opts.ingestService,
       profileService: opts.profileService,
       memoryService,
+      reviseProposal: (input) => proposalService.revise({ userId, ...input }),
     }),
     createProposal: (input) =>
       proposalService.create({
@@ -150,6 +152,7 @@ export async function registerAiModule(
               summary: input.summary,
               payload: input.payload,
             }),
+          reviseProposal: (input) => proposalService.revise({ userId: claims.userId, ...input }),
         }),
     }),
     { prefix: '/internal/mcp' },

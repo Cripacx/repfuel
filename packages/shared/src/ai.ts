@@ -137,6 +137,8 @@ export interface UserContextSnapshot {
   latestWeightKg: number | null;
   /** Coach-Gedächtnis: vom Nutzer stammende, dauerhafte Fakten (klein halten). */
   memories: { id: string; category: MemoryCategory; content: string }[];
+  /** Offene KI-Vorschläge — Basis für Überarbeitungen per revises_proposal_id. */
+  pendingProposals: { id: string; kind: ProposalKind; summary: string }[];
 }
 
 /**
