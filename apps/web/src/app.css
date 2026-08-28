@@ -1266,6 +1266,42 @@ a.list-card:hover {
   height: 260px;
 }
 
+/* --- Health-Kacheln (Home-Dashboard) --- */
+
+.stat-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: var(--space-3);
+}
+
+.stat-tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.stat-tile-label {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.stat-tile-value {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-heading);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-tile-unit {
+  margin-left: 0.25em;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
 textarea {
   min-height: 80px;
   padding: var(--space-2) var(--space-3);

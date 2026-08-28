@@ -135,6 +135,7 @@
       <a href={resolve('/nutrition')} class:active={isActiveNav('/nutrition')}
         >{m().nav.nutrition}</a
       >
+      <a href={resolve('/stats')} class:active={isActiveNav('/stats')}>{m().nav.stats}</a>
       {#if isAiEnabled()}
         <a href={resolve('/chat')} class:active={isActiveNav('/chat')}>{m().nav.coach}</a>
       {/if}

@@ -4,15 +4,20 @@ import type {
   AdminUserDto,
   AiStatusResponse,
   ApiErrorBody,
+  ApiTokenDto,
   BodyWeightDto,
   ChatMessageDto,
   ChatSessionDto,
+  CreateApiTokenRequest,
   CreateExerciseRequest,
   CreateFoodRequest,
   CreateInviteRequest,
   CreateRoutineRequest,
+  CreatedApiTokenDto,
   ExerciseDto,
   FoodDto,
+  HealthStatsQuery,
+  HealthStatsResponse,
   InstanceStatusDto,
   LastSetsResponse,
   ListExercisesQuery,
@@ -31,6 +36,7 @@ import type {
   RoutineDto,
   SetDto,
   SetPasswordRequest,
+  StrengthStatsResponse,
   SyncBatchRequest,
   SyncBatchResponse,
   UpdateMeRequest,
@@ -321,5 +327,41 @@ export const api = {
       get(
         `/stats/nutrition${query({ from: params.from, to: params.to, tzOffsetMinutes: params.tzOffsetMinutes })}`,
       ),
+    health: (params: Partial<HealthStatsQuery> & { metric: string }): Promise<HealthStatsResponse> =>
+      get(
+        `/stats/health${query({ metric: params.metric, from: params.from, to: params.to, limit: params.limit })}`,
+      ),
+    strength: (exerciseId: string): Promise<{ stats: StrengthStatsResponse }> =>
+      get(`/stats/strength${query({ exerciseId })}`),
+  },
+
+  // --- Health-Ingest: API-Tokens (Session-Auth; das Ingest selbst läuft per Bearer-Token) ---
+  ingest: {
+    listTokens: (): Promise<{ tokens: ApiTokenDto[] }> => get('/ingest/tokens'),
+    createToken: (body: CreateApiTokenRequest): Promise<{ token: CreatedApiTokenDto }> =>
+      post('/ingest/tokens', body),
+    revokeToken: (id: string): Promise<void> => del(`/ingest/tokens/${id}`),
+  },
+
+  // --- Datenexport: liefert einen Blob (Content-Disposition ist gesetzt), kein JSON-Body
+  // über `request()` — der Aufrufer löst Content-Disposition -> Dateiname selbst auf. ---
+  exportData: async (): Promise<{ blob: Blob; filename: string }> => {
+    const response = await fetch(`${BASE_URL}/export`, { credentials: 'same-origin' });
+    if (!response.ok) {
+      let body: unknown;
+      try {
+        body = await response.json();
+      } catch {
+        body = undefined;
+      }
+      const errorBody: ApiErrorBody = isApiErrorBody(body)
+        ? body
+        : { error: 'unknown_error', message: response.statusText || 'Unknown error' };
+      throw new ApiError(response.status, errorBody);
+    }
+    const disposition = response.headers.get('content-disposition') ?? '';
+    const match = /filename="?([^";]+)"?/.exec(disposition);
+    const filename = match?.[1] ?? `repfuel-export-${new Date().toISOString().slice(0, 10)}.json`;
+    return { blob: await response.blob(), filename };
   },
 };

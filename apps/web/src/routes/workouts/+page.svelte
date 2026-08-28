@@ -69,9 +69,12 @@
 
 <div class="page-header">
   <h1>{m().workouts.title}</h1>
-  <button type="button" class="primary" onclick={() => (showStartOptions = !showStartOptions)}>
-    {m().workouts.startButton}
-  </button>
+  <div class="row-actions">
+    <a class="secondary" href={resolve('/stats')}>{m().nav.stats}</a>
+    <button type="button" class="primary" onclick={() => (showStartOptions = !showStartOptions)}>
+      {m().workouts.startButton}
+    </button>
+  </div>
 </div>
 
 {#if showStartOptions}

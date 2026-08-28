@@ -4,8 +4,14 @@
   import { resolve } from '$app/paths';
   import { api } from '$lib/api.js';
   import { getUser } from '$lib/auth.svelte.js';
+  import { latestMetricEntry, sumMetricValues } from '$lib/health/dashboard.js';
   import { getLocale, m } from '$lib/i18n/index.js';
-  import { currentTzOffsetMinutes, todayDateString } from '$lib/nutrition/day-range.js';
+  import {
+    currentTzOffsetMinutes,
+    localDayBoundsUtc,
+    shiftDateString,
+    todayDateString,
+  } from '$lib/nutrition/day-range.js';
   import { roundKcal } from '$lib/nutrition/format.js';
   import { computeProgress } from '$lib/nutrition/progress.js';
   import { computeVolumeKg } from '$lib/workout/volume.js';
@@ -18,10 +24,42 @@
   let nutritionTargets = $state<NutritionTargets | null>(null);
   let loading = $state(true);
 
+  let todaySteps = $state<number | null>(null);
+  let todayActiveKcal = $state<number | null>(null);
+  let latestRestingHr = $state<number | null>(null);
+
   const kcalProgress = $derived(
     todayNutrition && nutritionTargets
       ? computeProgress(todayNutrition.kcal, nutritionTargets.kcalTarget)
       : null,
+  );
+
+  function formatNumber(value: number): string {
+    return value.toLocaleString(getLocale() === 'de' ? 'de-DE' : 'en-US');
+  }
+
+  const healthTiles = $derived(
+    [
+      todaySteps !== null
+        ? { key: 'steps', label: m().home.stepsLabel, value: formatNumber(todaySteps), unit: '' }
+        : null,
+      latestRestingHr !== null
+        ? {
+            key: 'restingHr',
+            label: m().home.restingHrLabel,
+            value: formatNumber(latestRestingHr),
+            unit: m().home.restingHrUnit,
+          }
+        : null,
+      todayActiveKcal !== null
+        ? {
+            key: 'activeKcal',
+            label: m().home.activeKcalLabel,
+            value: formatNumber(todayActiveKcal),
+            unit: m().nutrition.kcalUnit,
+          }
+        : null,
+    ].filter((tile): tile is { key: string; label: string; value: string; unit: string } => tile !== null),
   );
 
   onMount(async () => {
@@ -40,6 +78,33 @@
       // Startseite bleibt auch ohne Daten benutzbar — kein Fehlerbanner nötig.
     } finally {
       loading = false;
+    }
+
+    // Health-Kacheln sind best-effort (Gesundheitsdaten sind optional) — ein
+    // fehlgeschlagener Abruf blendet nur die jeweilige Kachel aus, nie die Seite.
+    try {
+      const tz = currentTzOffsetMinutes();
+      const todayBounds = localDayBoundsUtc(today, tz);
+      // Ruhepuls kommt oft nicht täglich rein — Fenster von 30 Tagen, um den
+      // zeitlich letzten Wert sicher zu erfassen (`stats/health` sortiert aufsteigend).
+      const recentFrom = localDayBoundsUtc(shiftDateString(today, -30), tz).from;
+      const [stepsRes, kcalRes, hrRes] = await Promise.allSettled([
+        api.stats.health({ metric: 'steps', from: todayBounds.from, to: todayBounds.to }),
+        api.stats.health({ metric: 'active_kcal', from: todayBounds.from, to: todayBounds.to }),
+        api.stats.health({ metric: 'resting_hr', from: recentFrom, to: todayBounds.to }),
+      ]);
+      if (stepsRes.status === 'fulfilled' && stepsRes.value.entries.length > 0) {
+        todaySteps = Math.round(sumMetricValues(stepsRes.value.entries));
+      }
+      if (kcalRes.status === 'fulfilled' && kcalRes.value.entries.length > 0) {
+        todayActiveKcal = Math.round(sumMetricValues(kcalRes.value.entries));
+      }
+      if (hrRes.status === 'fulfilled') {
+        const latest = latestMetricEntry(hrRes.value.entries);
+        if (latest) latestRestingHr = Math.round(latest.value);
+      }
+    } catch {
+      // s.o.
     }
   });
 
@@ -86,6 +151,23 @@
   </section>
 
   {#if !loading}
+    {#if healthTiles.length > 0}
+      <section class="card">
+        <h2>{m().home.healthTitle}</h2>
+        <div class="stat-tiles">
+          {#each healthTiles as tile (tile.key)}
+            <div class="stat-tile">
+              <span class="stat-tile-label">{tile.label}</span>
+              <span class="stat-tile-value"
+                >{tile.value}{#if tile.unit}<span class="stat-tile-unit">{tile.unit}</span
+                  >{/if}</span
+              >
+            </div>
+          {/each}
+        </div>
+      </section>
+    {/if}
+
     <section class="card">
       <h2>{m().home.todayNutritionTitle}</h2>
       {#if todayNutrition && nutritionTargets?.kcalTarget != null}
