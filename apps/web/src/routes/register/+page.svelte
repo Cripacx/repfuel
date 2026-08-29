@@ -287,7 +287,7 @@
     <a href={resolve('/login')}>{m().auth.loginLink}</a>
   </p>
 
-  <button type="button" class="link-button" onclick={() => (showInstallModal = true)}>
+  <button type="button" class="secondary" onclick={() => (showInstallModal = true)}>
     {m().auth.installApp.linkLabel}
   </button>
 </section>

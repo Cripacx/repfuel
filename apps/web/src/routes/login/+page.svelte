@@ -173,7 +173,7 @@
     <a href={resolve('/register')}>{m().auth.registerLink}</a>
   </p>
 
-  <button type="button" class="link-button" onclick={() => (showInstallModal = true)}>
+  <button type="button" class="secondary" onclick={() => (showInstallModal = true)}>
     {m().auth.installApp.linkLabel}
   </button>
 </section>
