@@ -98,6 +98,94 @@ erreichbar sein soll.
 SSE (KI-Chat) funktioniert mit Caddy out of the box; bei nginx
 `proxy_buffering off;` für `/api/v1/chat/` setzen.
 
+## nginx bei mehreren Services auf demselben Server
+
+Laufen auf dem VServer noch andere Anwendungen, ist ein zentraler nginx als
+Reverse-Proxy die übliche Lösung: er nimmt Port 80/443 entgegen und leitet
+anhand des `Host`-Headers an den richtigen Dienst weiter — repfuel auf
+`fit.example.com`, ein anderer Service auf `other.example.com`, beide auf
+demselben Server, unterschiedliche Ports dahinter.
+
+**1. repfuels Port nur lokal binden.** Im `app`-Service der
+`docker-compose.yml` `ports: ['${PORT:-8080}:8080']` auf
+`127.0.0.1:${PORT:-8080}:8080` ändern (oder `PORT` in der `.env` setzen und
+in Compose entsprechend binden). Damit ist der Container nur über nginx
+erreichbar, nicht direkt am offenen Port — jeder andere Service bekommt
+analog einen eigenen, ebenfalls nur lokal gebundenen Port.
+
+**2. nginx installieren und ein Server-Block pro Domain.**
+
+```bash
+sudo apt install nginx
+```
+
+`/etc/nginx/sites-available/repfuel.conf`:
+
+```nginx
+server {
+    listen 80;
+    server_name fit.example.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # SSE-Stream des KI-Chats: Buffering aus, langer Read-Timeout —
+    # sonst kommt die Antwort nur in Schüben oder bricht vorzeitig ab.
+    location /api/v1/chat/ {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_buffering off;
+        proxy_read_timeout 3600s;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Für jeden weiteren Service eine eigene Datei mit eigenem `server_name` und
+eigenem `proxy_pass`-Port anlegen, z.B.
+`/etc/nginx/sites-available/other.conf` mit `server_name other.example.com;`
+und `proxy_pass http://127.0.0.1:9000;`. Aktivieren und prüfen:
+
+```bash
+sudo ln -s /etc/nginx/sites-available/repfuel.conf /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/other.conf /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+**3. HTTPS mit Certbot** (holt Zertifikate automatisch und richtet den
+HTTP→HTTPS-Redirect ein — für alle konfigurierten `server_name`s in einem
+Rutsch):
+
+```bash
+sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d fit.example.com -d other.example.com
+```
+
+`.env`: `ORIGIN=https://fit.example.com` (muss exakt dem `server_name`
+inkl. `https://` entsprechen — WebAuthn prüft das strikt).
+
+**Alternative: nginx als Container statt auf dem Host.** Läuft alles
+ohnehin in Docker, spart ein gemeinsames externes Netzwerk die
+Port-Bindungen ganz: `docker network create edge`, repfuels
+`docker-compose.yml` bekommt beim `app`-Service `networks: [edge]` plus
+`networks: { edge: { external: true } }` auf Compose-Ebene (Port-Mapping
+kann dann entfallen), der nginx-Container hängt ebenfalls in `edge` und
+zeigt per `proxy_pass http://app:8080;` auf den Container-Namen statt auf
+`127.0.0.1:<port>`. Für automatisches Multi-Domain-TLS ohne eigene
+nginx-Configs eignet sich dafür
+[`nginx-proxy` + `acme-companion`](https://github.com/nginx-proxy/nginx-proxy):
+jeder Service bekommt nur `VIRTUAL_HOST=fit.example.com` und
+`LETSENCRYPT_HOST=fit.example.com` als Environment-Variablen, den Rest
+(vhost-Config + Zertifikat) erledigt der Companion automatisch — praktisch,
+wenn regelmäßig neue Services dazukommen.
+
 ## Erstlauf & Nutzerverwaltung
 
 1. `https://fit.example.com` öffnen → registrieren (Passkey empfohlen,
