@@ -27,8 +27,10 @@ export interface ChatServiceDeps {
   profileService: ProfileService;
   weightService: WeightService;
   memoryService: MemoryService;
-  /** Offene Vorschläge für den System-Prompt (Überarbeitung statt Duplikat). */
-  listPendingProposals: (userId: string) => Promise<ProposalDto[]>;
+  /** Offene Vorschläge DIESES Gesprächs für den System-Prompt (Überarbeitung statt Duplikat). */
+  listPendingProposals: (userId: string, sessionId: string) => Promise<ProposalDto[]>;
+  /** Beim Löschen eines Gesprächs dessen offene Vorschläge verwerfen. */
+  rejectPendingProposalsForSession: (userId: string, sessionId: string) => Promise<number>;
   /** Baut die Tool-Dependencies für einen Chat-Turn (userId/session-gebunden). */
   toolDeps: (input: {
     userId: string;
@@ -97,11 +99,15 @@ export function createChatService(deps: ChatServiceDeps) {
     return deps.adapter;
   }
 
-  async function buildContext(user: SessionUser, tzOffsetMinutes: number): Promise<UserContextSnapshot> {
+  async function buildContext(
+    user: SessionUser,
+    tzOffsetMinutes: number,
+    sessionId: string,
+  ): Promise<UserContextSnapshot> {
     const profile = await deps.profileService.get(user.id);
     const weights = await deps.weightService.list(user.id, { limit: 1 });
     const memories = await deps.memoryService.list(user.id);
-    const pendingProposals = await deps.listPendingProposals(user.id);
+    const pendingProposals = await deps.listPendingProposals(user.id, sessionId);
     const tzSign = tzOffsetMinutes <= 0 ? '+' : '-';
     const abs = Math.abs(tzOffsetMinutes);
     const localNow = new Date(Date.now() - tzOffsetMinutes * 60_000);
@@ -201,6 +207,7 @@ export function createChatService(deps: ChatServiceDeps) {
     async deleteSession(userId: string, sessionId: string): Promise<void> {
       const row = await deps.chatRepo.deleteSession(userId, sessionId);
       if (!row) throw new AppError('not_found', 'Chat session not found');
+      await deps.rejectPendingProposalsForSession(userId, sessionId);
     },
 
     async listMessages(userId: string, sessionId: string): Promise<ChatMessageDto[]> {
@@ -233,7 +240,7 @@ export function createChatService(deps: ChatServiceDeps) {
       }
 
       const history = (await deps.chatRepo.listMessages(session.id)).map(toMessageDto);
-      const userContext = await buildContext(input.user, input.tzOffsetMinutes);
+      const userContext = await buildContext(input.user, input.tzOffsetMinutes, session.id);
       const tools = buildToolSet({
         ...deps.toolDeps({
           userId: input.user.id,

@@ -55,7 +55,8 @@
   async function loadProposals(): Promise<void> {
     proposalsError = null;
     try {
-      const { proposals: pending } = await api.ai.listProposals();
+      // Nur die Vorschläge DIESES Gesprächs — andere Sessions haben ihre eigenen.
+      const { proposals: pending } = await api.ai.listProposals(sessionId);
       // Server ist Quelle für Offenes — auch überarbeitete Inhalte
       // (revises_proposal_id) landen so in der Karte. Lokal aufgelöste
       // Karten bleiben für die laufende Sitzung im Sheet sichtbar.

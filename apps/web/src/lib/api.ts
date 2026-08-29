@@ -333,7 +333,8 @@ export const api = {
     removeMemory: (id: string): Promise<void> => del(`/ai/memories/${id}`),
     clearMemories: (): Promise<{ deleted: number }> =>
       request('/ai/memories', { method: 'DELETE' }),
-    listProposals: (): Promise<{ proposals: ProposalDto[] }> => get('/ai/proposals'),
+    listProposals: (sessionId?: string): Promise<{ proposals: ProposalDto[] }> =>
+      get(`/ai/proposals${query({ session: sessionId })}`),
     confirmProposal: (id: string): Promise<{ proposal: ProposalDto }> =>
       post(`/ai/proposals/${id}/confirm`),
     rejectProposal: (id: string): Promise<{ proposal: ProposalDto }> =>

@@ -77,8 +77,13 @@ export function fakeProposalRepo(): ProposalRepo & { rows: AiProposalRow[] } {
     async findById(userId, id) {
       return rows.find((r) => r.id === id && r.userId === userId) ?? null;
     },
-    async listByStatus(userId, status) {
-      return rows.filter((r) => r.userId === userId && r.status === status);
+    async listByStatus(userId, status, sessionId) {
+      return rows.filter(
+        (r) =>
+          r.userId === userId &&
+          r.status === status &&
+          (sessionId === undefined || r.sessionId === sessionId),
+      );
     },
     async setStatus(id, status) {
       const row = rows.find((r) => r.id === id);

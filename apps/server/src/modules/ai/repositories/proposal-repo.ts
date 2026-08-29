@@ -12,7 +12,8 @@ export interface ProposalRepo {
     payload: unknown;
   }): Promise<AiProposalRow>;
   findById(userId: string, id: string): Promise<AiProposalRow | null>;
-  listByStatus(userId: string, status: ProposalStatus): Promise<AiProposalRow[]>;
+  /** Mit sessionId: nur Vorschläge aus diesem Gespräch. */
+  listByStatus(userId: string, status: ProposalStatus, sessionId?: string): Promise<AiProposalRow[]>;
   setStatus(id: string, status: ProposalStatus): Promise<void>;
   /** Inhalt eines Vorschlags ersetzen (Überarbeitung im Gespräch). */
   updateContent(id: string, input: { summary: string; payload: unknown }): Promise<void>;
@@ -33,11 +34,17 @@ export function createProposalRepo(db: Database): ProposalRepo {
         .limit(1);
       return rows[0] ?? null;
     },
-    async listByStatus(userId, status) {
+    async listByStatus(userId, status, sessionId) {
       return db
         .select()
         .from(aiProposals)
-        .where(and(eq(aiProposals.userId, userId), eq(aiProposals.status, status)))
+        .where(
+          and(
+            eq(aiProposals.userId, userId),
+            eq(aiProposals.status, status),
+            ...(sessionId ? [eq(aiProposals.sessionId, sessionId)] : []),
+          ),
+        )
         .orderBy(desc(aiProposals.createdAt));
     },
     async setStatus(id, status) {

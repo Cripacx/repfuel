@@ -95,7 +95,9 @@ export async function registerAiModule(
     profileService: opts.profileService,
     weightService: opts.weightService,
     memoryService,
-    listPendingProposals: (userId) => proposalService.listPending(userId),
+    listPendingProposals: (userId, sessionId) => proposalService.listPending(userId, sessionId),
+    rejectPendingProposalsForSession: (userId, sessionId) =>
+      proposalService.rejectAllForSession(userId, sessionId),
     toolDeps: ({ userId, sessionId, tzOffsetMinutes }) => ({
       userId,
       sessionId,

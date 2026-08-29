@@ -25,6 +25,7 @@ function setup(adapter: ReturnType<typeof scriptedAdapter> | null) {
     weightService: { list: vi.fn(async () => []) },
     memoryService: { list: vi.fn(async () => []) },
     listPendingProposals: vi.fn(async () => []),
+    rejectPendingProposalsForSession: vi.fn(async () => 0),
     toolDeps: () => ({}),
     createProposal: vi.fn(),
   } as unknown as ChatServiceDeps;

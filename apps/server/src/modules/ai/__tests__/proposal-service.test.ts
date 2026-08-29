@@ -223,6 +223,32 @@ describe('proposal flow (Bestätigungs-Guard)', () => {
     expect(await service.listPending(USER)).toHaveLength(0);
   });
 
+  it('listPending filtert auf das Gespräch; Löschen des Gesprächs verwirft Offenes', async () => {
+    const { service } = setup();
+    const SESSION_A = '00000000-0000-4000-8000-00000000cccc';
+    const SESSION_B = '00000000-0000-4000-8000-00000000dddd';
+    const make = (sessionId: string, summary: string) =>
+      service.create({
+        userId: USER,
+        sessionId,
+        kind: 'update_profile',
+        summary,
+        payload: { changes: { kcalTarget: 2000 } },
+      });
+    await make(SESSION_A, 'aus Gespräch A');
+    await make(SESSION_B, 'aus Gespräch B');
+
+    expect(await service.listPending(USER)).toHaveLength(2);
+    const forA = await service.listPending(USER, SESSION_A);
+    expect(forA).toHaveLength(1);
+    expect(forA[0]?.summary).toBe('aus Gespräch A');
+
+    expect(await service.rejectAllForSession(USER, SESSION_A)).toBe(1);
+    expect(await service.listPending(USER, SESSION_A)).toHaveLength(0);
+    expect(await service.listPending(USER, SESSION_B)).toHaveLength(1);
+    expect(await service.rejectAllForSession(USER, SESSION_A)).toBe(0);
+  });
+
   it('scopes proposals to the owning user', async () => {
     const { service } = setup();
     const p = await service.create({

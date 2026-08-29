@@ -107,8 +107,23 @@ export function createProposalService(deps: ProposalServiceDeps) {
       return { ...toProposalDto(row), summary: input.summary, payload: input.payload };
     },
 
-    async listPending(userId: string): Promise<ProposalDto[]> {
-      return (await deps.proposalRepo.listByStatus(userId, 'pending')).map(toProposalDto);
+    /** Mit sessionId: nur die offenen Vorschläge dieses Gesprächs. */
+    async listPending(userId: string, sessionId?: string): Promise<ProposalDto[]> {
+      return (await deps.proposalRepo.listByStatus(userId, 'pending', sessionId)).map(
+        toProposalDto,
+      );
+    },
+
+    /**
+     * Beim Löschen eines Gesprächs dessen offene Vorschläge verwerfen — sonst
+     * blieben sie unsichtbar (die Anzeige ist session-gebunden), aber bestätigbar.
+     */
+    async rejectAllForSession(userId: string, sessionId: string): Promise<number> {
+      const pending = await deps.proposalRepo.listByStatus(userId, 'pending', sessionId);
+      for (const row of pending) {
+        await deps.proposalRepo.setStatus(row.id, 'rejected');
+      }
+      return pending.length;
     },
 
     async confirm(userId: string, id: string): Promise<ProposalDto> {

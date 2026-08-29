@@ -14,6 +14,7 @@ import type { MemoryService } from './services/memory-service.js';
 import type { ProposalService } from './services/proposal-service.js';
 
 const memoryIdParams = z.object({ id: uuidSchema });
+const proposalListQuery = z.object({ session: uuidSchema.optional() });
 
 export interface AiRoutesDeps {
   chatService: ChatService;
@@ -111,9 +112,11 @@ export function aiRoutes(deps: AiRoutesDeps) {
         deleted: await memoryService.removeAll(uid(req)),
       }));
 
-      authed.get('/ai/proposals', async (req) => ({
-        proposals: await proposalService.listPending(uid(req)),
-      }));
+      // ?session=<id>: nur die Vorschläge dieses Gesprächs (Chat-Ansicht).
+      authed.get('/ai/proposals', async (req) => {
+        const { session } = proposalListQuery.parse(req.query);
+        return { proposals: await proposalService.listPending(uid(req), session) };
+      });
 
       authed.post('/ai/proposals/:id/confirm', async (req) => {
         const { id } = proposalIdParamsSchema.parse(req.params);
