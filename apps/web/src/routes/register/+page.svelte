@@ -8,11 +8,13 @@
   import { api } from '$lib/api.js';
   import { setUser } from '$lib/auth.svelte.js';
   import { passwordsMatch, validatePasswordPolicy } from '$lib/auth-validation.js';
+  import InstallAppModal from '$lib/components/InstallAppModal.svelte';
   import { describeError } from '$lib/errors.js';
   import { m } from '$lib/i18n/index.js';
 
   type Method = 'passkey' | 'password';
   let method = $state<Method>('passkey');
+  let showInstallModal = $state(false);
 
   // Gemeinsam für beide Methoden: derselbe Benutzername/Einladungs-Token, egal ob das Konto
   // per Passkey oder per Passwort angelegt wird — Invite-Logik und Bootstrap-Hinweis gelten
@@ -284,4 +286,12 @@
     {m().auth.haveAccountAlready}
     <a href={resolve('/login')}>{m().auth.loginLink}</a>
   </p>
+
+  <button type="button" class="link-button" onclick={() => (showInstallModal = true)}>
+    {m().auth.installApp.linkLabel}
+  </button>
 </section>
+
+{#if showInstallModal}
+  <InstallAppModal onClose={() => (showInstallModal = false)} />
+{/if}

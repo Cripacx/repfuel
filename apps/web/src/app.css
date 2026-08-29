@@ -615,6 +615,11 @@ button.danger:disabled {
   color: var(--text-muted);
 }
 
+.auth-card > .link-button {
+  display: block;
+  margin-top: var(--space-2);
+}
+
 /* Segmented Control: gemeinsame Basis für Methoden-Umschalter, Tabs, Zeitraum-Filter.
    .method-switch bleibt als Klassenname erhalten (Tests). */
 .method-switch {

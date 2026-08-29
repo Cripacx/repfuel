@@ -90,6 +90,21 @@ const de = {
     hidePassword: 'Passwort verbergen',
     loginWithPasswordButton: 'Mit Passwort anmelden',
     registerWithPasswordButton: 'Mit Passwort registrieren',
+    installApp: {
+      linkLabel: 'Zum Home-Bildschirm hinzufügen',
+      title: 'repfuel zum Home-Bildschirm hinzufügen',
+      intro:
+        'Installiert als App startet repfuel im Vollbild, ohne Adressleiste, direkt vom Home-Bildschirm.',
+      iosTitle: 'iPhone/iPad (Safari)',
+      iosStep1: '1. Öffne repfuel in Safari.',
+      iosStep2: '2. Tippe unten in der Leiste auf das Teilen-Symbol.',
+      iosStep3: '3. Scrolle im Menü nach unten und tippe auf „Zum Home-Bildschirm".',
+      iosStep4: '4. Tippe oben rechts auf „Hinzufügen".',
+      androidTitle: 'Android (Chrome)',
+      androidStep1: '1. Öffne repfuel in Chrome.',
+      androidStep2: '2. Tippe oben rechts auf das Drei-Punkte-Menü.',
+      androidStep3: '3. Tippe auf „App installieren" und bestätige mit „Installieren".',
+    },
   },
   errors: {
     generic: 'Etwas ist schiefgelaufen. Bitte versuche es erneut.',

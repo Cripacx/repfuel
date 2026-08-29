@@ -4,11 +4,13 @@
   import { resolve } from '$app/paths';
   import { api } from '$lib/api.js';
   import { setUser } from '$lib/auth.svelte.js';
+  import InstallAppModal from '$lib/components/InstallAppModal.svelte';
   import { describeError } from '$lib/errors.js';
   import { m } from '$lib/i18n/index.js';
 
   type Method = 'passkey' | 'password';
   let method = $state<Method>('passkey');
+  let showInstallModal = $state(false);
 
   // Gemeinsam für beide Methoden: derselbe Benutzername, egal ob per Passkey (optional) oder
   // per Passwort (Pflichtfeld) angemeldet wird.
@@ -170,4 +172,12 @@
     {m().auth.noAccountYet}
     <a href={resolve('/register')}>{m().auth.registerLink}</a>
   </p>
+
+  <button type="button" class="link-button" onclick={() => (showInstallModal = true)}>
+    {m().auth.installApp.linkLabel}
+  </button>
 </section>
+
+{#if showInstallModal}
+  <InstallAppModal onClose={() => (showInstallModal = false)} />
+{/if}
