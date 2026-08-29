@@ -45,6 +45,7 @@ import type {
   SetDto,
   SetPasswordRequest,
   StrengthStatsResponse,
+  SwapProposalExerciseRequest,
   SyncBatchRequest,
   SyncBatchResponse,
   UpdateMeRequest,
@@ -231,6 +232,8 @@ export const api = {
           offset: params.offset,
         })}`,
       ),
+    byIds: (ids: string[]): Promise<{ exercises: ExerciseDto[] }> =>
+      get(`/exercises${query({ ids: ids.join(',') })}`),
     facets: (): Promise<{ facets: ExerciseFacetsDto }> => get('/exercises/facets'),
     create: (body: CreateExerciseRequest): Promise<{ exercise: ExerciseDto }> =>
       post('/exercises', body),
@@ -337,6 +340,10 @@ export const api = {
       get(`/ai/proposals${query({ session: sessionId })}`),
     confirmProposal: (id: string): Promise<{ proposal: ProposalDto }> =>
       post(`/ai/proposals/${id}/confirm`),
+    swapProposalExercise: (
+      id: string,
+      body: SwapProposalExerciseRequest,
+    ): Promise<{ proposal: ProposalDto }> => post(`/ai/proposals/${id}/swap-exercise`, body),
     rejectProposal: (id: string): Promise<{ proposal: ProposalDto }> =>
       post(`/ai/proposals/${id}/reject`),
   },

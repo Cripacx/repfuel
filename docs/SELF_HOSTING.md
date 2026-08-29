@@ -19,6 +19,31 @@ Services: `app` (Fastify + SPA, Port 8080), `db` (Postgres 17), `redis`
 `ai-cli` (Claude-Code-Sidecar, siehe [AI_CLI.md](AI_CLI.md)).
 Postgres und Redis sind bewusst **nicht** auf dem Host exponiert.
 
+## Fertige Images (CI/CD) statt lokalem Build
+
+Bei jedem Push auf `main` baut GitHub Actions
+([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)) die Images
+`ghcr.io/cripacx/repfuel` und `ghcr.io/cripacx/repfuel-ai-cli` und pusht sie
+nach GHCR — genau die Namen, die `docker-compose.yml` referenziert. Auf einem
+VServer muss deshalb nichts kompiliert werden:
+
+```bash
+docker compose pull          # holt die aktuellen Images von ghcr.io
+docker compose up -d         # startet/aktualisiert die Container
+```
+
+Ein Update ist damit `git pull` (für Compose-/Doku-Änderungen) plus die beiden
+Zeilen oben. Wer stattdessen lokal bauen will (z.B. eigene Änderungen):
+`docker compose up -d --build`.
+
+Hinweise:
+
+- Die GHCR-Packages einmalig auf **public** stellen (GitHub → Repo → Packages
+  → Package settings → Change visibility), sonst braucht der Server ein
+  `docker login ghcr.io` mit einem Personal Access Token (`read:packages`).
+- Neben `latest` taggt die CI jeden Stand auch mit `sha-<commit>` und
+  Version-Tags (`v1.2.3` → `1.2.3`) — zum Pinnen in der `.env` bzw. Compose.
+
 Wichtige `.env`-Werte:
 
 | Variable | Bedeutung |

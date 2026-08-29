@@ -24,6 +24,16 @@ export const createExerciseRequestSchema = z.object({
 });
 export type CreateExerciseRequest = z.infer<typeof createExerciseRequestSchema>;
 
+/** Gezieltes Nachladen per ID-Liste (z.B. Vorschlagskarte im Chat). */
+export const exerciseIdsQuerySchema = z.object({
+  ids: z
+    .string()
+    .min(1)
+    .max(4000)
+    .transform((value) => value.split(','))
+    .pipe(z.array(uuidSchema).min(1).max(100)),
+});
+
 export const listExercisesQuerySchema = z.object({
   q: z.string().max(200).optional(),
   muscle: z.string().max(50).optional(),

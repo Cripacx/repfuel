@@ -5,6 +5,7 @@ import {
   chatSessionIdParamsSchema,
   postChatMessageRequestSchema,
   proposalIdParamsSchema,
+  swapProposalExerciseRequestSchema,
   uuidSchema,
 } from '@repfuel/shared';
 import { z } from 'zod';
@@ -121,6 +122,20 @@ export function aiRoutes(deps: AiRoutesDeps) {
       authed.post('/ai/proposals/:id/confirm', async (req) => {
         const { id } = proposalIdParamsSchema.parse(req.params);
         return { proposal: await proposalService.confirm(uid(req), id) };
+      });
+
+      // Nutzer tauscht eine Übung im offenen Routinen-Vorschlag.
+      authed.post('/ai/proposals/:id/swap-exercise', async (req) => {
+        const { id } = proposalIdParamsSchema.parse(req.params);
+        const body = swapProposalExerciseRequestSchema.parse(req.body);
+        return {
+          proposal: await proposalService.swapExercise({
+            userId: uid(req),
+            proposalId: id,
+            fromExerciseId: body.fromExerciseId,
+            toExerciseId: body.toExerciseId,
+          }),
+        };
       });
 
       authed.post('/ai/proposals/:id/reject', async (req) => {

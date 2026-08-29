@@ -18,7 +18,7 @@ describe('extractRoutineItems', () => {
       exerciseNames: { [ID]: 'Kniebeugen' },
     });
     expect(items).toEqual([
-      { name: 'Kniebeugen', targetSets: 3, targetReps: 8, targetWeightKg: 60 },
+      { exerciseId: ID, name: 'Kniebeugen', targetSets: 3, targetReps: 8, targetWeightKg: 60 },
     ]);
   });
 
@@ -27,7 +27,9 @@ describe('extractRoutineItems', () => {
       routineId: ID,
       changes: { items: [{ exerciseId: ID, targetSets: 4, targetReps: 10 }] },
     });
-    expect(items).toEqual([{ name: ID, targetSets: 4, targetReps: 10, targetWeightKg: null }]);
+    expect(items).toEqual([
+      { exerciseId: ID, name: ID, targetSets: 4, targetReps: 10, targetWeightKg: null },
+    ]);
   });
 
   it('liefert für Profil-Payloads und Unsinn eine leere Liste', () => {

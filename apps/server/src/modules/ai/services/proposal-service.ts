@@ -7,7 +7,7 @@ import {
 } from '@repfuel/shared';
 import { AppError } from '../../../core/errors.js';
 import type { ProfileService } from '../../auth/index.js';
-import type { RoutineService } from '../../workout/index.js';
+import type { ExerciseService, RoutineService } from '../../workout/index.js';
 import type { ProposalRepo } from '../repositories/proposal-repo.js';
 import type { AiProposalRow } from '../schema.js';
 
@@ -46,6 +46,7 @@ export interface ProposalServiceDeps {
   proposalRepo: ProposalRepo;
   routineService: RoutineService;
   profileService: ProfileService;
+  exerciseService: ExerciseService;
 }
 
 export type ProposalService = ReturnType<typeof createProposalService>;
@@ -112,6 +113,68 @@ export function createProposalService(deps: ProposalServiceDeps) {
       return (await deps.proposalRepo.listByStatus(userId, 'pending', sessionId)).map(
         toProposalDto,
       );
+    },
+
+    /**
+     * Nutzer-Aktion in der Vorschlagskarte: eine Übung im offenen
+     * Routinen-Vorschlag gegen eine ähnliche tauschen. Sätze/Wiederholungen
+     * des Eintrags bleiben erhalten, nur die exercise_id (und der Anzeigename
+     * in exerciseNames) wechselt. Angewendet wird weiterhin erst bei Bestätigung.
+     */
+    async swapExercise(input: {
+      userId: string;
+      proposalId: string;
+      fromExerciseId: string;
+      toExerciseId: string;
+    }): Promise<ProposalDto> {
+      const row = await requirePending(input.userId, input.proposalId);
+      if (row.kind === 'update_profile') {
+        throw new AppError('bad_request', 'Proposal has no exercises');
+      }
+      const [replacement] = await deps.exerciseService.byIds(input.userId, [input.toExerciseId]);
+      if (!replacement) throw new AppError('not_found', 'Unknown exercise');
+
+      const swapItems = <T extends { exerciseId: string }>(items: T[]): T[] => {
+        if (!items.some((item) => item.exerciseId === input.fromExerciseId)) {
+          throw new AppError('not_found', 'Exercise not part of this proposal');
+        }
+        return items.map((item) =>
+          item.exerciseId === input.fromExerciseId
+            ? { ...item, exerciseId: input.toExerciseId }
+            : item,
+        );
+      };
+      const rebuildNames = (
+        names: Record<string, string> | undefined,
+        items: { exerciseId: string }[],
+      ): Record<string, string> => {
+        const used = new Set(items.map((item) => item.exerciseId));
+        const next = Object.fromEntries(
+          Object.entries(names ?? {}).filter(([id]) => used.has(id)),
+        );
+        next[input.toExerciseId] = replacement.nameDe ?? replacement.name;
+        return next;
+      };
+
+      let newPayload: unknown;
+      if (row.kind === 'create_routine') {
+        const payload = createRoutinePayloadSchema.parse(row.payload);
+        const items = swapItems(payload.routine.items ?? []);
+        newPayload = {
+          routine: { ...payload.routine, items },
+          exerciseNames: rebuildNames(payload.exerciseNames, items),
+        };
+      } else {
+        const payload = routinePayloadSchema.parse(row.payload);
+        const items = swapItems(payload.changes.items ?? []);
+        newPayload = {
+          routineId: payload.routineId,
+          changes: { ...payload.changes, items },
+          exerciseNames: rebuildNames(payload.exerciseNames, items),
+        };
+      }
+      await deps.proposalRepo.updateContent(row.id, { summary: row.summary, payload: newPayload });
+      return { ...toProposalDto(row), payload: newPayload };
     },
 
     /**

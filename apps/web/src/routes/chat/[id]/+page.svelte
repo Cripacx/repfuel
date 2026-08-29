@@ -333,7 +333,12 @@
     <Modal title={m().chat.proposals.pendingTitle} onClose={() => (proposalsOpen = false)}>
       <div class="proposal-sheet">
         {#each proposals as proposal (proposal.id)}
-          <ProposalCard {proposal} offline={!isOnline()} onResolved={onProposalResolved} />
+          <ProposalCard
+            {proposal}
+            offline={!isOnline()}
+            onResolved={onProposalResolved}
+            onUpdated={onProposalResolved}
+          />
         {/each}
       </div>
     </Modal>

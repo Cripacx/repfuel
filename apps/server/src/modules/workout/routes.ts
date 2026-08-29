@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import {
   createExerciseRequestSchema,
   createRoutineRequestSchema,
+  exerciseIdsQuerySchema,
   lastSetsQuerySchema,
   listActivitiesQuerySchema,
   listExercisesQuerySchema,
@@ -43,6 +44,11 @@ export function workoutRoutes(deps: WorkoutRoutesDeps) {
     });
 
     app.get('/exercises', async (req) => {
+      // ?ids=a,b,c: gezieltes Nachladen (Vorschlagskarte) statt Suche.
+      if (typeof (req.query as Record<string, unknown>).ids === 'string') {
+        const { ids } = exerciseIdsQuerySchema.parse(req.query);
+        return { exercises: await exerciseService.byIds(uid(req), ids) };
+      }
       const query = listExercisesQuerySchema.parse(req.query);
       return { exercises: await exerciseService.list(uid(req), query) };
     });

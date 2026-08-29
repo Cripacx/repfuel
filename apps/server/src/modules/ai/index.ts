@@ -86,6 +86,7 @@ export async function registerAiModule(
     proposalRepo,
     routineService: opts.routineService,
     profileService: opts.profileService,
+    exerciseService: opts.exerciseService,
   });
 
   const chatService = createChatService({

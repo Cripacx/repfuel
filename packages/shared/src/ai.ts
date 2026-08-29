@@ -177,6 +177,13 @@ export type PostChatMessageRequest = z.infer<typeof postChatMessageRequestSchema
 export const chatSessionIdParamsSchema = z.object({ id: z.string().uuid() });
 export const proposalIdParamsSchema = z.object({ id: z.string().uuid() });
 
+/** Nutzer tauscht in einem offenen Routinen-Vorschlag eine Übung gegen eine ähnliche. */
+export const swapProposalExerciseRequestSchema = z.object({
+  fromExerciseId: z.string().uuid(),
+  toExerciseId: z.string().uuid(),
+});
+export type SwapProposalExerciseRequest = z.infer<typeof swapProposalExerciseRequestSchema>;
+
 export interface AiStatusResponse {
   /** false ⇒ Chat-Tab und alle KI-UI-Elemente ausblenden. */
   enabled: boolean;

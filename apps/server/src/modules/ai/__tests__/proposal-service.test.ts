@@ -9,12 +9,20 @@ function setup() {
   const proposalRepo = fakeProposalRepo();
   const routineService = { update: vi.fn(async () => ({})), create: vi.fn(async () => ({})) };
   const profileService = { update: vi.fn(async () => ({})) };
+  const exerciseService = {
+    byIds: vi.fn(async (_userId: string, ids: string[]) =>
+      ids
+        .filter((id) => !id.endsWith('9999'))
+        .map((id) => ({ id, name: 'Replacement Exercise', nameDe: null })),
+    ),
+  };
   const service = createProposalService({
     proposalRepo,
     routineService,
     profileService,
+    exerciseService,
   } as unknown as ProposalServiceDeps);
-  return { proposalRepo, routineService, profileService, service };
+  return { proposalRepo, routineService, profileService, exerciseService, service };
 }
 
 describe('proposal flow (Bestätigungs-Guard)', () => {
@@ -221,6 +229,97 @@ describe('proposal flow (Bestätigungs-Guard)', () => {
     expect(rejected.status).toBe('rejected');
     expect(profileService.update).toHaveBeenCalledTimes(1);
     expect(await service.listPending(USER)).toHaveLength(0);
+  });
+
+  it('swapExercise tauscht die Übung, behält Sätze/Reps und bleibt pending', async () => {
+    const { service, routineService } = setup();
+    const FROM = '00000000-0000-4000-8000-00000000bbbb';
+    const TO = '00000000-0000-4000-8000-00000000eeee';
+    const p = await service.create({
+      userId: USER,
+      sessionId: null,
+      kind: 'create_routine',
+      summary: 'Push-Tag',
+      payload: {
+        routine: {
+          name: 'Push',
+          items: [{ exerciseId: FROM, position: 0, targetSets: 4, targetReps: 8 }],
+        },
+        exerciseNames: { [FROM]: 'Bankdrücken' },
+      },
+    });
+
+    const swapped = await service.swapExercise({
+      userId: USER,
+      proposalId: p.id,
+      fromExerciseId: FROM,
+      toExerciseId: TO,
+    });
+    expect(swapped.status).toBe('pending');
+    const payload = swapped.payload as {
+      routine: { items: { exerciseId: string; targetSets: number; targetReps: number }[] };
+      exerciseNames: Record<string, string>;
+    };
+    expect(payload.routine.items).toEqual([
+      { exerciseId: TO, position: 0, targetSets: 4, targetReps: 8 },
+    ]);
+    expect(payload.exerciseNames).toEqual({ [TO]: 'Replacement Exercise' });
+
+    await service.confirm(USER, p.id);
+    expect(routineService.create).toHaveBeenCalledWith(
+      USER,
+      expect.objectContaining({
+        items: [expect.objectContaining({ exerciseId: TO })],
+      }),
+    );
+  });
+
+  it('swapExercise lehnt Profil-Vorschläge, fremde Übungen und unbekannte Ersatz-IDs ab', async () => {
+    const { service } = setup();
+    const FROM = '00000000-0000-4000-8000-00000000bbbb';
+    const routineProposal = await service.create({
+      userId: USER,
+      sessionId: null,
+      kind: 'create_routine',
+      summary: 'Push-Tag',
+      payload: {
+        routine: { name: 'Push', items: [{ exerciseId: FROM, position: 0, targetSets: 3, targetReps: 10 }] },
+      },
+    });
+    // Ersatz-Übung existiert nicht (Fake filtert IDs mit Suffix 9999)
+    await expect(
+      service.swapExercise({
+        userId: USER,
+        proposalId: routineProposal.id,
+        fromExerciseId: FROM,
+        toExerciseId: '00000000-0000-4000-8000-000000009999',
+      }),
+    ).rejects.toMatchObject({ code: 'not_found' });
+    // from-Übung ist nicht Teil des Vorschlags
+    await expect(
+      service.swapExercise({
+        userId: USER,
+        proposalId: routineProposal.id,
+        fromExerciseId: '00000000-0000-4000-8000-00000000eeee',
+        toExerciseId: '00000000-0000-4000-8000-00000000ffff',
+      }),
+    ).rejects.toMatchObject({ code: 'not_found' });
+
+    const profileProposal = await service.create({
+      userId: USER,
+      sessionId: null,
+      kind: 'update_profile',
+      summary: 'kcal',
+      payload: { changes: { kcalTarget: 2000 } },
+    });
+    await expect(
+      service.swapExercise({
+        userId: USER,
+        proposalId: profileProposal.id,
+        fromExerciseId: FROM,
+        toExerciseId: '00000000-0000-4000-8000-00000000ffff',
+      }),
+    ).rejects.toMatchObject({ code: 'bad_request' });
   });
 
   it('listPending filtert auf das Gespräch; Löschen des Gesprächs verwirft Offenes', async () => {

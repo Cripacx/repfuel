@@ -127,6 +127,7 @@ export function formatProposalPayload(payload: unknown): ProposalField[] {
 // ---------- Routinen-Vorschläge: Übungsliste statt UUID-Wand ----------
 
 export interface RoutineItemPreview {
+  exerciseId: string;
   /** Anzeigename aus payload.exerciseNames; Fallback: die ID. */
   name: string;
   targetSets: number | null;
@@ -156,6 +157,7 @@ export function extractRoutineItems(payload: unknown): RoutineItemPreview[] {
     const id = typeof item.exerciseId === 'string' ? item.exerciseId : '';
     const mapped = names[id];
     return {
+      exerciseId: id,
       name: typeof mapped === 'string' && mapped.length > 0 ? mapped : id,
       targetSets: numberOrNull(item.targetSets),
       targetReps: numberOrNull(item.targetReps),
