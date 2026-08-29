@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from 'svelte';
   import type { ExerciseDto, ProposalDto, ProposalStatus } from '@repfuel/shared';
   import { EXERCISE_MEDIA_ATTRIBUTION_URL } from '@repfuel/shared';
   import { api } from '$lib/api.js';
@@ -147,8 +148,12 @@
         toExerciseId: replacement.id,
       });
       exerciseMap = { ...exerciseMap, [replacement.id]: replacement };
-      onUpdated?.(updated);
+      // Erst das Sheet schließen und den Outro anlaufen lassen, DANN den
+      // Parent aktualisieren: beides im selben Flush lässt die
+      // Modal-Ausgangs-Transition hängen (verwaistes Sheet im DOM).
       closeSheet();
+      await tick();
+      onUpdated?.(updated);
     } catch (err) {
       swapError = `${m().chat.proposals.swapError} ${describeError(err)}`;
     } finally {
