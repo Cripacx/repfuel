@@ -21,28 +21,40 @@ Postgres und Redis sind bewusst **nicht** auf dem Host exponiert.
 
 ## Fertige Images (CI/CD) statt lokalem Build
 
-Bei jedem Push auf `main` baut GitHub Actions
-([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)) die Images
-`ghcr.io/cripacx/repfuel` und `ghcr.io/cripacx/repfuel-ai-cli` und pusht sie
-nach GHCR — genau die Namen, die `docker-compose.yml` referenziert. Auf einem
-VServer muss deshalb nichts kompiliert werden:
+Zwei getrennte Workflows:
+
+- **CI** ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)): läuft
+  bei jedem Push/PR (Tests, Typecheck, Lint) — baut **keine** Images.
+- **Release** ([`.github/workflows/release.yml`](../.github/workflows/release.yml)):
+  **manuell** ausgelöst (GitHub → Actions → „Release" → „Run workflow",
+  Versions-Sprung `patch`/`minor`/`major` wählen). Läuft dieselben Checks,
+  zieht dann den nächsten SemVer-Tag (z.B. `v1.3.0`) auf Basis des letzten
+  Git-Tags, baut `ghcr.io/cripacx/repfuel` und `ghcr.io/cripacx/repfuel-ai-cli`
+  — genau die Namen, die `docker-compose.yml` referenziert —, taggt sie mit
+  `latest` und der neuen Version, und veröffentlicht ein GitHub-Release mit
+  automatisch generierten Release-Notes (aus den Commits/PRs seit dem letzten
+  Tag).
+
+Auf dem VServer muss dadurch nichts kompiliert werden:
 
 ```bash
-docker compose pull          # holt die aktuellen Images von ghcr.io
+docker compose pull          # holt das zuletzt released Image von ghcr.io
 docker compose up -d         # startet/aktualisiert die Container
 ```
 
-Ein Update ist damit `git pull` (für Compose-/Doku-Änderungen) plus die beiden
-Zeilen oben. Wer stattdessen lokal bauen will (z.B. eigene Änderungen):
-`docker compose up -d --build`.
+Ein Update ist damit: einen Release auslösen, dann auf dem Server `git pull`
+(für Compose-/Doku-Änderungen) plus die beiden Zeilen oben. Wer stattdessen
+lokal bauen will (z.B. eigene Änderungen ohne Release): `docker compose up -d
+--build`.
 
 Hinweise:
 
 - Die GHCR-Packages einmalig auf **public** stellen (GitHub → Repo → Packages
   → Package settings → Change visibility), sonst braucht der Server ein
   `docker login ghcr.io` mit einem Personal Access Token (`read:packages`).
-- Neben `latest` taggt die CI jeden Stand auch mit `sha-<commit>` und
-  Version-Tags (`v1.2.3` → `1.2.3`) — zum Pinnen in der `.env` bzw. Compose.
+- Auf eine konkrete Version pinnen statt `latest` zu folgen: in `docker-compose.yml`
+  bzw. per `.env`-Override den Image-Tag auf die gewünschte SemVer-Version setzen
+  (z.B. `1.3.0` — ohne führendes `v`, das steht nur am Git-Tag).
 
 Wichtige `.env`-Werte:
 

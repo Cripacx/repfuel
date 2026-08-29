@@ -64,9 +64,11 @@ Dann http://localhost:8080 öffnen und den ersten Nutzer registrieren
 (wird automatisch Admin). Migrationen und der Übungs-Seed laufen beim
 Start automatisch.
 
-Die Images kommen fertig gebaut von GHCR (`ghcr.io/cripacx/repfuel`,
-per GitHub Actions bei jedem Push auf `main` aktualisiert) — auf dem Server
-wird nichts kompiliert. Update: `docker compose pull && docker compose up -d`.
+Die Images kommen fertig gebaut von GHCR (`ghcr.io/cripacx/repfuel`) — auf
+dem Server wird nichts kompiliert. Ein neues Image entsteht per manuellem
+Release-Workflow (SemVer-Tag + GitHub-Release, siehe
+[docs/SELF_HOSTING.md](docs/SELF_HOSTING.md#fertige-images-cicd-statt-lokalem-build)),
+nicht bei jedem Push. Update: `docker compose pull && docker compose up -d`.
 Lokal bauen geht weiterhin mit `docker compose up -d --build`.
 
 > **Wichtig:** Für den Betrieb unter eigener Domain `ORIGIN` in der `.env`

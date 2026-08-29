@@ -1,0 +1,25 @@
+# Wiederverwendbarer Quality-Gate-Job (Tests, Typecheck, Lint) — von ci.yml
+# (jeder Push/PR) UND release.yml (vor jedem Release) aufgerufen, damit die
+# Prüfung an genau einer Stelle definiert ist.
+name: Checks
+
+on:
+  workflow_call:
+
+jobs:
+  checks:
+    name: Tests, Typecheck, Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Version kommt aus dem "packageManager"-Feld der package.json.
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @repfuel/shared build
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test

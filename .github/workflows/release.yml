@@ -1,0 +1,123 @@
+# Manueller Release: im Actions-Tab "Release" auswählen, Bump-Typ wählen,
+# "Run workflow" — dann läuft Checks → Version-Tag (SemVer) setzen und
+# pushen → Docker-Images (repfuel, repfuel-ai-cli) nach GHCR bauen und mit
+# `latest` + der neuen Version taggen → GitHub-Release mit automatisch
+# generierten Release-Notes (aus den Commits/PRs seit dem letzten Tag).
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Versions-Sprung (SemVer)'
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+        required: true
+
+jobs:
+  checks:
+    uses: ./.github/workflows/checks.yml
+
+  version:
+    name: Version-Tag setzen
+    needs: checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.bump.outputs.tag }}
+      version: ${{ steps.bump.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Volle Tag-Historie noetig, um den letzten Release-Tag zu finden.
+          fetch-depth: 0
+      - name: Naechste Version berechnen und taggen
+        id: bump
+        run: |
+          set -euo pipefail
+          latest_tag="$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n1)"
+          latest_tag="${latest_tag:-v0.0.0}"
+          version="${latest_tag#v}"
+          IFS='.' read -r major minor patch <<< "$version"
+          case "${{ inputs.bump }}" in
+            major) major=$((major + 1)); minor=0; patch=0 ;;
+            minor) minor=$((minor + 1)); patch=0 ;;
+            patch) patch=$((patch + 1)) ;;
+          esac
+          new_version="${major}.${minor}.${patch}"
+          new_tag="v${new_version}"
+          echo "Letzter Tag: ${latest_tag} -> neuer Tag: ${new_tag} (${{ inputs.bump }})"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$new_tag" -m "Release $new_tag"
+          git push origin "$new_tag"
+          echo "tag=${new_tag}" >> "$GITHUB_OUTPUT"
+          echo "version=${new_version}" >> "$GITHUB_OUTPUT"
+
+  images:
+    name: 'Image: ${{ matrix.image }}'
+    needs: version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - image: repfuel
+            dockerfile: Dockerfile
+          - image: repfuel-ai-cli
+            dockerfile: apps/ai-cli-sidecar/Dockerfile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          # metadata-action schreibt den Owner automatisch klein (GHCR-Pflicht).
+          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
+          tags: |
+            type=raw,value=latest
+            type=raw,value=${{ needs.version.outputs.version }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+
+  github-release:
+    name: GitHub-Release erstellen
+    needs: [version, images]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Release veroeffentlichen
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          # --notes und --generate-notes schliessen sich bei `gh release create`
+          # gegenseitig aus — Notes also erst generieren lassen, dann den
+          # Image-Hinweis voranstellen und per --notes-file zurueckspielen.
+          gh api "repos/${{ github.repository }}/releases/generate-notes" \
+            -f tag_name="$TAG" --jq .body > generated-notes.md
+          {
+            echo "Images: \`ghcr.io/${{ github.repository_owner }}/repfuel:${TAG#v}\` und \`ghcr.io/${{ github.repository_owner }}/repfuel-ai-cli:${TAG#v}\`"
+            echo
+            cat generated-notes.md
+          } > notes.md
+          gh release create "$TAG" --title "$TAG" --notes-file notes.md
