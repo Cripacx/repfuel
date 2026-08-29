@@ -1,0 +1,78 @@
+# CI/CD: Bei jedem Push/PR laufen Tests, Typecheck und Lint; auf main (und
+# Version-Tags) werden zusätzlich die beiden Docker-Images gebaut und nach
+# GHCR gepusht — genau die Images, die docker-compose.yml referenziert
+# (ghcr.io/<owner>/repfuel und ghcr.io/<owner>/repfuel-ai-cli).
+#
+# Damit `docker compose pull` auf einem Server ohne Login funktioniert, die
+# beiden Packages im GitHub-Repo einmalig auf "public" stellen
+# (Repo → Packages → Package settings → Change visibility).
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  checks:
+    name: Tests, Typecheck, Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Version kommt aus dem "packageManager"-Feld der package.json.
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @repfuel/shared build
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test
+
+  images:
+    name: 'Image: ${{ matrix.image }}'
+    needs: checks
+    # PRs bauen nicht (kein Push-Recht auf GHCR nötig); main, Tags und
+    # manuelle Läufe (workflow_dispatch) bauen und pushen.
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - image: repfuel
+            dockerfile: Dockerfile
+          - image: repfuel-ai-cli
+            dockerfile: apps/ai-cli-sidecar/Dockerfile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          # metadata-action schreibt den Owner automatisch klein (GHCR-Pflicht).
+          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+            type=sha
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}

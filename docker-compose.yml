@@ -1,0 +1,124 @@
+services:
+  # Einmaliger Download der Übungsmedien (~140 MB) in das Volume `media-data`.
+  # Die Medien sind NICHT Teil dieses Repos oder des Images: sie gehören
+  # Gym visual (https://gymvisual.com/) und dürfen von uns nicht
+  # weiterverbreitet werden. Dieser Container holt sie einmalig auf DEINEN
+  # Server; Attribution "© Gym visual" bleibt in der App sichtbar.
+  # Details: apps/server/src/modules/workout/seed/README.md
+  exercise-media:
+    image: alpine/git
+    restart: 'no'
+    volumes:
+      - media-data:/out
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - |
+        if [ -z "$$(ls -A /out/img 2>/dev/null)" ]; then
+          echo "↓ Übungsmedien werden geladen (~140 MB, einmalig)…"
+          rm -rf /tmp/ds
+          git clone --depth 1 https://github.com/hasaneyldrm/exercises-dataset /tmp/ds
+          mkdir -p /out/img /out/gif
+          cp /tmp/ds/images/*.jpg /out/img/
+          cp /tmp/ds/videos/*.gif /out/gif/
+          rm -rf /tmp/ds
+          echo "✓ Übungsmedien bereit ($$(ls /out/img | wc -l) Bilder)."
+        else
+          echo "✓ Übungsmedien bereits vorhanden — Download übersprungen."
+        fi
+
+  app:
+    image: ghcr.io/cripacx/repfuel:latest
+    build: .
+    restart: unless-stopped
+    ports:
+      - '${PORT:-8080}:8080'
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgres://repfuel:repfuel@db:5432/repfuel}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      ORIGIN: ${ORIGIN:-http://localhost:8080}
+      REGISTRATION_MODE: ${REGISTRATION_MODE:-open}
+      SESSION_TTL_DAYS: ${SESSION_TTL_DAYS:-30}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      MEDIA_DIR: /app/media
+      AI_PROVIDER: ${AI_PROVIDER:-none}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-}
+      AI_MODEL_LIGHT: ${AI_MODEL_LIGHT:-}
+      AI_BASE_URL: ${AI_BASE_URL:-}
+    volumes:
+      - media-data:/app/media:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      exercise-media:
+        condition: service_completed_successfully
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: repfuel
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-repfuel}
+      POSTGRES_DB: repfuel
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U repfuel -d repfuel']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes']
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Optional: Claude-Code-CLI-Adapter — aktivieren mit
+  # `docker compose --profile cli-adapter up -d` und AI_PROVIDER=cli in der .env.
+  # Auth: CLAUDE_CODE_OAUTH_TOKEN in .env (empfohlen) ODER Host-Login mounten
+  # (Volume unten einkommentieren) ODER einmalig:
+  #   docker compose exec ai-cli npx @anthropic-ai/claude-code login
+  ai-cli:
+    image: ghcr.io/cripacx/repfuel-ai-cli:latest
+    build:
+      context: .
+      dockerfile: apps/ai-cli-sidecar/Dockerfile
+    profiles: ['cli-adapter']
+    restart: unless-stopped
+    environment:
+      # Runtime-Wahl (codex-local → Codex CLI, sonst Claude Code) + Modell.
+      AI_PROVIDER: ${AI_PROVIDER:-none}
+      AI_MODEL: ${AI_MODEL:-}
+      # Auth: AI_API_KEY genügt (setup-token bzw. OpenAI-Key); die
+      # spezifischen Variablen sind optionale Overrides.
+      AI_API_KEY: ${AI_API_KEY:-}
+      CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
+      CODEX_API_KEY: ${CODEX_API_KEY:-}
+    # Alternativ zu Token/Key: lokalen CLI-Login mounten (Container läuft als User "node").
+    # volumes:
+    #   - ~/.claude:/home/node/.claude
+    #   - ~/.codex:/home/node/.codex
+
+  # Optional: lokales LLM — aktivieren mit `docker compose --profile ollama up -d`
+  # und AI_PROVIDER=ollama, AI_BASE_URL=http://ollama:11434/v1 in der .env.
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ['ollama']
+    restart: unless-stopped
+    volumes:
+      - ollama-data:/root/.ollama
+
+volumes:
+  media-data:
+  db-data:
+  redis-data:
+  ollama-data:

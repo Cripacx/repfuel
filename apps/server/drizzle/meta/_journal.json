@@ -1,0 +1,83 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1787871415336,
+      "tag": "0000_large_kulan_gath",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1787873372172,
+      "tag": "0001_cold_ulik",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787875345391,
+      "tag": "0002_military_madripoor",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787877667025,
+      "tag": "0003_chunky_nick_fury",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1787890654209,
+      "tag": "0004_funny_legion",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1787893128026,
+      "tag": "0005_big_energizer",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1787910186184,
+      "tag": "0006_kind_terrax",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1787913415828,
+      "tag": "0007_thankful_famine",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1787921749966,
+      "tag": "0008_ambitious_gideon",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1787944539283,
+      "tag": "0009_natural_saracen",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1787945578490,
+      "tag": "0010_polite_natasha_romanoff",
+      "breakpoints": true
+    }
+  ]
+}

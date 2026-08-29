@@ -1,6 +1,16 @@
-﻿node_modules/
+node_modules/
 dist/
 build/
+.svelte-kit/
+*.log
 .env
-*.local
-data/
+.env.*
+!.env.example
+.DS_Store
+coverage/
+.pnpm-store/
+/data/
+# Sandbox-Verifikationsartefakte (nicht Teil des Projekts)
+Dockerfile.verify
+.sandbox-ca.crt
+compose.sandbox-override.yml
